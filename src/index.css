@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* الألوان الأساسية */
+  --primary-color: #005580;
+  --secondary-color: #f0f0f0;
+  --accent-color: #ffb700;
+  --text-color: #333333;
+  --light-text: #666666;
+
+  /* متغيرات النظام */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 3.9%;
+  --primary: 0 0% 9%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 0 0% 96.1%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96.1%;
+  --muted-foreground: 0 0% 45.1%;
+  /* ... باقي المتغيرات ... */
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  color: var(--text-color);
+  background-color: var(--secondary-color);
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Custom utility classes */
+.btn-primary {
+  @apply bg-[#005580] text-white font-medium py-2 px-4 rounded hover:bg-[#004466] transition-colors;
+}
+
+.btn-secondary {
+  @apply bg-white text-[#005580] border border-[#005580] font-medium py-2 px-4 rounded hover:bg-gray-50 transition-colors;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-md overflow-hidden;
+}
+
+.section-title {
+  @apply text-xl font-bold mb-4;
+}
+
+.discount-badge {
+  @apply bg-[#ffb700] text-black text-xs font-bold px-2 py-1 rounded;
+}
+
+/* Scrollbar styling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Horizontal scroll container */
+.scroll-container {
+  @apply flex overflow-x-auto gap-4 pb-4 scrollbar-hide;
+}
+
+/* Animation for loading */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
