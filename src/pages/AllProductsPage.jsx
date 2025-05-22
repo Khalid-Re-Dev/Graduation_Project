@@ -87,18 +87,25 @@ function AllProductsPage() {
 
       // Apply category filter
       if (filters.category) {
-        result = result.filter((product) => product.category.toLowerCase() === filters.category.toLowerCase())
+        result = result.filter((product) => {
+          // Handle category as object or string
+          if (typeof product.category === 'object' && product.category && product.category.name) {
+            return product.category.name.toLowerCase() === filters.category.toLowerCase();
+          }
+          return (product.category || '').toLowerCase() === filters.category.toLowerCase();
+        });
       }
 
       // Apply search filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase()
+        const query = searchQuery.toLowerCase();
         result = result.filter(
           (product) =>
-            product.name.toLowerCase().includes(query) ||
-            product.description.toLowerCase().includes(query) ||
-            product.category.toLowerCase().includes(query),
-        )
+            (typeof product.name === 'string' && product.name.toLowerCase().includes(query)) ||
+            (typeof product.description === 'string' && product.description.toLowerCase().includes(query)) ||
+            (typeof product.category === 'object' && product.category && product.category.name && product.category.name.toLowerCase().includes(query)) ||
+            ((typeof product.category === 'string' || typeof product.category === 'number') && String(product.category).toLowerCase().includes(query))
+        );
       }
 
       // Apply price range filter
@@ -123,10 +130,24 @@ function AllProductsPage() {
       } else if (sortOption === "price-high") {
         result.sort((a, b) => b.price - a.price)
       } else if (sortOption === "popular") {
-        result.sort((a, b) => b.popularity - a.popularity)
+        result.sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       }
 
-      setFilteredProducts(result)
+      // Filter out invalid products (same as HomePage)
+      const isValidProduct = (p) => {
+        const valid = (
+          p && typeof p === 'object' &&
+          !('product_count' in p) &&
+          typeof p.id !== 'undefined' && p.id !== null &&
+          typeof p.name === 'string' && p.name.length > 0 &&
+          typeof p.price === 'number' && !isNaN(p.price) && p.price >= 0
+        );
+        if (!valid) {
+          console.warn('Filtered out non-product object:', p);
+        }
+        return valid;
+      };
+      setFilteredProducts(result.filter(isValidProduct))
     }
   }, [allProducts, filters, sortOption, searchQuery])
 
