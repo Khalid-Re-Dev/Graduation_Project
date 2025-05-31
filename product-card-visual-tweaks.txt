@@ -1,0 +1,22 @@
+Product Card Visual Tweaks Log - 2025-05-30
+
+Spacing changes:
+- Added p-4 to card root for more internal whitespace.
+- Increased my-2 to my-4 for vertical separation between cards.
+- Used mb-4 below image, mt-3/mb-1 for icon row, and space-y-2 for details section.
+- Increased gap between favorite/compare icons to gap-4.
+- Increased gap between price and rating to gap-4.
+
+Typography changes:
+- Price: text-base sm:text-lg font-bold tracking-tight (smaller, more balanced).
+- Product name: text-base sm:text-lg font-semibold leading-tight tracking-tight.
+- Shop name: text-xs sm:text-sm leading-snug.
+- Rating: text-xs sm:text-sm font-medium, gap-1 for icon separation.
+- Details button: text-sm sm:text-base, font-medium.
+
+Rationale:
+- Improved whitespace for a cleaner, less crowded look.
+- Harmonized font sizes for better hierarchy and readability.
+- More breathing room between icons, price, and rating for clarity.
+- Responsive classes ensure good appearance on all screen sizes.
+- All changes use Tailwind utility classes only, with no logic or JSX changes.

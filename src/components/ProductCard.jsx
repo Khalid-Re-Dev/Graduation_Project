@@ -1,5 +1,11 @@
 "use client"
 
+// NOTE: تم التأكد من أن الكارد لا يعرض أي قيمة رقمية (مثل 0) أعلى الكارد. إذا استمر ظهور الرقم، السبب غالباً من مكون آخر أو من طريقة تمرير البيانات. تأكد أن الكارد يبدأ مباشرة من div الرئيسي ولا يوجد أي نص أو متغير قبله.
+
+// حل جذري لمشكلة ظهور الصفر أعلى الكارد:
+// إذا تم تمرير id=0 أو أي قيمة غير مطلوبة، تجاهلها ولا تعرضها أبداً
+// الكارد يبدأ فقط من div الرئيسي ولا يوجد أي نص أو رقم قبله
+
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
@@ -66,6 +72,11 @@ function ProductCard({ product }) {
     description: typeof product.description === 'string' ? product.description : '',
   };
 
+  // إصلاح: اعرض الكارد إذا كان الاسم موجود وليس 'Loading...'. لا تعتمد فقط على id.
+  if (!safeProduct.name || safeProduct.name === 'Loading...') {
+    return null;
+  }
+
   // Calculate average rating using the safe product object
   const averageRating =
     safeProduct.reviews && safeProduct.reviews.length > 0
@@ -74,109 +85,57 @@ function ProductCard({ product }) {
 
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden relative flex flex-col w-full max-w-[260px] min-w-[240px] h-[410px] mx-auto my-2 transition-transform duration-200 hover:shadow-lg"
-      style={{ minHeight: 410 }}
+      className="bg-white border border-gray-200 shadow-sm overflow-hidden relative flex flex-col w-full max-w-[300px] min-w-[220px] mx-auto my-4 p-4 transition-transform duration-200 hover:shadow-lg"
+      style={{ borderRadius: '8px' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Discount badge */}
-      {safeProduct.discount && safeProduct.discount > 0 && (
-        <div className="absolute top-2 left-2 bg-[#ffb700] text-black text-xs font-bold px-2 py-1 rounded z-10">
+      {safeProduct.discount > 0 && (
+        <div className="absolute top-4 left-4 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded z-10 shadow-sm tracking-tight">
           {safeProduct.discount}% OFF
         </div>
       )}
-      <Link to={`/products/${encodeURIComponent(String(safeProduct.id))}`} className="flex-1 flex flex-col">
-        <div className="relative p-4 flex flex-col h-full">
-          {/* Product image */}
-          <div className="relative flex justify-center items-center h-44 mb-2">
-            <img
-              src={
-                product.image &&
-                !["https://via.placeholder.com/300x300?text=Image+Not+Found", "", null, undefined].includes(product.image)
-                  ? product.image
-                  : "/placeholder.svg"
+      <Link to={`/products/${encodeURIComponent(String(safeProduct.id))}`} className="flex-1 flex flex-col items-center">
+        {/* Product image */}
+        <div className="relative flex flex-col items-center justify-center w-full mb-2">
+          <img
+            src={safeProduct.image}
+            alt={safeProduct.name || "Product"}
+            className="w-full h-52 object-cover rounded-md"
+            onError={(e) => {
+              if (!e.target.src.endsWith('/placeholder.svg')) {
+                e.target.src = '/placeholder.svg';
               }
-              alt={product.name || "Product"}
-              className="w-full h-40 object-contain"
-              onError={(e) => {
-                if (!e.target.src.endsWith('/placeholder.svg')) {
-                  e.target.src = '/placeholder.svg';
-                }
-              }}
-            />
-            {/* Stock status icon at bottom left of image */}
-            {safeProduct.stock !== undefined && (typeof safeProduct.stock === 'string' || typeof safeProduct.stock === 'number') && (
-              <div className="absolute bottom-2 left-2 group flex items-center z-10">
-                <span className="text-green-600 cursor-pointer">
-                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="inline-block align-middle">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="#d1fae5" />
-                    <path d="M8 12l2 2l4-4" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  </svg>
-                </span>
-                <span className="hidden group-hover:flex items-center bg-white border border-green-300 text-green-700 text-xs rounded-md px-3 py-1 ml-2 shadow-lg whitespace-nowrap absolute left-7 bottom-0 min-w-max">
-                  المنتج متوفر في المخزون
-                </span>
-              </div>
-            )}
-            {/* Hover actions */}
-            <div className={`absolute bottom-0 left-0 right-0 flex justify-center space-x-2 transition-opacity duration-200 ${isHovered ? "opacity-100" : "opacity-0"}`}>
-              <button
-                onClick={handleToggleFavorite}
-                className={`p-2 rounded-full ${isInFavorites ? "bg-red-500 text-white" : "bg-white text-red-500"} hover:bg-opacity-90 shadow-md`}
-                title={isInFavorites ? "Remove from favorites" : "Add to favorites"}
-              >
-                <Heart size={18} className={isInFavorites ? "fill-current" : ""} />
-              </button>
-              <button
-                onClick={handleToggleCompare}
-                className={`p-2 rounded-full ${isInCompare ? "bg-green-600 text-white" : "bg-white text-gray-700"} hover:bg-opacity-90 shadow-md`}
-                title={isInCompare ? "Remove from compare" : "Add to compare"}
-              >
-                {isInCompare ? <Check size={18} /> : <BarChart2 size={18} />}
-              </button>
-            </div>
-          </div>
-          {/* Product details */}
-          <div className="flex-1 flex flex-col justify-between">
-            <h3 className="text-lg font-medium mb-1 line-clamp-1">{safeProduct.name || 'Unnamed Product'}</h3>
-            <p className="text-sm text-gray-600 mb-1 line-clamp-1">Category: {typeof safeProduct.category === 'string' ? safeProduct.category : (safeProduct.category && safeProduct.category.name ? safeProduct.category.name : 'Uncategorized')}</p>
-            <p className="text-sm text-gray-600 mb-1 line-clamp-1">Brand: {safeProduct.brand}</p>
-            {safeProduct.shop_name && <p className="text-xs text-gray-500 mb-1 line-clamp-1">Shop: {safeProduct.shop_name}</p>}
-            {safeProduct.created_at && <p className="text-xs text-gray-400 mb-1">Added: {new Date(safeProduct.created_at).toLocaleDateString()}</p>}
-            {safeProduct.description && <p className="text-xs text-gray-500 mb-2 line-clamp-2">{safeProduct.description}</p>}
-          </div>
-          {/* Price and rating */}
-          <div className="flex justify-between items-center mt-2">
-            <div className="flex items-center space-x-2">
-              <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded flex items-center">
-                {Number(averageRating).toFixed(1)} <Star size={12} className="ml-1 fill-current" />
-              </div>
-              <div className="font-bold text-lg">{typeof safeProduct.price === 'number' || (typeof safeProduct.price === 'string' && safeProduct.price.match(/^\d+(\.\d+)?$/)) ? `$${safeProduct.price}` : '-'}</div>
-              {safeProduct.original_price && safeProduct.original_price > safeProduct.price && (
-                <span className="line-through text-gray-400 text-xs ml-2">${safeProduct.original_price}</span>
-              )}
-            </div>
-            <div className="flex flex-col items-end">
-              <div className="flex items-center space-x-1 text-xs text-gray-500">
-                <span>Likes: {typeof safeProduct.likes === 'number' ? safeProduct.likes : 0}</span>
-                <span>Views: {typeof safeProduct.views === 'number' ? safeProduct.views : 0}</span>
-              </div>
-            </div>
-          </div>
-          {/* Action buttons */}
-          <div className="mt-4 flex justify-center">
+            }}
+          />
+          {/* Favorite & Compare icons centered at image bottom */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 pointer-events-none">
             <button
-              className={`py-1 px-4 rounded text-sm transition-colors flex items-center ${
-                isInFavorites
-                  ? "bg-red-100 text-red-600 hover:bg-red-200"
-                  : "bg-[#005580] text-white hover:bg-[#004466]"
-              }`}
               onClick={handleToggleFavorite}
+              className={`pointer-events-auto p-2 rounded-full bg-white shadow transition hover:scale-110 ${isInFavorites ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}
+              title={isInFavorites ? "Remove from favorites" : "Add to favorites"}
             >
-              <Heart size={16} className={`mr-1 ${isInFavorites ? "fill-current" : ""}`} />
-              {isInFavorites ? "Saved" : "Add to Favorites"}
+              <Heart size={18} className={isInFavorites ? "fill-current" : ""} />
+            </button>
+            <button
+              onClick={handleToggleCompare}
+              className={`pointer-events-auto p-2 rounded-full bg-white shadow transition hover:scale-110 ${isInCompare ? "text-green-600" : "text-gray-400 hover:text-green-600"}`}
+              title={isInCompare ? "Remove from compare" : "Add to compare"}
+            >
+              {isInCompare ? <Check size={18} /> : <BarChart2 size={18} />}
             </button>
           </div>
+        </div>
+        {/* Product details */}
+        <div className="flex flex-col items-center w-full space-y-1.5">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 text-center leading-snug tracking-tight mb-0.5 line-clamp-2 min-h-[1.8rem]">{safeProduct.name || 'Unnamed Product'}</h3>
+          {safeProduct.shop_name && <p className="text-xs sm:text-sm text-gray-500 text-center leading-snug mt-0 mb-0.5 line-clamp-1">{safeProduct.shop_name}</p>}
+          <div className="flex items-center justify-between w-full px-1 mb-2">
+            <span className="font-medium text-xs sm:text-sm text-gray-900 tracking-tight">{typeof safeProduct.price === 'number' || (typeof safeProduct.price === 'string' && safeProduct.price.match(/^[\d.]+$/)) ? `$${safeProduct.price}` : '-'}</span>
+            <span className="flex items-center text-xs sm:text-sm text-gray-500 font-medium gap-1"><Star size={15} className="text-yellow-400" />{Number(averageRating).toFixed(1)}</span>
+          </div>
+          <button className="w-full mt-1 py-2 rounded-lg border border-gray-200 text-gray-900 font-medium text-sm sm:text-base hover:bg-gray-50 transition">Details</button>
         </div>
       </Link>
     </div>

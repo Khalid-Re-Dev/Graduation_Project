@@ -210,7 +210,7 @@ function HomePage() {
                     ))
                 ) : loading ? (
                   // Still loading, show placeholders
-                  Array(4).fill({ id: 0, name: "Loading...", price: 0, image: "/placeholder.svg" }).map((product, index) => (
+                  Array(4).fill({ name: "Loading...", price: "-", image: "/placeholder.svg" }).map((product, index) => (
                     <div key={`loading-${index}`} className="min-w-[250px]">
                       <ProductCard product={product} />
                     </div>
@@ -265,7 +265,7 @@ function HomePage() {
                     ))
                 ) : loading ? (
                   // Still loading, show placeholders
-                  Array(4).fill({ id: 0, name: "Loading...", price: 0, image: "/placeholder.svg" }).map((product, index) => (
+                  Array(4).fill({ name: "Loading...", price: "-", image: "/placeholder.svg" }).map((product, index) => (
                     <div key={`loading-${index}`} className="min-w-[250px]">
                       <ProductCard product={product} />
                     </div>
@@ -328,7 +328,7 @@ function HomePage() {
                     ))
                 ) : loading ? (
                   // Still loading, show placeholders
-                  Array(4).fill({ id: 0, name: "Loading...", price: 0, image: "/placeholder.svg" })
+                  Array(4).fill({ name: "Loading...", price: "-", image: "/placeholder.svg" })
                     .map((product, index) => <ProductCard key={`loading-${index}`} product={product} />)
                 ) : (
                   // No products and not loading, show message with retry button
