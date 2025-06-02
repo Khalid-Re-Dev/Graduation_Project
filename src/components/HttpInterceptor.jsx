@@ -32,7 +32,11 @@ function HttpInterceptor() {
           const response = await originalFetch(url, options)
 
           // Handle 401 Unauthorized errors
-          if (response.status === 401) {
+          if (
+            response.status === 401 &&
+            // لا تعمل logout إذا كان الطلب إلى /recommendations/
+            !(typeof url === "string" && url.includes("/recommendations/"))
+          ) {
             // Logout user on authentication error
             dispatch(logout())
           }
