@@ -1,11 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import {
+import { productService } from "../services/product.service"
+
+const {
   getProducts,
   getProductDetails,
   getFeaturedProducts,
   getPopularProducts,
   getNewProducts
-} from "../services/product.service"
+} = productService
 
 // Async thunk for fetching all products
 export const fetchAllProducts = createAsyncThunk("products/fetchAll", async (_, { rejectWithValue }) => {
@@ -137,7 +139,6 @@ export const fetchProductById = createAsyncThunk("products/fetchById", async (id
       return rejectWithValue("Invalid data format received from API")
     }
 
-    // API might return data in a different structure than the mock data
     // Ensure we have a consistent structure for the component
     const result = {
       product: productData.product || productData,
@@ -236,15 +237,40 @@ const productSlice = createSlice({
           }
         }
 
-        // Filter out any invalid product objects
-        products = products.filter(p => p && typeof p === 'object' && (p.id || p.name));
+        // Filter out any invalid product objects and non-product objects
+        products = products.filter(p => {
+          // Must be an object
+          if (!p || typeof p !== 'object') return false;
+
+          // Filter out category objects (have product_count)
+          if ('product_count' in p) {
+            console.warn('🚫 Filtering out category object:', p.name);
+            return false;
+          }
+
+          // Filter out shop objects (have owner_name or completion_percentage)
+          if ('owner_name' in p || 'completion_percentage' in p) {
+            console.warn('🚫 Filtering out shop object:', p.name);
+            return false;
+          }
+
+          // Filter out brand objects (have popularity, rating, likes, dislikes)
+          if ('popularity' in p && 'rating' in p && 'likes' in p && 'dislikes' in p) {
+            console.warn('🚫 Filtering out brand object:', p.name);
+            return false;
+          }
+
+          // Must have id or name to be considered a product
+          return (p.id || p.name);
+        });
+
         if (products.length === 0) {
           console.error("No valid products found in API response:", action.payload);
         }
 
         // Ensure each product has required properties
         products = products.map(product => ({
-          id: product.id || Math.random().toString(36).substr(2, 9),
+          id: product.id || Math.random().toString(36).substring(2, 11),
           name: product.name || 'Unnamed Product',
           price: product.price || 0,
           image: product.image || product.image_url || product.thumbnail || "https://via.placeholder.com/300x300?text=Product+Image",
@@ -258,19 +284,9 @@ const productSlice = createSlice({
       .addCase(fetchAllProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch products"
-        // Don't clear existing products on error to maintain UI state
-        if (!state.allProducts || state.allProducts.length === 0) {
-          console.warn("No products in state, using mock data")
-          // Import mock products directly to avoid circular dependency
-          try {
-            const { mockProducts } = require('../services/productService')
-            console.log("Using mock products fallback:", mockProducts.length)
-            state.allProducts = mockProducts || []
-          } catch (err) {
-            console.error("Failed to load mock products:", err)
-            state.allProducts = []
-          }
-        }
+        console.error("❌ Failed to fetch products from API:", action.payload)
+        // Clear products array to show empty state when API fails
+        state.allProducts = []
       })
 
       // Handle fetchNewProducts
@@ -287,23 +303,9 @@ const productSlice = createSlice({
       .addCase(fetchNewProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch new products"
-        // Don't clear existing products on error to maintain UI state
-        if (!state.newProducts || state.newProducts.length === 0) {
-          console.warn("No new products in state, using mock data")
-          // Import mock products directly to avoid circular dependency
-          try {
-            const { mockProducts } = require('../services/productService')
-            console.log("Using mock products for new products:", mockProducts.length)
-            // Sort by creation date to get "new" products
-            const sortedProducts = [...mockProducts].sort((a, b) =>
-              new Date(b.created_at) - new Date(a.created_at)
-            )
-            state.newProducts = sortedProducts.slice(0, 10) || []
-          } catch (err) {
-            console.error("Failed to load mock products for new products:", err)
-            state.newProducts = []
-          }
-        }
+        console.error("❌ Failed to fetch new products from API:", action.payload)
+        // Clear new products array to show empty state when API fails
+        state.newProducts = []
       })
 
       // Handle fetchPopularProducts
@@ -320,21 +322,9 @@ const productSlice = createSlice({
       .addCase(fetchPopularProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch popular products"
-        // Don't clear existing products on error to maintain UI state
-        if (!state.popularProducts || state.popularProducts.length === 0) {
-          console.warn("No popular products in state, using mock data")
-          // Import mock products directly to avoid circular dependency
-          try {
-            const { mockProducts } = require('../services/productService')
-            console.log("Using mock products for popular products:", mockProducts.length)
-            // Sort by popularity to get "popular" products
-            const sortedProducts = [...mockProducts].sort((a, b) => b.popularity - a.popularity)
-            state.popularProducts = sortedProducts.slice(0, 10) || []
-          } catch (err) {
-            console.error("Failed to load mock products for popular products:", err)
-            state.popularProducts = []
-          }
-        }
+        console.error("❌ Failed to fetch popular products from API:", action.payload)
+        // Clear popular products array to show empty state when API fails
+        state.popularProducts = []
       })
 
       // Handle fetchProductById
@@ -353,25 +343,11 @@ const productSlice = createSlice({
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch product details"
+        console.error("❌ Failed to fetch product details from API:", action.payload)
 
-        // If we don't have a current product, use a placeholder
-        if (!state.currentProduct) {
-          console.warn("No product details in state, using placeholder")
-          state.currentProduct = {
-            id: 0,
-            name: "Product Not Found",
-            price: 0,
-            description: "Sorry, we couldn't find the product you're looking for. Please try another product.",
-            image: "/placeholder.svg",
-            category: "Unknown",
-            reviews: []
-          }
-        }
-
-        // If we don't have related products, use empty array
-        if (!state.relatedProducts || !Array.isArray(state.relatedProducts)) {
-          state.relatedProducts = []
-        }
+        // Clear current product and related products to show error state
+        state.currentProduct = null
+        state.relatedProducts = []
       })
   },
 })

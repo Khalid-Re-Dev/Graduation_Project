@@ -17,24 +17,32 @@ function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false)
 
   const handleToggleFavorite = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
+    try {
+      e.preventDefault()
+      e.stopPropagation()
 
-    if (isInFavorites) {
-      dispatch(removeFromFavorites(product.id))
-    } else {
-      dispatch(addToFavorites(product))
+      if (isInFavorites) {
+        dispatch(removeFromFavorites(product.id))
+      } else {
+        dispatch(addToFavorites(product))
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   }
 
   const handleToggleCompare = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
+    try {
+      e.preventDefault()
+      e.stopPropagation()
 
-    if (isInCompare) {
-      dispatch(removeFromCompare(product.id))
-    } else {
-      dispatch(addToCompare(product))
+      if (isInCompare) {
+        dispatch(removeFromCompare(product.id))
+      } else {
+        dispatch(addToCompare(product))
+      }
+    } catch (error) {
+      console.error('Error toggling compare:', error);
     }
   }
 
@@ -85,13 +93,13 @@ function ProductCard({ product }) {
 
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden"
+      className="bg-white rounded-lg shadow-md overflow-hidden relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Discount badge */}
       {safeProduct.discount && safeProduct.discount > 0 && (
-        <div className="absolute top-2 left-2 bg-[#ffb700] text-black text-xs font-bold px-2 py-1 rounded">
+        <div className="absolute top-2 left-2 bg-[#ffb700] text-black text-xs font-bold px-2 py-1 rounded z-10">
           {safeProduct.discount}% OFF
         </div>
       )}
@@ -115,14 +123,22 @@ function ProductCard({ product }) {
               className={`absolute bottom-0 left-0 right-0 flex justify-center space-x-2 transition-opacity duration-200 ${isHovered ? "opacity-100" : "opacity-0"}`}
             >
               <button
-                onClick={handleToggleFavorite}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleToggleFavorite(e);
+                }}
                 className={`p-2 rounded-full ${isInFavorites ? "bg-red-500 text-white" : "bg-white text-red-500"} hover:bg-opacity-90 shadow-md`}
                 title={isInFavorites ? "Remove from favorites" : "Add to favorites"}
               >
                 <Heart size={18} className={isInFavorites ? "fill-current" : ""} />
               </button>
               <button
-                onClick={handleToggleCompare}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleToggleCompare(e);
+                }}
                 className={`p-2 rounded-full ${isInCompare ? "bg-green-600 text-white" : "bg-white text-gray-700"} hover:bg-opacity-90 shadow-md`}
                 title={isInCompare ? "Remove from compare" : "Add to compare"}
               >
@@ -154,7 +170,11 @@ function ProductCard({ product }) {
                   ? "bg-red-100 text-red-600 hover:bg-red-200"
                   : "bg-[#005580] text-white hover:bg-[#004466]"
               }`}
-              onClick={handleToggleFavorite}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleToggleFavorite(e);
+              }}
             >
               <Heart size={16} className={`mr-1 ${isInFavorites ? "fill-current" : ""}`} />
               {isInFavorites ? "Saved" : "Add to Favorites"}

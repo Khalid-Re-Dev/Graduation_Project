@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { useSearchParams } from "react-router-dom"
 import { fetchAllProducts } from "../store/productSlice"
 import ProductCard from "../components/ProductCard"
+import SimpleProductCard from "../components/SimpleProductCard"
 import FallbackLoader from "../components/FallbackLoader"
 import { Filter, Grid3X3, Grid2X2, Search, AlertCircle, RefreshCw } from "lucide-react"
 
@@ -82,51 +83,77 @@ function AllProductsPage() {
   }, [dispatch])
 
   useEffect(() => {
+    console.log('🔄 Filtering products. allProducts count:', allProducts.length);
+
     if (allProducts.length > 0) {
       let result = [...allProducts]
+      console.log('📊 Starting with products:', result.length);
 
       // Apply category filter
       if (filters.category) {
-        result = result.filter((product) => product.category.toLowerCase() === filters.category.toLowerCase())
+        const beforeCount = result.length;
+        result = result.filter((product) => product.category?.toLowerCase() === filters.category.toLowerCase())
+        console.log(`🏷️ Category filter (${filters.category}): ${beforeCount} → ${result.length}`);
       }
 
       // Apply search filter
       if (searchQuery) {
+        const beforeCount = result.length;
         const query = searchQuery.toLowerCase()
         result = result.filter(
           (product) =>
-            product.name.toLowerCase().includes(query) ||
-            product.description.toLowerCase().includes(query) ||
-            product.category.toLowerCase().includes(query),
+            product.name?.toLowerCase().includes(query) ||
+            product.description?.toLowerCase().includes(query) ||
+            product.category?.toLowerCase().includes(query),
         )
+        console.log(`🔍 Search filter (${searchQuery}): ${beforeCount} → ${result.length}`);
       }
 
       // Apply price range filter
+      const beforePriceCount = result.length;
       result = result.filter(
-        (product) => product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1],
+        (product) => {
+          const price = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+          return price >= filters.priceRange[0] && price <= filters.priceRange[1];
+        }
       )
+      console.log(`💰 Price filter ($${filters.priceRange[0]}-$${filters.priceRange[1]}): ${beforePriceCount} → ${result.length}`);
 
       // Apply rating filter
       if (filters.rating > 0) {
+        const beforeRatingCount = result.length;
         result = result.filter((product) => {
           if (!product.reviews || product.reviews.length === 0) return false
           const avgRating = product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
           return avgRating >= filters.rating
         })
+        console.log(`⭐ Rating filter (${filters.rating}+): ${beforeRatingCount} → ${result.length}`);
       }
 
       // Apply sorting
       if (sortOption === "newest") {
-        result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
       } else if (sortOption === "price-low") {
-        result.sort((a, b) => a.price - b.price)
+        result.sort((a, b) => {
+          const priceA = typeof a.price === 'string' ? parseFloat(a.price) : a.price;
+          const priceB = typeof b.price === 'string' ? parseFloat(b.price) : b.price;
+          return priceA - priceB;
+        })
       } else if (sortOption === "price-high") {
-        result.sort((a, b) => b.price - a.price)
+        result.sort((a, b) => {
+          const priceA = typeof a.price === 'string' ? parseFloat(a.price) : a.price;
+          const priceB = typeof b.price === 'string' ? parseFloat(b.price) : b.price;
+          return priceB - priceA;
+        })
       } else if (sortOption === "popular") {
-        result.sort((a, b) => b.popularity - a.popularity)
+        result.sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
       }
 
+      console.log(`📋 Final filtered products: ${result.length}`);
       setFilteredProducts(result)
+    } else {
+      console.log('❌ No products to filter');
+      setFilteredProducts([]);
     }
   }, [allProducts, filters, sortOption, searchQuery])
 
@@ -154,16 +181,64 @@ function AllProductsPage() {
 
   // Helper function to check if an object is a valid product
   const isValidProduct = (p) => {
+    // First check if it's an object at all
+    if (!p || typeof p !== 'object') {
+      console.warn('🚫 Not an object:', p);
+      return false;
+    }
+
+    // Check for category objects (they have product_count)
+    if ('product_count' in p) {
+      console.warn('🚫 Filtered out category object:', {
+        id: p?.id,
+        name: p?.name,
+        product_count: p?.product_count
+      });
+      return false;
+    }
+
+    // Check for shop objects (they have owner_name or completion_percentage)
+    if ('owner_name' in p || 'completion_percentage' in p) {
+      console.warn('🚫 Filtered out shop object:', {
+        id: p?.id,
+        name: p?.name,
+        owner_name: p?.owner_name
+      });
+      return false;
+    }
+
+    // Check for brand objects (they have popularity, rating, likes, dislikes)
+    if ('popularity' in p && 'rating' in p && 'likes' in p && 'dislikes' in p) {
+      console.warn('🚫 Filtered out brand object:', {
+        id: p?.id,
+        name: p?.name,
+        popularity: p?.popularity
+      });
+      return false;
+    }
+
+    // Now check if it's a valid product
     const valid = (
-      p && typeof p === 'object' &&
-      !('product_count' in p) &&
       typeof p.id !== 'undefined' && p.id !== null &&
       typeof p.name === 'string' && p.name.length > 0 &&
-      typeof p.description === 'string' &&
-      typeof p.price === 'number' && !isNaN(p.price) && p.price >= 0
+      // Make description optional - it can be string, null, or undefined
+      (typeof p.description === 'string' || p.description === null || p.description === undefined) &&
+      // Price can be number or string that can be converted to number
+      ((typeof p.price === 'number' && !isNaN(p.price) && p.price >= 0) ||
+       (typeof p.price === 'string' && !isNaN(parseFloat(p.price)) && parseFloat(p.price) >= 0))
     );
+
     if (!valid) {
-      console.warn('Filtered out non-product object:', p);
+      console.warn('🚫 Invalid product structure:', {
+        id: p?.id,
+        name: p?.name,
+        description: p?.description,
+        price: p?.price,
+        type: typeof p,
+        keys: Object.keys(p)
+      });
+    } else {
+      console.log('✅ Valid product:', { id: p.id, name: p.name, price: p.price });
     }
     return valid;
   };
@@ -452,6 +527,14 @@ function AllProductsPage() {
             ) : filteredProducts.length === 0 ? (
               <div className="bg-white p-8 rounded-lg shadow-sm text-center">
                 <p className="text-lg mb-4">No products found matching your criteria.</p>
+                <div className="text-sm text-gray-600 mb-4">
+                  <p>Debug Info:</p>
+                  <p>• Total products in store: {allProducts.length}</p>
+                  <p>• Filtered products: {filteredProducts.length}</p>
+                  <p>• Current filters: {JSON.stringify(filters)}</p>
+                  <p>• Search query: "{searchQuery}"</p>
+                  <p>• Sort option: {sortOption}</p>
+                </div>
                 <button
                   onClick={() => {
                     // Reset filters and fetch products again
@@ -470,17 +553,33 @@ function AllProductsPage() {
                 </button>
               </div>
             ) : (
-              <div
-                className={`grid grid-cols-1 sm:grid-cols-2 ${
-                  gridView === "grid-4" ? "lg:grid-cols-3 xl:grid-cols-4" : "lg:grid-cols-3"
-                } gap-6`}
-              >
-                {filteredProducts
-                  .filter(isValidProduct)
-                  .map((product) => {
-                    console.log('Rendering ProductCard (all-products):', product);
-                    return <ProductCard key={product.id} product={product} />;
-                  })}
+              <div>
+                {/* Debug info */}
+                <div className="mb-4 p-2 bg-blue-50 rounded text-sm">
+                  <p><strong>Debug:</strong> Filtered products: {filteredProducts.length}, Valid products: {filteredProducts.filter(isValidProduct).length}</p>
+                </div>
+
+                <div
+                  className={`grid grid-cols-1 sm:grid-cols-2 ${
+                    gridView === "grid-4" ? "lg:grid-cols-3 xl:grid-cols-4" : "lg:grid-cols-3"
+                  } gap-6`}
+                >
+                  {filteredProducts
+                    .filter(isValidProduct)
+                    .map((product) => {
+                      console.log('🎨 Rendering ProductCard (all-products):', product);
+                      try {
+                        return <SimpleProductCard key={product.id} product={product} />;
+                      } catch (error) {
+                        console.error('Error rendering ProductCard:', error, product);
+                        return (
+                          <div key={product.id} className="bg-red-50 border border-red-200 p-4 rounded">
+                            <p className="text-red-600">Error loading product: {product.name}</p>
+                          </div>
+                        );
+                      }
+                    })}
+                </div>
               </div>
             )}
           </div>

@@ -3,9 +3,11 @@
  * This file contains the configuration for the API
  */
 
-// Base URL for API requests
-export const API_BASE_URL = 'http://127.0.0.1:8000/api';
+import { config } from './environment.config.js';
 
+// Base URL for API requests (now environment-aware)
+export const API_BASE_URL = config.API_BASE_URL;
+ 
 // API endpoints
 export const API_ENDPOINTS = {
   // Auth endpoints

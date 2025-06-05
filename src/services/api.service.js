@@ -44,9 +44,9 @@ class ApiService {
       // Add signal to request options
       requestOptions.signal = controller.signal;
 
-      // Check if backend is available (for development purposes)
+      // Check if backend is available
       if (!navigator.onLine) {
-        console.warn("Network is offline, using mock data if available");
+        console.error("❌ Network is offline - no internet connection");
         clearTimeout(timeoutId);
         throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
       }
@@ -144,32 +144,24 @@ class ApiService {
   /**
    * Handle errors from the request
    * @param {Error} error - The error from the request
-   * @param {Object} fallbackData - Optional fallback data to return instead of throwing
-   * @returns {Object|null} - Fallback data or null
-   * @throws {Error} - The error with a more descriptive message if no fallback provided
+   * @throws {Error} - The error with a more descriptive message
    */
-  handleError(error, fallbackData = null) {
+  handleError(error) {
     if (error.name === 'AbortError') {
-      console.warn(ERROR_MESSAGES.TIMEOUT);
+      console.error('❌ Request timeout:', ERROR_MESSAGES.TIMEOUT);
       toast.error(ERROR_MESSAGES.TIMEOUT);
-
-      if (fallbackData) return fallbackData;
       return { error: ERROR_MESSAGES.TIMEOUT, success: false };
     }
 
     if (!navigator.onLine) {
-      console.warn(ERROR_MESSAGES.NETWORK_ERROR);
+      console.error('❌ Network offline:', ERROR_MESSAGES.NETWORK_ERROR);
       toast.error(ERROR_MESSAGES.NETWORK_ERROR);
-
-      if (fallbackData) return fallbackData;
       return { error: ERROR_MESSAGES.NETWORK_ERROR, success: false };
     }
 
     const errorMessage = error.message || 'API Error';
-    console.warn(`API Error: ${errorMessage}`);
+    console.error(`❌ API Error: ${errorMessage}`);
     toast.error(errorMessage);
-
-    if (fallbackData) return fallbackData;
     return { error: errorMessage, success: false };
   }
 
