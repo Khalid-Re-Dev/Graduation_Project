@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchProductById } from "../store/productSlice"
-import { addToFavorites, removeFromFavorites } from "../store/favoritesSlice"
-import { addToCompare, removeFromCompare } from "../store/compareSlice"
+import { addFavorite, removeFavorite } from "../store/favoritesSlice"
+import { addCompare, removeCompare } from "../store/compareSlice"
 import { Heart, Minus, Plus, Monitor, Cpu, MemoryStick, BarChart2, Check } from "lucide-react"
 import ProductCard from "../components/ProductCard"
 import ReviewList from "../components/ReviewList"
@@ -32,17 +32,17 @@ function ProductDetailPage() {
 
   const handleToggleFavorite = () => {
     if (isInFavorites) {
-      dispatch(removeFromFavorites(Number(id)))
+      dispatch(removeFavorite(Number(id)))
     } else if (currentProduct) {
-      dispatch(addToFavorites(currentProduct))
+      dispatch(addFavorite(currentProduct))
     }
   }
 
   const handleToggleCompare = () => {
     if (isInCompare) {
-      dispatch(removeFromCompare(Number(id)))
+      dispatch(removeCompare(Number(id)))
     } else if (currentProduct) {
-      dispatch(addToCompare(currentProduct))
+      dispatch(addCompare(currentProduct))
     }
   }
 

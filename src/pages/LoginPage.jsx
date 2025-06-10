@@ -2,21 +2,27 @@
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useDispatch } from "react-redux"
-import { login } from "../store/authSlice"
+import { useSelector, useDispatch } from "react-redux"
+import { login, clearError } from "../store/authSlice"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "react-toastify"
+import { addFavorite, fetchFavorites } from "../store/favoritesSlice"
 
 // Login page component
 function LoginPage() {
   const [credentials, setCredentials] = useState({ email: "", password: "" })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const { loading, error: reduxError } = useSelector((state) => state.auth)
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setCredentials((prev) => ({ ...prev, [name]: value }))
+    setError("")
+    if (reduxError) dispatch(clearError())
   }
 
   const handleSubmit = async (e) => {
@@ -25,9 +31,20 @@ function LoginPage() {
 
     try {
       // Call the API through Redux action
-      const result = await dispatch(login(credentials)).unwrap()
+      const result = await dispatch(login({ ...credentials, rememberMe })).unwrap()
 
       if (result && result.user) {
+        // مزامنة مفضلة الزائر مع السيرفر بعد تسجيل الدخول
+        const guestFavorites = JSON.parse(sessionStorage.getItem('guest_favorites') || '[]')
+        if (guestFavorites.length > 0) {
+          for (const product of guestFavorites) {
+            // أرسل كل منتج كمفضلة للسيرفر
+            await dispatch(addFavorite(product))
+          }
+          sessionStorage.removeItem('guest_favorites')
+          // بعد المزامنة، جلب المفضلة من السيرفر
+          await dispatch(fetchFavorites())
+        }
         // Redirect to dashboard if user is admin, otherwise to owner dashboard or home page
         if (result.user.is_admin || result.user.is_staff) {
           navigate("/dashboard")
@@ -40,8 +57,16 @@ function LoginPage() {
         navigate("/")
       }
     } catch (err) {
-      console.error("Login error:", err)
-      setError(err || "Invalid email or password. Please try again.")
+      let msg = err || "Invalid email or password. Please try again."
+      // Network/CORS error detection
+      if (typeof msg === "string" && (msg.includes("Network") || msg.includes("CORS") || msg.includes("Failed to fetch"))) {
+        msg = "تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت أو حاول لاحقًا."
+        toast.error(msg)
+      } else if (typeof msg === "string" && (msg.includes("server") || msg.includes("response"))) {
+        msg = "حدث خطأ في الخادم. حاول لاحقًا أو تواصل مع الدعم."
+        toast.error(msg)
+      }
+      setError(msg)
     }
   }
 
@@ -50,10 +75,15 @@ function LoginPage() {
       {/* Left Side - Form */}
       <div className="w-full md:w-1/2 p-8 flex flex-col justify-center">
         <div className="max-w-md mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Log in to Best On Click</h1>
+          <h1 className="text-3xl font-bold mb-2 text-[#005580]">Log in to Best On Click</h1>
           <p className="text-gray-600 mb-8">Enter your details below</p>
 
-          {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+          {(error || reduxError) && (
+            <div className="bg-red-50 border border-red-300 text-[#b91c1c] px-4 py-3 rounded mb-4 flex items-center gap-2 animate-fade-in">
+              <svg className="w-5 h-5 text-[#b91c1c]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" /></svg>
+              <span>{error || reduxError}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
@@ -88,7 +118,15 @@ function LoginPage() {
             </div>
 
             <div className="flex justify-between items-center mb-6">
-              <div></div>
+              <label className="flex items-center gap-2 text-sm select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  className="accent-[#005580]"
+                />
+                Remember me
+              </label>
               <Link to="/forgot-password" className="text-[#005580] hover:underline text-sm">
                 Forgot Password?
               </Link>
@@ -96,8 +134,10 @@ function LoginPage() {
 
             <button
               type="submit"
-              className="w-full bg-[#005580] text-white py-3 rounded-md hover:bg-[#004466] transition-colors"
+              className="w-full bg-[#005580] text-white py-3 rounded-md hover:bg-[#004466] transition-colors flex items-center justify-center gap-2"
+              disabled={loading}
             >
+              {loading && <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>}
               Log in
             </button>
           </form>

@@ -6,41 +6,95 @@
 // إذا تم تمرير id=0 أو أي قيمة غير مطلوبة، تجاهلها ولا تعرضها أبداً
 // الكارد يبدأ فقط من div الرئيسي ولا يوجد أي نص أو رقم قبله
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { addToFavorites, removeFromFavorites } from "../store/favoritesSlice"
-import { addToCompare, removeFromCompare } from "../store/compareSlice"
+import { addFavorite, removeFavorite, addFavoriteLocal, removeFavoriteLocal, fetchFavorites } from "../store/favoritesSlice"
+import { addCompare, removeCompare } from "../store/compareSlice"
 import { Star, Heart, BarChart2, Check } from "lucide-react"
+import { productService } from "../services/product.service"
 
 // Product card component for displaying product information
 function ProductCard({ product }) {
   const dispatch = useDispatch()
   const compareItems = useSelector((state) => state.compare.items)
   const favoriteItems = useSelector((state) => state.favorites.items)
+  const favoritesLoading = useSelector((state) => state.favorites.loading)
+  const compareLoading = useSelector((state) => state.compare.loading)
   const isInCompare = compareItems.some((item) => item.id === product.id)
   const isInFavorites = favoriteItems.some((item) => item.id === product.id)
   const [isHovered, setIsHovered] = useState(false)
+  const [reviews, setReviews] = useState([])
+  const [averageRating, setAverageRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(null)
+  const [userRating, setUserRating] = useState(null)
+  const [loadingReviews, setLoadingReviews] = useState(false)
 
-  const handleToggleFavorite = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-
+  const handleToggleFavorite = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (favoritesLoading) return;
     if (isInFavorites) {
-      dispatch(removeFromFavorites(product.id))
+      dispatch(removeFavoriteLocal(product.id)); // تفعيل فوري
+      await dispatch(removeFavorite(product.id));      // مزامنة مع الباك إند
+      dispatch(fetchFavorites()); // تحديث المفضلة فوراً بعد الحذف
     } else {
-      dispatch(addToFavorites(product))
+      dispatch(addFavoriteLocal(product));       // تفعيل فوري
+      await dispatch(addFavorite(product));            // مزامنة مع الباك إند
+      dispatch(fetchFavorites()); // تحديث المفضلة فوراً بعد الإضافة
     }
   }
 
   const handleToggleCompare = (e) => {
     e.preventDefault()
     e.stopPropagation()
-
+    if (compareLoading) return // منع التكرار أثناء التحميل
     if (isInCompare) {
-      dispatch(removeFromCompare(product.id))
+      dispatch(removeCompare(product.id))
     } else {
-      dispatch(addToCompare(product))
+      dispatch(addCompare(product))
+    }
+  }
+
+  // جلب التقييمات من السيرفر عند تحميل الكارد أو تغيير المنتج
+  useEffect(() => {
+    let isMounted = true
+    setLoadingReviews(true)
+    productService.getProductReviews(product.id)
+      .then((data) => {
+        if (!isMounted) return
+        setReviews(Array.isArray(data) ? data : [])
+        if (Array.isArray(data) && data.length > 0) {
+          const avg = data.reduce((sum, r) => sum + (typeof r.rating === 'number' ? r.rating : 0), 0) / data.length
+          setAverageRating(avg)
+        } else {
+          setAverageRating(0)
+        }
+      })
+      .catch(() => {
+        setReviews([])
+        setAverageRating(0)
+      })
+      .finally(() => setLoadingReviews(false))
+    return () => { isMounted = false }
+  }, [product.id])
+
+  // إرسال تقييم جديد عند اختيار المستخدم
+  const handleRate = async (rating) => {
+    setUserRating(rating)
+    try {
+      await productService.addProductReview(product.id, rating)
+      // إعادة جلب التقييمات بعد التقييم
+      const data = await productService.getProductReviews(product.id)
+      setReviews(Array.isArray(data) ? data : [])
+      if (Array.isArray(data) && data.length > 0) {
+        const avg = data.reduce((sum, r) => sum + (typeof r.rating === 'number' ? r.rating : 0), 0) / data.length
+        setAverageRating(avg)
+      } else {
+        setAverageRating(0)
+      }
+    } catch (e) {
+      // يمكن عرض رسالة خطأ هنا
     }
   }
 
@@ -76,12 +130,6 @@ function ProductCard({ product }) {
   if (!safeProduct.name || safeProduct.name === 'Loading...') {
     return null;
   }
-
-  // Calculate average rating using the safe product object
-  const averageRating =
-    safeProduct.reviews && safeProduct.reviews.length > 0
-      ? safeProduct.reviews.reduce((sum, review) => sum + (typeof review.rating === 'number' ? review.rating : 0), 0) / safeProduct.reviews.length
-      : safeProduct.average_rating || 0;
 
   return (
     <div
@@ -133,7 +181,25 @@ function ProductCard({ product }) {
           {safeProduct.shop_name && <p className="text-xs sm:text-sm text-gray-500 text-center leading-snug mt-0 mb-0.5 line-clamp-1">{safeProduct.shop_name}</p>}
           <div className="flex items-center justify-between w-full px-1 mb-2">
             <span className="font-medium text-xs sm:text-sm text-gray-900 tracking-tight">{typeof safeProduct.price === 'number' || (typeof safeProduct.price === 'string' && safeProduct.price.match(/^[\d.]+$/)) ? `$${safeProduct.price}` : '-'}</span>
-            <span className="flex items-center text-xs sm:text-sm text-gray-500 font-medium gap-1"><Star size={15} className="text-yellow-400" />{Number(averageRating).toFixed(1)}</span>
+            <span className="flex items-center text-xs sm:text-sm text-gray-500 font-medium gap-1">
+              <Star size={15} className="text-yellow-400" />
+              <span
+                onMouseLeave={() => setHoverRating(null)}
+                className="flex gap-0.5 cursor-pointer"
+              >
+                {[1,2,3,4,5].map((star) => (
+                  <span
+                    key={star}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onClick={() => handleRate(star)}
+                    style={{ color: (hoverRating || userRating || Math.round(averageRating)) >= star ? '#facc15' : '#d1d5db' }}
+                  >
+                    ★
+                  </span>
+                ))}
+              </span>
+              <span className="ml-1">{loadingReviews ? '...' : Number(averageRating).toFixed(1)}</span>
+            </span>
           </div>
           <button className="w-full mt-1 py-2 rounded-lg border border-gray-200 text-gray-900 font-medium text-sm sm:text-base hover:bg-gray-50 transition">Details</button>
         </div>

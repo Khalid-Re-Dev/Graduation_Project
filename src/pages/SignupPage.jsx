@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useDispatch } from "react-redux"
-import { register } from "../store/authSlice"
+import { useSelector, useDispatch } from "react-redux"
+import { register, clearError, clearSuccess } from "../store/authSlice"
 import { Eye, EyeOff } from "lucide-react"
 
 // Signup page component
@@ -20,14 +20,14 @@ function SignupPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
+  const { loading, error: reduxError, successMessage } = useSelector((state) => state.auth)
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
+    setErrors((prev) => ({ ...prev, [name]: "" }))
+    if (reduxError) dispatch(clearError())
+    if (successMessage) dispatch(clearSuccess())
   }
 
   const validateForm = () => {
@@ -95,7 +95,7 @@ function SignupPage() {
 
       if (result && result.user) {
         // Show success message
-        alert("Registration successful!")
+        // alert("Registration successful!")
 
         // Redirect based on user type
         if (formData.userType === "owner") {
@@ -140,14 +140,23 @@ function SignupPage() {
       {/* Left Side - Form */}
       <div className="w-full md:w-1/2 p-8 flex flex-col justify-center">
         <div className="max-w-md mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Create an account</h1>
+          <h1 className="text-3xl font-bold mb-2 text-[#005580]">Create an account</h1>
           <p className="text-gray-600 mb-8">Enter your details below to create your account</p>
           <p className="text-sm text-gray-500 mb-4 bg-blue-50 p-3 rounded-md border border-blue-100">
             <strong>Note:</strong> Only the required fields are shown. You can update your profile with additional information after registration.
           </p>
 
-          {errors.general && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{errors.general}</div>
+          {successMessage && (
+            <div className="bg-green-50 border border-green-300 text-[#166534] px-4 py-3 rounded mb-4 flex items-center gap-2 animate-fade-in">
+              <svg className="w-5 h-5 text-[#166534]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span>{successMessage}</span>
+            </div>
+          )}
+          {(errors.general || reduxError) && (
+            <div className="bg-red-50 border border-red-300 text-[#b91c1c] px-4 py-3 rounded mb-4 flex items-center gap-2 animate-fade-in">
+              <svg className="w-5 h-5 text-[#b91c1c]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" /></svg>
+              <span>{errors.general || reduxError}</span>
+            </div>
           )}
 
           <form onSubmit={handleSubmit}>
@@ -276,8 +285,10 @@ function SignupPage() {
 
             <button
               type="submit"
-              className="w-full bg-[#005580] text-white py-3 rounded-md hover:bg-[#004466] transition-colors"
+              className="w-full bg-[#005580] text-white py-3 rounded-md hover:bg-[#004466] transition-colors flex items-center justify-center gap-2"
+              disabled={loading}
             >
+              {loading && <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>}
               Create Account
             </button>
 

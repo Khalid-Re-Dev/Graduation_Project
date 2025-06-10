@@ -1,0 +1,26 @@
+# Product API Integration Migration Summary
+
+## What was changed:
+- All product data fetching, details, new, and popular product logic now exclusively use the live API at https://binc-b-1.onrender.com/api/.
+- Removed all fallback logic to mock data from:
+  - `src/services/product.service.js`
+  - `src/store/productSlice.jsx`
+- Added a clear comment to `src/services/productService.js` marking it as deprecated for production (mock only).
+
+## Details:
+- No product data will be loaded from local mock files in production. All product-related Redux thunks and service functions now throw errors or return empty arrays if the API fails, instead of using mock data.
+- All product lists, product details, new products, and popular products are now fetched directly from the live backend.
+- The Redux slice (`productSlice.jsx`) will only show real API data or an error/empty state if the API fails.
+
+## Professional Practices:
+- All API endpoints are now consistent and use the new live backend.
+- No logic, state, or component structure was changed except to remove mock fallback.
+- The code is now production-grade and will not show fake/mock data to users.
+
+## Next Steps:
+- Test all product-related flows (listing, details, new, popular) to ensure correct data is shown from the live backend.
+- For local development, you may still use `productService.js` by importing it only in dev/test environments.
+
+---
+
+If you need to re-enable mock data for local development, use environment variables or a config flag to switch between API and mock sources.

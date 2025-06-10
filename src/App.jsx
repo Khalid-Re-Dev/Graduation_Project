@@ -21,6 +21,7 @@ import LoginPage from "./pages/LoginPage"
 import SignupPage from "./pages/SignupPage"
 import NotFoundPage from "./pages/NotFoundPage"
 import OwnerDashboardPage from "./pages/OwnerDashboardPage"
+import ProfilePage from "./pages/ProfilePage"
 
 // Main App component that sets up routing and initial data loading
 function App() {
@@ -84,6 +85,7 @@ function App() {
             <Route path="owner-dashboard" element={<OwnerDashboardPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />
+            <Route path="profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

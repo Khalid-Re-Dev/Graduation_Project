@@ -4,7 +4,7 @@
  */
 
 // Base URL for API requests
-export const API_BASE_URL = 'http://127.0.0.1:8000/api';
+export const API_BASE_URL = 'https://binc-b-1.onrender.com/api';
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -46,9 +46,7 @@ export const API_ENDPOINTS = {
   
   // Comparison endpoints
   COMPARISON: {
-    LIST: '/comparison/',
-    ADD: '/comparison/add/',
-    REMOVE: '/comparison/remove/',
+    COMPARE: (productId) => `/comparison/${productId}/compare/`,
   },
 };
 

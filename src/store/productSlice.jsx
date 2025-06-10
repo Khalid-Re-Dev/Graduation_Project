@@ -258,19 +258,7 @@ const productSlice = createSlice({
       .addCase(fetchAllProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch products"
-        // Don't clear existing products on error to maintain UI state
-        if (!state.allProducts || state.allProducts.length === 0) {
-          console.warn("No products in state, using mock data")
-          // Import mock products directly to avoid circular dependency
-          try {
-            const { mockProducts } = require('../services/productService')
-            console.log("Using mock products fallback:", mockProducts.length)
-            state.allProducts = mockProducts || []
-          } catch (err) {
-            console.error("Failed to load mock products:", err)
-            state.allProducts = []
-          }
-        }
+        // Do not use mock data fallback
       })
 
       // Handle fetchNewProducts
@@ -287,23 +275,8 @@ const productSlice = createSlice({
       .addCase(fetchNewProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch new products"
-        // Don't clear existing products on error to maintain UI state
-        if (!state.newProducts || state.newProducts.length === 0) {
-          console.warn("No new products in state, using mock data")
-          // Import mock products directly to avoid circular dependency
-          try {
-            const { mockProducts } = require('../services/productService')
-            console.log("Using mock products for new products:", mockProducts.length)
-            // Sort by creation date to get "new" products
-            const sortedProducts = [...mockProducts].sort((a, b) =>
-              new Date(b.created_at) - new Date(a.created_at)
-            )
-            state.newProducts = sortedProducts.slice(0, 10) || []
-          } catch (err) {
-            console.error("Failed to load mock products for new products:", err)
-            state.newProducts = []
-          }
-        }
+        // Do not use mock data fallback
+        state.newProducts = []
       })
 
       // Handle fetchPopularProducts
@@ -320,21 +293,8 @@ const productSlice = createSlice({
       .addCase(fetchPopularProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch popular products"
-        // Don't clear existing products on error to maintain UI state
-        if (!state.popularProducts || state.popularProducts.length === 0) {
-          console.warn("No popular products in state, using mock data")
-          // Import mock products directly to avoid circular dependency
-          try {
-            const { mockProducts } = require('../services/productService')
-            console.log("Using mock products for popular products:", mockProducts.length)
-            // Sort by popularity to get "popular" products
-            const sortedProducts = [...mockProducts].sort((a, b) => b.popularity - a.popularity)
-            state.popularProducts = sortedProducts.slice(0, 10) || []
-          } catch (err) {
-            console.error("Failed to load mock products for popular products:", err)
-            state.popularProducts = []
-          }
-        }
+        // Do not use mock data fallback
+        state.popularProducts = []
       })
 
       // Handle fetchProductById
@@ -353,10 +313,8 @@ const productSlice = createSlice({
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch product details"
-
-        // If we don't have a current product, use a placeholder
+        // Do not use mock data fallback
         if (!state.currentProduct) {
-          console.warn("No product details in state, using placeholder")
           state.currentProduct = {
             id: 0,
             name: "Product Not Found",
@@ -367,8 +325,6 @@ const productSlice = createSlice({
             reviews: []
           }
         }
-
-        // If we don't have related products, use empty array
         if (!state.relatedProducts || !Array.isArray(state.relatedProducts)) {
           state.relatedProducts = []
         }
