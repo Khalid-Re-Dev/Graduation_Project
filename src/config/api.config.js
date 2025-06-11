@@ -34,7 +34,7 @@ export const API_ENDPOINTS = {
     POPULAR: '/products/popular/',
     NEW: '/products/new/',
     SEARCH: '/products/search/',
-    CATEGORIES: '/categories/',
+    CATEGORIES: 'https://binc-b-1.onrender.com/categories/',
   },
   
   // User endpoints

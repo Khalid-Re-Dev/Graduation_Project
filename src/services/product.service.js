@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from '../config/api.config';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api.config';
 import { apiService } from './api.service';
 
 /**
@@ -140,7 +140,8 @@ class ProductService {
    * @returns {Promise} - Categories data
    */
   async getCategories() {
-    return await apiService.get(API_ENDPOINTS.PRODUCTS.CATEGORIES);
+    // استخدم المسار المطلق مباشرة لجلب التصنيفات
+    return await apiService.get(API_ENDPOINTS.PRODUCTS.CATEGORIES, { absolute: true });
   }
 
   /**
@@ -149,16 +150,6 @@ class ProductService {
   async getProductReviews(productId) {
     // جلب التقييمات: /api/products/<product_id>/reviews/
     return await apiService.get(`/products/${productId}/reviews/`);
-  }
-
-  /**
-   * Add a review for a product (المسار الصحيح)
-   */
-  async addProductReview(productId, rating, userId = null) {
-    // إضافة تقييم: إرسال product_id وuser_id (إن وجد) في body مع rating
-    const body = { product_id: productId, rating, comment: "" };
-    if (userId) body.user_id = userId;
-    return await apiService.post(`/products/${productId}/reviews/`, body);
   }
 }
 
@@ -174,4 +165,20 @@ export const getNewProducts = (limit) => productService.getNewProducts(limit);
 export const searchProducts = (query, params) => productService.searchProducts(query, params);
 export const getCategories = () => productService.getCategories();
 export const getProductReviews = (productId) => productService.getProductReviews(productId);
-export const addProductReview = (productId, rating) => productService.addProductReview(productId, rating);
+
+// طلب خاص للتصنيفات مع API_BASE_URL ثابت
+export const getCategoriesDirect = async () => {
+  const url = `${API_BASE_URL.replace(/\/$/, '')}/categories/`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('فشل في جلب التصنيفات');
+    return await response.json();
+  } catch (err) {
+    throw err;
+  }
+};

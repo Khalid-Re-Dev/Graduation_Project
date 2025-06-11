@@ -2,7 +2,7 @@
 
 import { useSelector, useDispatch } from "react-redux"
 import { Link } from "react-router-dom"
-import { removeFavorite, fetchFavorites, clearFavorites } from "../store/favoritesSlice"
+import { toggleFavorite, fetchFavorites, clearFavorites } from "../store/favoritesSlice"
 import { Trash2, ShoppingBag, Heart } from "lucide-react"
 import ProductCard from "../components/ProductCard"
 import { useEffect } from "react"
@@ -21,7 +21,7 @@ function FavoritesPage() {
   }, [dispatch, isAuthenticated])
 
   const handleRemoveItem = (id) => {
-    dispatch(removeFavorite(id))
+    dispatch(toggleFavorite(id))
   }
 
   const handleClearAll = () => {

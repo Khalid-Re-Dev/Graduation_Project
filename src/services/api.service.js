@@ -14,7 +14,9 @@ class ApiService {
    */
   async request(url, options = {}) {
     const withAuth = options.withAuth !== false;
-    const fullUrl = `${API_BASE_URL}${url}`;
+    // دعم المسارات المطلقة (absolute)
+    const isAbsolute = options.absolute === true;
+    const fullUrl = isAbsolute ? url : `${API_BASE_URL}${url}`;
 
     // Set default options
     const defaultOptions = {

@@ -4,12 +4,10 @@ import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchProductById } from "../store/productSlice"
-import { addFavorite, removeFavorite } from "../store/favoritesSlice"
+import { toggleFavorite } from "../store/favoritesSlice"
 import { addCompare, removeCompare } from "../store/compareSlice"
 import { Heart, Minus, Plus, Monitor, Cpu, MemoryStick, BarChart2, Check } from "lucide-react"
 import ProductCard from "../components/ProductCard"
-import ReviewList from "../components/ReviewList"
-import ReviewForm from "../components/ReviewForm"
 
 // Product detail page showing full product information
 function ProductDetailPage() {
@@ -31,11 +29,7 @@ function ProductDetailPage() {
   }, [dispatch, id])
 
   const handleToggleFavorite = () => {
-    if (isInFavorites) {
-      dispatch(removeFavorite(Number(id)))
-    } else if (currentProduct) {
-      dispatch(addFavorite(currentProduct))
-    }
+    dispatch(toggleFavorite(Number(id)))
   }
 
   const handleToggleCompare = () => {
@@ -44,29 +38,6 @@ function ProductDetailPage() {
     } else if (currentProduct) {
       dispatch(addCompare(currentProduct))
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="md:w-1/2">
-              <div className="bg-gray-300 h-80 w-full rounded-lg"></div>
-            </div>
-            <div className="md:w-1/2">
-              <div className="h-8 bg-gray-300 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-gray-300 rounded w-1/2 mb-6"></div>
-              <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-3/4 mb-6"></div>
-              <div className="h-10 bg-gray-300 rounded w-1/3 mb-4"></div>
-              <div className="h-12 bg-gray-300 rounded w-full"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   if (error || !currentProduct) {
@@ -309,9 +280,8 @@ function ProductDetailPage() {
             )}
 
             {activeTab === "reviews" && (
-              <div className="space-y-6">
-                <ReviewList reviews={currentProduct.reviews} />
-                <ReviewForm productId={currentProduct.id} />
+              <div className="space-y-6 text-gray-500 text-center text-sm">
+                No reviews available.
               </div>
             )}
           </div>

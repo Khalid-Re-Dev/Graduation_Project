@@ -17,28 +17,18 @@ export const fetchFavorites = createAsyncThunk(
   }
 )
 
-// Async thunk: إضافة منتج للمفضلة
-export const addFavorite = createAsyncThunk(
-  "favorites/addFavorite",
-  async (product, { rejectWithValue }) => {
-    try {
-      await addToFavorites(product.id)
-      return product
-    } catch (error) {
-      return rejectWithValue(error.message || "Failed to add to favorites")
-    }
-  }
-)
-
-// Async thunk: حذف منتج من المفضلة
-export const removeFavorite = createAsyncThunk(
-  "favorites/removeFavorite",
+// Async thunk: تبديل حالة المفضلة (toggle)
+export const toggleFavorite = createAsyncThunk(
+  "favorites/toggleFavorite",
   async (productId, { rejectWithValue }) => {
     try {
-      await removeFromFavoritesService(productId)
-      return productId
+      // استدعاء endpoint toggle
+      // POST /api/user/favorites/toggle/{product_id}/
+      // الاستجابة: حالة المنتج في المفضلة بعد التبديل
+      const res = await addToFavorites(productId, true); // true = toggle mode
+      return { productId, isFavorite: res && res.is_favorite };
     } catch (error) {
-      return rejectWithValue(error.message || "Failed to remove from favorites")
+      return rejectWithValue(error.message || "Failed to toggle favorite")
     }
   }
 )
@@ -117,37 +107,22 @@ const favoritesSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // إضافة للمفضلة (Optimistic)
-      .addCase(addFavorite.pending, (state) => {
-        state.loading = false;
-        state.error = null;
-      })
-      .addCase(addFavorite.fulfilled, (state, action) => {
-        // أضف المنتج إذا لم يكن موجودًا
-        if (!state.items.some((item) => item.id === action.payload.id)) {
-          state.items.push(action.payload);
+      // Toggle favorite
+      .addCase(toggleFavorite.fulfilled, (state, action) => {
+        const { productId, isFavorite } = action.payload || {};
+        if (typeof isFavorite === "boolean") {
+          if (isFavorite) {
+            // أضف المنتج إذا لم يكن موجودًا
+            if (!state.items.some((item) => item.id === productId)) {
+              state.items.push({ id: productId }); // يمكن جلب بيانات المنتج لاحقًا
+            }
+          } else {
+            // احذف المنتج إذا كان موجودًا
+            state.items = state.items.filter((item) => item.id !== productId);
+          }
           saveGuestFavorites(state.items);
         }
-        // بعد الإضافة، جلب المفضلة من السيرفر
-        // ملاحظة: dispatch غير متاح هنا مباشرة في extraReducers، الحل: استخدم thunk في ProductCard أو FavoritesPage
       })
-      .addCase(addFavorite.rejected, (state, action) => {
-        state.error = action.payload;
-      })
-      // حذف من المفضلة (Optimistic)
-      .addCase(removeFavorite.pending, (state) => {
-        state.loading = false;
-        state.error = null;
-      })
-      .addCase(removeFavorite.fulfilled, (state, action) => {
-        state.items = state.items.filter((item) => item.id !== action.payload);
-        saveGuestFavorites(state.items);
-        // بعد الحذف، جلب المفضلة من السيرفر
-        // ملاحظة: dispatch غير متاح هنا مباشرة في extraReducers، الحل: استخدم thunk في ProductCard أو FavoritesPage
-      })
-      .addCase(removeFavorite.rejected, (state, action) => {
-        state.error = action.payload;
-      });
   },
 });
 

@@ -5,11 +5,13 @@ import { Link, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { logout } from "../store/authSlice"
 import { ShoppingCart, Heart, Search, Menu, X, ListOrdered, UserCircle } from "lucide-react"
+import NotificationDropdown from "./NotificationDropdown"
 
 // Navbar component with search, favorites, and navigation
 function Navbar() {
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const auth = useSelector((state) => state.auth)
@@ -66,7 +68,7 @@ function Navbar() {
         </form>
 
         {/* Icons */}
-        <div className="hidden md:flex items-center gap-3 ml-2">
+        <div className="hidden md:flex items-center gap-3 ml-2 relative">
           <Link to="/favorites" className="relative p-2 rounded-full hover:bg-gray-100 transition group">
             <Heart size={22} className="text-gray-900 group-hover:text-[#005580]" />
           </Link>
@@ -77,6 +79,19 @@ function Navbar() {
             <Link to="/profile" className="relative p-2 rounded-full hover:bg-gray-100 transition group">
               <UserCircle size={24} className="text-gray-900 group-hover:text-[#005580]" />
             </Link>
+          )}
+          <button
+            className="relative p-2 rounded-full hover:bg-gray-100 transition group"
+            onClick={() => setShowNotifications((v) => !v)}
+            aria-label="Show notifications"
+          >
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+            <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V4a2 2 0 1 0-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" /></svg>
+          </button>
+          {showNotifications && (
+            <div className="absolute right-0 top-12 z-50">
+              <NotificationDropdown />
+            </div>
           )}
         </div>
 

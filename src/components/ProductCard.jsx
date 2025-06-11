@@ -9,10 +9,11 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { addFavorite, removeFavorite, addFavoriteLocal, removeFavoriteLocal, fetchFavorites } from "../store/favoritesSlice"
+import { toggleFavorite } from "../store/favoritesSlice"
 import { addCompare, removeCompare } from "../store/compareSlice"
 import { Star, Heart, BarChart2, Check } from "lucide-react"
 import { productService } from "../services/product.service"
+import { toast } from "react-toastify"
 
 // Product card component for displaying product information
 function ProductCard({ product }) {
@@ -26,22 +27,17 @@ function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false)
   const [reviews, setReviews] = useState([])
   const [averageRating, setAverageRating] = useState(0)
-  const [hoverRating, setHoverRating] = useState(null)
-  const [userRating, setUserRating] = useState(null)
   const [loadingReviews, setLoadingReviews] = useState(false)
 
   const handleToggleFavorite = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (favoritesLoading) return;
-    if (isInFavorites) {
-      dispatch(removeFavoriteLocal(product.id)); // تفعيل فوري
-      await dispatch(removeFavorite(product.id));      // مزامنة مع الباك إند
-      dispatch(fetchFavorites()); // تحديث المفضلة فوراً بعد الحذف
-    } else {
-      dispatch(addFavoriteLocal(product));       // تفعيل فوري
-      await dispatch(addFavorite(product));            // مزامنة مع الباك إند
-      dispatch(fetchFavorites()); // تحديث المفضلة فوراً بعد الإضافة
+    try {
+      await dispatch(toggleFavorite(product.id)).unwrap();
+      toast.success(isInFavorites ? "تمت إزالة المنتج من المفضلة" : "تمت إضافة المنتج إلى المفضلة");
+    } catch (err) {
+      toast.error("حدث خطأ أثناء تحديث المفضلة");
     }
   }
 
@@ -78,25 +74,6 @@ function ProductCard({ product }) {
       .finally(() => setLoadingReviews(false))
     return () => { isMounted = false }
   }, [product.id])
-
-  // إرسال تقييم جديد عند اختيار المستخدم
-  const handleRate = async (rating) => {
-    setUserRating(rating)
-    try {
-      await productService.addProductReview(product.id, rating)
-      // إعادة جلب التقييمات بعد التقييم
-      const data = await productService.getProductReviews(product.id)
-      setReviews(Array.isArray(data) ? data : [])
-      if (Array.isArray(data) && data.length > 0) {
-        const avg = data.reduce((sum, r) => sum + (typeof r.rating === 'number' ? r.rating : 0), 0) / data.length
-        setAverageRating(avg)
-      } else {
-        setAverageRating(0)
-      }
-    } catch (e) {
-      // يمكن عرض رسالة خطأ هنا
-    }
-  }
 
   // Ensure product is valid and log for debugging
   // Removed extra error handling and fallback cards, keep only minimal validation
@@ -183,21 +160,6 @@ function ProductCard({ product }) {
             <span className="font-medium text-xs sm:text-sm text-gray-900 tracking-tight">{typeof safeProduct.price === 'number' || (typeof safeProduct.price === 'string' && safeProduct.price.match(/^[\d.]+$/)) ? `$${safeProduct.price}` : '-'}</span>
             <span className="flex items-center text-xs sm:text-sm text-gray-500 font-medium gap-1">
               <Star size={15} className="text-yellow-400" />
-              <span
-                onMouseLeave={() => setHoverRating(null)}
-                className="flex gap-0.5 cursor-pointer"
-              >
-                {[1,2,3,4,5].map((star) => (
-                  <span
-                    key={star}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onClick={() => handleRate(star)}
-                    style={{ color: (hoverRating || userRating || Math.round(averageRating)) >= star ? '#facc15' : '#d1d5db' }}
-                  >
-                    ★
-                  </span>
-                ))}
-              </span>
               <span className="ml-1">{loadingReviews ? '...' : Number(averageRating).toFixed(1)}</span>
             </span>
           </div>

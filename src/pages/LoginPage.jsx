@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { login, clearError } from "../store/authSlice"
 import { Eye, EyeOff } from "lucide-react"
 import { toast } from "react-toastify"
-import { addFavorite, fetchFavorites } from "../store/favoritesSlice"
+import { fetchFavorites } from "../store/favoritesSlice"
 
 // Login page component
 function LoginPage() {
@@ -38,8 +38,8 @@ function LoginPage() {
         const guestFavorites = JSON.parse(sessionStorage.getItem('guest_favorites') || '[]')
         if (guestFavorites.length > 0) {
           for (const product of guestFavorites) {
-            // أرسل كل منتج كمفضلة للسيرفر
-            await dispatch(addFavorite(product))
+            // Use toggleFavorite to sync guest favorites with backend
+            await dispatch(toggleFavorite(product.id))
           }
           sessionStorage.removeItem('guest_favorites')
           // بعد المزامنة، جلب المفضلة من السيرفر

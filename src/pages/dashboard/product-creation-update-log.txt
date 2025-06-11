@@ -1,0 +1,38 @@
+Modified/New Files:
+- src/pages/dashboard/AddProduct.jsx (جديد)
+- src/pages/dashboard/EditProduct.jsx (جديد)
+- src/pages/OwnerDashboardPage.jsx (تعديل)
+
+Errors Fixed in API Integration:
+- Requests for product creation now use POST /dashboard/products/ with all required fields.
+- Requests for product update now use PATCH/PUT /dashboard/products/{product_id}/ with all required fields.
+- Payloads now include: name, description, price, original_price, category_id, brand_id, image_url, video_url, release_date, is_active, in_stock, stock, shop_id.
+- Image upload is handled as FormData if a file is selected, otherwise image_url is sent as a string.
+- All requests send proper Authorization headers via apiService.
+- UI now validates all required fields before sending requests.
+
+Fields Validated/Added to UI:
+- name (required)
+- description
+- price (required)
+- original_price (required)
+- category_id (required, select)
+- brand_id
+- image_url (or file upload)
+- video_url
+- release_date
+- is_active (checkbox)
+- in_stock (checkbox)
+- stock (required)
+- shop_id (auto-filled if available)
+
+Image Handling Improvements:
+- User can upload an image file or provide an image URL.
+- If a file is uploaded, it is sent as FormData with the key 'image'.
+- If only a URL is provided, it is sent as 'image_url'.
+- Client-side validation ensures only one method is used at a time.
+
+Confirmation:
+- Product creation and update requests now match backend expectations for both required fields and file handling.
+- UI is user-friendly, supports all fields, and provides clear error/success feedback.
+- Old modal logic removed; product management is now via dedicated pages for clarity and maintainability.
