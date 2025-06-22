@@ -34,12 +34,12 @@ const environmentConfigs = {
     LOG_LEVEL: 'debug'
   },
   [ENVIRONMENTS.STAGING]: {
-    API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://binc-b-1.onrender.com/api',
+    API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://binc-b.onrender.com/api',
     DEBUG: true,
     LOG_LEVEL: 'info'
   },
   [ENVIRONMENTS.PRODUCTION]: {
-    API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://binc-b-1.onrender.com/api',
+    API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://binc-b.onrender.com/api',
     DEBUG: false,
     LOG_LEVEL: 'error'
   }
