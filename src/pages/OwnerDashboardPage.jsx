@@ -152,13 +152,23 @@ function OwnerDashboardPage() {
       setShop(response.shop)
       await loadDashboardData()
     } catch (err) {
-      // معالجة الأخطاء القادمة من الباك إند
-      if (err?.response?.data) {
+      // رسائل أخطاء احترافية حسب نوع الخطأ
+      let msg = err?.message || "فشل في إنشاء المتجر"
+      if (msg.includes('صلاحية')) {
+        setError((prev) => ({ ...prev, form: msg }))
+      } else if (msg.includes('تحقق من صحة')) {
+        setError((prev) => ({ ...prev, form: msg }))
+      } else if (msg.includes('متجر بالفعل')) {
+        setError((prev) => ({ ...prev, form: msg }))
+      } else if (msg.includes('غير متوقع')) {
+        setError((prev) => ({ ...prev, form: msg }))
+      } else if (err?.response?.data) {
+        // دعم الأخطاء القادمة من الباك إند بشكل مفصل
         const apiErrors = err.response.data
         setShopFormErrors(apiErrors)
         setError((prev) => ({ ...prev, form: apiErrors.error || "فشل في إنشاء المتجر" }))
       } else {
-        setError((prev) => ({ ...prev, form: "فشل في إنشاء المتجر" }))
+        setError((prev) => ({ ...prev, form: msg }))
       }
     } finally {
       setLoading((prev) => ({ ...prev, form: false }))

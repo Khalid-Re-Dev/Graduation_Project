@@ -4,7 +4,7 @@
  */
 
 // Base URL for API requests
-export const API_BASE_URL = 'https://binc-b-1.onrender.com/api';
+export const API_BASE_URL = 'https://binc-b.onrender.com/api';
 
 // API endpoints
 export const API_ENDPOINTS = {
@@ -34,7 +34,7 @@ export const API_ENDPOINTS = {
     POPULAR: '/products/popular/',
     NEW: '/products/new/',
     SEARCH: '/products/search/',
-    CATEGORIES: 'https://binc-b-1.onrender.com/categories/',
+    CATEGORIES: '/products/categories/',
   },
   
   // User endpoints
