@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../components/ui/select";
 import { getCategoriesDirect } from "../services/product.service";
+import { getOwnerBrands } from "../services/owner.service";
 import { toast } from "react-toastify";
 
 export default function ProductForm({ initialData, onSubmit, loading, errors, setImageFile, form, setForm, mode }) {
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -21,6 +23,20 @@ export default function ProductForm({ initialData, onSubmit, loading, errors, se
       }
     }
     fetchCategories();
+    async function fetchBrands() {
+      try {
+        const brandsData = await getOwnerBrands();
+        let brandList = Array.isArray(brandsData) ? brandsData : brandsData.results || [];
+        brandList = brandList.map(brand => ({ ...brand, id: String(brand.id) }));
+        setBrands(brandList);
+        if (brandList.length === 0) {
+          toast.warn("لم يتم العثور على ماركات. يرجى إضافة ماركات أولاً.");
+        }
+      } catch {
+        toast.error("فشل في جلب الماركات. يرجى المحاولة لاحقاً.");
+      }
+    }
+    fetchBrands();
   }, []);
 
   // إشعار عند نجاح أو فشل الحفظ/التعديل
@@ -84,8 +100,18 @@ export default function ProductForm({ initialData, onSubmit, loading, errors, se
         {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
       </div>
       <div>
-        <label className="block mb-1">الماركة (Brand ID)</label>
-        <input name="brand_id" value={form.brand_id} onChange={handleChange} className="w-full border rounded px-3 py-2" />
+        <label htmlFor="brand_id" className="block text-sm font-medium text-gray-700">الماركة *</label>
+        <Select value={form.brand_id} onValueChange={val => setForm({ ...form, brand_id: val })}>
+          <SelectTrigger className="w-full border rounded px-3 py-2">
+            <SelectValue placeholder="اختر ماركة" />
+          </SelectTrigger>
+          <SelectContent>
+            {brands.map(brand => (
+              <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
       </div>
       <div>
         <label className="block mb-1">رابط الصورة (أو ارفع صورة)</label>
