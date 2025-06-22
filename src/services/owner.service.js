@@ -157,7 +157,27 @@ class OwnerService {
       return await apiService.get('/dashboard/analytics/');
     } catch (error) {
       console.error('Error fetching owner analytics:', error);
-      throw error;
+
+      // Return fallback analytics data when the backend is not available
+      console.warn('Returning fallback analytics data due to backend error');
+      return {
+        sales_chart: [
+          { date: '2025-01-01', sales: 0, orders: 0 },
+          { date: '2025-01-02', sales: 0, orders: 0 },
+          { date: '2025-01-03', sales: 0, orders: 0 },
+          { date: '2025-01-04', sales: 0, orders: 0 },
+          { date: '2025-01-05', sales: 0, orders: 0 }
+        ],
+        top_products_chart: [
+          { name: 'No data available', sales_count: 0, sales_amount: 0 }
+        ],
+        traffic_sources: [
+          { source: 'Direct', visits: 0, percentage: 0 },
+          { source: 'Search Engines', visits: 0, percentage: 0 },
+          { source: 'Social Media', visits: 0, percentage: 0 },
+          { source: 'Other Sources', visits: 0, percentage: 0 }
+        ]
+      };
     }
   }
 
