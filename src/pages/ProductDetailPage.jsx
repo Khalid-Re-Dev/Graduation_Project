@@ -112,7 +112,12 @@ function ProductDetailPage() {
             {/* Product Info */}
             <div className="md:w-1/2">
               <h1 className="text-2xl font-bold mb-2">{currentProduct.name}</h1>
-              <p className="text-gray-600 mb-4">{currentProduct.category}</p>
+              <p className="text-gray-600 mb-2">
+                التصنيف: {currentProduct.category_name || currentProduct.category || "بدون تصنيف"}
+              </p>
+              <p className="text-gray-600 mb-4">
+                الماركة: {currentProduct.brand_name || currentProduct.brand || "بدون ماركة"}
+              </p>
 
               {/* Rating */}
               {currentProduct.reviews && currentProduct.reviews.length > 0 && (

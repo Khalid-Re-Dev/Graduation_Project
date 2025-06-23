@@ -32,6 +32,8 @@ export default function AddProduct() {
     setLoading(true);
     setErrors({});
     try {
+      // طباعة البيانات قبل الإرسال
+      console.log("Form data being sent:", form);
       if (!form.brand_id) {
         setErrors({ brand_id: "الرجاء اختيار الماركة" });
         setLoading(false);
