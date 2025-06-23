@@ -99,6 +99,25 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         # Crear el producto
         return super().create(validated_data)
 
+    def to_internal_value(self, data):
+        # معالجة brand_id لقبول int أو UUID
+        brand_id = data.get('brand_id')
+        if brand_id is not None:
+            from uuid import UUID
+            try:
+                # إذا كان int، حوّله إلى Brand ثم UUID
+                if isinstance(brand_id, int) or (isinstance(brand_id, str) and brand_id.isdigit()):
+                    from core.models import Brand
+                    brand_obj = Brand.objects.get(id=int(brand_id))
+                    data['brand_id'] = str(brand_obj.id)
+                else:
+                    # تحقق من صحة الـ UUID
+                    data['brand_id'] = str(UUID(str(brand_id)))
+            except Exception:
+                pass  # سيظهر خطأ لاحقًا إذا لم يوجد البراند
+        # معالجة category_id بنفس الطريقة إذا رغبت
+        return super().to_internal_value(data)
+
 #----------------------------------------------------------------
 #                   Shop Serializer
 #----------------------------------------------------------------
@@ -223,6 +242,25 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         # Crear el producto
         return super().create(validated_data)
 
+    def to_internal_value(self, data):
+        # معالجة brand_id لقبول int أو UUID
+        brand_id = data.get('brand_id')
+        if brand_id is not None:
+            from uuid import UUID
+            try:
+                # إذا كان int، حوّله إلى Brand ثم UUID
+                if isinstance(brand_id, int) or (isinstance(brand_id, str) and brand_id.isdigit()):
+                    from core.models import Brand
+                    brand_obj = Brand.objects.get(id=int(brand_id))
+                    data['brand_id'] = str(brand_obj.id)
+                else:
+                    # تحقق من صحة الـ UUID
+                    data['brand_id'] = str(UUID(str(brand_id)))
+            except Exception:
+                pass  # سيظهر خطأ لاحقًا إذا لم يوجد البراند
+        # معالجة category_id بنفس الطريقة إذا رغبت
+        return super().to_internal_value(data)
+
 #----------------------------------------------------------------
 #                   Customer Serializer
 #----------------------------------------------------------------
@@ -231,43 +269,15 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Customer
-        fields = ('id', 'name', 'email', 'phone', 'address', 'user_email')
-
-    def get_user_email(self, obj):
-        if obj.user:
-            return obj.user.email
-        return None
-
-
-
-#----------------------------------------------------------------
-#                   Dashboard Stats Serializer
-#----------------------------------------------------------------
-class DashboardStatsSerializer(serializers.Serializer):
-    total_products = serializers.IntegerField()
-    total_customers = serializers.IntegerField()
-    customers_change = serializers.FloatField()
-    top_products = ProductListSerializer(many=True)
-
-# Brand Serializer moved to the top of the file
-
-#----------------------------------------------------------------
-#                   Specification Category Serializer
-#----------------------------------------------------------------
-class SpecificationCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SpecificationCategory
-        fields = ('id', 'category_name')
+        fields = ('id', 'category', 'specification_name')
 
 #----------------------------------------------------------------
 #                   Specification Serializer
 #----------------------------------------------------------------
 class SpecificationSerializer(serializers.ModelSerializer):
-    category = SpecificationCategorySerializer(read_only=True)
-
     class Meta:
         model = Specification
-        fields = ('id', 'category', 'specification_name')
+        fields = ('id', 'name')
 
 #----------------------------------------------------------------
 #                   Product Specification Serializer
