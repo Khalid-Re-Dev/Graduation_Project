@@ -88,13 +88,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # حذف الحقول غير الموجودة في الموديل
         validated_data.pop('stock', None)
-        # Asignar valores predeterminados si no están presentes
-        if 'rating' not in validated_data:
-            validated_data['rating'] = 0
-        if 'in_stock' not in validated_data:
-            validated_data['in_stock'] = True
-
-        # Crear el producto
+        print('validated_data before create:', validated_data)
         return super().create(validated_data)
 
     def to_internal_value(self, data):
@@ -229,13 +223,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # حذف الحقول غير الموجودة في الموديل
         validated_data.pop('stock', None)
-        # Asignar valores predeterminados si no están presentes
-        if 'rating' not in validated_data:
-            validated_data['rating'] = 0
-        if 'in_stock' not in validated_data:
-            validated_data['in_stock'] = True
-
-        # Crear el producto
+        print('validated_data before create:', validated_data)
         return super().create(validated_data)
 
     def to_internal_value(self, data):
