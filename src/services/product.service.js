@@ -21,8 +21,8 @@ class ProductService {
       ? `${API_ENDPOINTS.PRODUCTS.LIST}?${queryString}`
       : API_ENDPOINTS.PRODUCTS.LIST;
 
-    // Only use API, no mock fallback
-    const apiData = await apiService.get(url, { withAuth: false });
+    // استخدم التوكن دائماً مع المنتجات العامة
+    const apiData = await apiService.get(url, { withAuth: true });
 
     // Log the raw API response for debugging
     console.log('Raw API response:', typeof apiData, apiData);
