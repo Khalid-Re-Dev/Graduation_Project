@@ -41,7 +41,7 @@ export default function AddProduct() {
       }
       await createOwnerProduct(form);
       toast.success("تم إضافة المنتج بنجاح");
-      navigate("/dashboard/products");
+      navigate("/owner-dashboard");
     } catch (err) {
       setErrors(err?.response?.data || {});
       toast.error("فشل في إضافة المنتج");

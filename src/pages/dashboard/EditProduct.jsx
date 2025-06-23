@@ -22,5 +22,53 @@ const initialState = {
 };
 
 export default function EditProduct() {
-  return null;
+  const { id } = useParams();
+  const [form, setForm] = useState(initialState);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const data = await getOwnerProduct(id);
+        setForm({
+          ...initialState,
+          ...data,
+          category_id: data.category?.id || data.category_id || "",
+          brand_id: data.brand?.id || data.brand_id || "",
+        });
+      } catch (err) {
+        toast.error("فشل في جلب بيانات المنتج");
+      }
+    }
+    fetchProduct();
+  }, [id]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+    try {
+      await updateOwnerProduct(id, form);
+      toast.success("تم تحديث المنتج بنجاح");
+      navigate("/owner-dashboard");
+    } catch (err) {
+      setErrors(err?.response?.data || {});
+      toast.error("فشل في تحديث المنتج");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ProductForm
+      form={form}
+      setForm={setForm}
+      onSubmit={handleSubmit}
+      loading={loading}
+      errors={errors}
+      mode="edit"
+    />
+  );
 }
