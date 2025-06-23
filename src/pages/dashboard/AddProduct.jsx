@@ -34,19 +34,12 @@ export default function AddProduct() {
     try {
       // طباعة البيانات قبل الإرسال
       console.log("Form data being sent:", form);
-      // جرب إرسال brand بدل brand_id إذا كان brand_id موجود
-      const dataToSend = { ...form };
-      if (form.brand_id) {
-        dataToSend.brand = form.brand_id;
-      }
-      // أزل brand_id إذا أضفت brand
-      delete dataToSend.brand_id;
       if (!form.brand_id) {
         setErrors({ brand_id: "الرجاء اختيار الماركة" });
         setLoading(false);
         return;
       }
-      await createOwnerProduct(dataToSend);
+      await createOwnerProduct(form);
       toast.success("تم إضافة المنتج بنجاح");
       navigate("/dashboard/products");
     } catch (err) {
