@@ -167,55 +167,17 @@ function HomePage() {
     )
   }
 
-  // الزائر: فقط جميع المنتجات + رسالة وزر تسجيل الدخول
-  if (!isAuthenticated) {
+  if (!pageLoading && !pageError && (!allProducts || allProducts.length === 0)) {
     return (
-      <div>
-        <HeroSection />
-        <section className="py-8 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Browse By Category</h2>
-            </div>
-            <CategorySection />
-          </div>
-        </section>
-        <section className="py-8 bg-blue-50 border-b border-blue-100">
-          <div className="container mx-auto px-4 flex flex-col items-center text-center">
-            <h2 className="text-xl font-bold text-blue-900 mb-2">Sign in to unlock more features</h2>
-            <p className="text-blue-800 mb-4 max-w-xl">
-              To view <span className="font-semibold">popular</span>, <span className="font-semibold">new</span>, and <span className="font-semibold">recommended</span> products, please <Link to="/login" className="text-blue-700 underline hover:text-blue-900">log in</Link> or <Link to="/signup" className="text-blue-700 underline hover:text-blue-900">create an account</Link>.<br/>
-              As a guest, you can browse all available products below.
-            </p>
-            <Link
-              to="/login"
-              className="inline-block px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors font-bold text-lg"
-            >
-              Log In
-            </Link>
-          </div>
-        </section>
-        {/* All Products Section (vertical grid, like AllProductsPage) */}
-        <section className="py-8 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">All Products</h2>
-              <Link to="/products" className="text-[#005580] hover:underline flex items-center">
-                View All
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {allProducts.filter(isValidProduct).map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </div>
-        </section>
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-6 rounded-lg max-w-2xl mx-auto text-center">
+          <h2 className="text-xl font-bold mb-2">No products available</h2>
+          <p className="mb-4">No products were found. Please check your backend or try again later.</p>
+        </div>
       </div>
     )
   }
 
-  // المستخدم المسجل دخوله: جميع الأقسام
   return (
     <div>
       {/* Error message if needed */}
