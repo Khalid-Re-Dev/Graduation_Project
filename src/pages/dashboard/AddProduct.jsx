@@ -22,5 +22,40 @@ const initialState = {
 };
 
 export default function AddProduct() {
-  return null;
+  const [form, setForm] = useState(initialState);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrors({});
+    try {
+      if (!form.brand_id) {
+        setErrors({ brand_id: "الرجاء اختيار الماركة" });
+        setLoading(false);
+        return;
+      }
+      await createOwnerProduct(form);
+      toast.success("تم إضافة المنتج بنجاح");
+      navigate("/dashboard/products");
+    } catch (err) {
+      setErrors(err?.response?.data || {});
+      toast.error("فشل في إضافة المنتج");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ProductForm
+      form={form}
+      setForm={setForm}
+      onSubmit={handleSubmit}
+      loading={loading}
+      errors={errors}
+      mode="add"
+    />
+  );
 }
