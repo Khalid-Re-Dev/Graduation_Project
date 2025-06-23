@@ -59,7 +59,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category', write_only=True)
     brand = BrandSerializer(read_only=True)
-    brand_id = serializers.PrimaryKeyRelatedField(queryset=Brand.objects.all(), source='brand', write_only=True, required=False)
+    brand_id = serializers.PrimaryKeyRelatedField(queryset=Brand.objects.all(), source='brand', write_only=True, required=True)
     # shop = ShopSerializer(read_only=True) # Commented out to avoid circular import
     shop_id = serializers.PrimaryKeyRelatedField(queryset=Shop.objects.all(), source='shop', write_only=True, required=False)
     reviews = ReviewSerializer(many=True, read_only=True)
@@ -176,7 +176,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source='category', write_only=True)
     brand = BrandSerializer(read_only=True)
-    brand_id = serializers.PrimaryKeyRelatedField(queryset=Brand.objects.all(), source='brand', write_only=True, required=False)
+    brand_id = serializers.PrimaryKeyRelatedField(queryset=Brand.objects.all(), source='brand', write_only=True, required=True)
     shop_name = serializers.SerializerMethodField()
     shop_id = serializers.PrimaryKeyRelatedField(queryset=Shop.objects.all(), source='shop', write_only=True, required=False)
     reviews = ReviewSerializer(many=True, read_only=True)
@@ -222,8 +222,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
         # Crear el producto
         return super().create(validated_data)
-
-
 
 #----------------------------------------------------------------
 #                   Customer Serializer
