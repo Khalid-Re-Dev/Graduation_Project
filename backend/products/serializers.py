@@ -86,15 +86,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         return obj.discount_percentage
 
     def create(self, validated_data):
+        # حذف الحقول غير الموجودة في الموديل
+        validated_data.pop('stock', None)
         # Asignar valores predeterminados si no están presentes
         if 'rating' not in validated_data:
             validated_data['rating'] = 0
         if 'in_stock' not in validated_data:
             validated_data['in_stock'] = True
-
-        # Eliminar el campo stock si está presente, ya que no existe en el modelo
-        if 'stock' in validated_data:
-            validated_data.pop('stock')
 
         # Crear el producto
         return super().create(validated_data)
@@ -229,15 +227,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         return 0
 
     def create(self, validated_data):
+        # حذف الحقول غير الموجودة في الموديل
+        validated_data.pop('stock', None)
         # Asignar valores predeterminados si no están presentes
         if 'rating' not in validated_data:
             validated_data['rating'] = 0
         if 'in_stock' not in validated_data:
             validated_data['in_stock'] = True
-
-        # Eliminar el campo stock si está presente, ya que no existe en el modelo
-        if 'stock' in validated_data:
-            validated_data.pop('stock')
 
         # Crear el producto
         return super().create(validated_data)
