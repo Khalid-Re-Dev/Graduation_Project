@@ -82,7 +82,8 @@ function ProductDetailPage() {
               <div className="mb-4">
                 <img
                   src={
-                    currentProduct.images?.[activeImage] ||
+                    (currentProduct.images && currentProduct.images[activeImage]) ||
+                    currentProduct.image_url ||
                     currentProduct.image ||
                     "/placeholder.svg?height=400&width=500"
                   }
@@ -113,10 +114,10 @@ function ProductDetailPage() {
             <div className="md:w-1/2">
               <h1 className="text-2xl font-bold mb-2">{currentProduct.name}</h1>
               <p className="text-gray-600 mb-2">
-                التصنيف: {currentProduct.category_name || currentProduct.category || "بدون تصنيف"}
+                التصنيف: {currentProduct.category?.name || currentProduct.category_name || (typeof currentProduct.category === 'string' ? currentProduct.category : "بدون تصنيف")}
               </p>
               <p className="text-gray-600 mb-4">
-                الماركة: {currentProduct.brand_name || currentProduct.brand || "بدون ماركة"}
+                الماركة: {currentProduct.brand?.name || currentProduct.brand_name || (typeof currentProduct.brand === 'string' ? currentProduct.brand : "بدون ماركة")}
               </p>
 
               {/* Rating */}
