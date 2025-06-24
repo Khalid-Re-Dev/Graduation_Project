@@ -22,13 +22,32 @@ function ProductDetailPage() {
   const isInCompare = compareItems.some((item) => item.id === Number(id))
   const isInFavorites = favoriteItems.some((item) => item.id === Number(id))
 
+  // حالة تفاعل المستخدم مع المنتج
+  const [userReaction, setUserReaction] = useState("neutral");
+  const [reactionCounts, setReactionCounts] = useState({ likes: 0, dislikes: 0, neutrals: 0 });
+
   useEffect(() => {
     if (id) {
-      dispatch(fetchProductById(id))
-      // تسجيل المشاهدة عند فتح الصفحة
-      import("../services/product.service").then(({ reactToProduct }) => {
-        reactToProduct(id, "neutral");
-      });
+      const fetchReaction = async () => {
+        try {
+          // جلب تفاصيل المنتج مع التوكن (withAuth: true)
+          const { getProductDetails, reactToProduct } = await import("../services/product.service");
+          await getProductDetails(id, true);
+          // جلب تفاعل المستخدم الحالي
+          const res = await fetch(`/api/products/${id}/reaction/`, { credentials: 'include' });
+          const data = await res.json();
+          setUserReaction(data.reaction_type || "neutral");
+          setReactionCounts({
+            likes: data.likes || 0,
+            dislikes: data.dislikes || 0,
+            neutrals: data.neutrals || 0
+          });
+          // تسجيل المشاهدة عند فتح الصفحة
+          await reactToProduct(id, "neutral");
+        } catch (e) { /* يمكن عرض رسالة خطأ */ }
+      };
+      fetchReaction();
+      dispatch(fetchProductById(id));
     }
   }, [dispatch, id])
 
@@ -222,29 +241,32 @@ function ProductDetailPage() {
               </div>
 
               {/* Like/Dislike Buttons */}
-              <div className="flex gap-4 mb-4">
+              <div className="flex gap-4 mb-4 items-center">
                 <button
                   onClick={async () => {
                     try {
                       await import("../services/product.service").then(({ reactToProduct }) => reactToProduct(currentProduct.id, "like"));
-                      window.location.reload();
+                      setUserReaction("like");
+                      setReactionCounts(c => ({ ...c, likes: c.likes + 1, dislikes: userReaction === "dislike" ? c.dislikes - 1 : c.dislikes, neutrals: userReaction === "neutral" ? c.neutrals - 1 : c.neutrals }));
                     } catch (e) { alert("فشل تسجيل الإعجاب"); }
                   }}
-                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                  className={`px-4 py-2 rounded transition-colors ${userReaction === "like" ? "bg-green-600 text-white" : "bg-green-500 text-white hover:bg-green-600"}`}
                 >
-                  👍 إعجاب
+                  👍 إعجاب ({reactionCounts.likes})
                 </button>
                 <button
                   onClick={async () => {
                     try {
                       await import("../services/product.service").then(({ reactToProduct }) => reactToProduct(currentProduct.id, "dislike"));
-                      window.location.reload();
+                      setUserReaction("dislike");
+                      setReactionCounts(c => ({ ...c, dislikes: c.dislikes + 1, likes: userReaction === "like" ? c.likes - 1 : c.likes, neutrals: userReaction === "neutral" ? c.neutrals - 1 : c.neutrals }));
                     } catch (e) { alert("فشل تسجيل عدم الإعجاب"); }
                   }}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  className={`px-4 py-2 rounded transition-colors ${userReaction === "dislike" ? "bg-red-600 text-white" : "bg-red-500 text-white hover:bg-red-600"}`}
                 >
-                  👎 عدم إعجاب
+                  👎 عدم إعجاب ({reactionCounts.dislikes})
                 </button>
+                <span className="text-gray-500 text-sm">مشاهدات: {reactionCounts.neutrals}</span>
               </div>
             </div>
           </div>
