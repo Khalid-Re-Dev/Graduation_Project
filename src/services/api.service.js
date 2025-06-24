@@ -13,11 +13,14 @@ class ApiService {
    * @returns {Promise} - The response from the server
    */
   async request(url, options = {}) {
-    const fullUrl = `${API_BASE_URL}${url}`;
+    const withAuth = options.withAuth !== false;
+    // دعم المسارات المطلقة (absolute)
+    const isAbsolute = options.absolute === true;
+    const fullUrl = isAbsolute ? url : `${API_BASE_URL}${url}`;
 
     // Set default options
     const defaultOptions = {
-      headers: this.getHeaders(),
+      headers: this.getHeaders(withAuth),
       timeout: REQUEST_TIMEOUT,
     };
 
@@ -69,14 +72,14 @@ class ApiService {
    * Get request headers including authentication token if available
    * @returns {Object} - The headers for the request
    */
-  getHeaders() {
+  getHeaders(withAuth = true) {
     const headers = { ...DEFAULT_HEADERS };
-    const token = getToken();
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    if (withAuth) {
+      const token = getToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
     }
-
     return headers;
   }
 
@@ -111,8 +114,10 @@ class ApiService {
         // Handle different error status codes
         switch (response.status) {
           case 401:
-            // Unauthorized - clear tokens and redirect to login
-            clearTokens();
+            // Only clear tokens if refresh token exists
+            if (typeof localStorage !== 'undefined' && localStorage.getItem('refresh_token')) {
+              clearTokens();
+            }
             throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
           case 403:
             throw new Error(ERROR_MESSAGES.FORBIDDEN);

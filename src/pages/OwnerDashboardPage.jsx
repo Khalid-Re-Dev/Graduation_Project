@@ -14,7 +14,8 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from ".
 import {
   checkShop, registerShop, getOwnerStats, getOwnerProducts,
   getOwnerAnalytics, getShopSettings, updateShopSettings,
-  createOwnerProduct, updateOwnerProduct, deleteOwnerProduct
+  createOwnerProduct, updateOwnerProduct, deleteOwnerProduct,
+  getOwnerBrands, createOwnerBrand
 } from "../services/owner.service"
 import { getCategories } from "../services/product.service"
 
@@ -41,6 +42,7 @@ function OwnerDashboardPage() {
   const [stats, setStats] = useState(null)
   const [products, setProducts] = useState([])
   const [analytics, setAnalytics] = useState(null)
+  const [errorAnalytics, setErrorAnalytics] = useState("")
   const [orders, setOrders] = useState([])
   const [settings, setSettings] = useState(null)
 
@@ -96,11 +98,20 @@ function OwnerDashboardPage() {
   const loadDashboardData = async () => {
     setLoading((prev) => ({ ...prev, page: true }))
     setError((prev) => ({ ...prev, page: '' }))
+    setErrorAnalytics("")
     try {
       const [statsRes, productsRes, analyticsRes, settingsRes] = await Promise.all([
         getOwnerStats(),
         getOwnerProducts(),
-        getOwnerAnalytics(),
+        // analytics
+        (async () => {
+          try {
+            return await getOwnerAnalytics()
+          } catch (err) {
+            setErrorAnalytics("تعذر تحميل بيانات الإحصائيات. هناك مشكلة في السيرفر.")
+            return null
+          }
+        })(),
         getShopSettings()
       ])
       setStats(statsRes)
@@ -171,9 +182,9 @@ function OwnerDashboardPage() {
   }
 
   // إضافة منتج جديد
-  const handleAddProduct = () => openProductModal()
+  const handleAddProduct = () => navigate("/dashboard/add-product")
   // تعديل منتج
-  const handleEditProduct = (prod) => openProductModal(prod)
+  const handleEditProduct = (prod) => navigate(`/dashboard/edit-product/${prod.id}`)
   // حذف منتج
   const handleDeleteProduct = async (prod) => {
     if (!window.confirm('هل أنت متأكد من حذف المنتج؟')) return
@@ -185,36 +196,6 @@ function OwnerDashboardPage() {
       setError((prev) => ({ ...prev, page: 'فشل في حذف المنتج' }))
     }
     setLoading((prev) => ({ ...prev, page: false }))
-  }
-
-  // حفظ منتج (إضافة أو تعديل)
-  const handleSaveProduct = async (form) => {
-    setProductModalLoading(true)
-    setProductModalErrors({})
-    try {
-      // Convert form data to FormData object for proper content type handling
-      const formData = new FormData()
-
-      // Add all form fields to FormData
-      Object.entries(form).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value)
-        }
-      })
-
-      if (productModalInitial && productModalInitial.id) {
-        await updateOwnerProduct(productModalInitial.id, formData)
-      } else {
-        await createOwnerProduct(formData)
-      }
-      setProductModalOpen(false)
-      await loadDashboardData()
-    } catch (err) {
-      console.error("Error saving product:", err)
-      if (err?.response?.data) setProductModalErrors(err.response.data)
-      else setProductModalErrors({ error: 'فشل في حفظ المنتج' })
-    }
-    setProductModalLoading(false)
   }
 
   // --- إصلاح حفظ إعدادات المتجر ---
@@ -368,22 +349,13 @@ function OwnerDashboardPage() {
                 onEdit={handleEditProduct}
                 onDelete={handleDeleteProduct}
               />
-              <ProductModal
-                open={productModalOpen}
-                onClose={() => setProductModalOpen(false)}
-                onSave={handleSaveProduct}
-                categories={categories}
-                initialData={productModalInitial}
-                loading={productModalLoading}
-                errors={productModalErrors}
-              />
             </>
           )}
           {activeTab === "orders" && (
             <OrdersTab orders={orders} loading={loading.page} error={error.page} />
           )}
           {activeTab === "analytics" && (
-            <AnalyticsTab analytics={analytics} loading={loading.page} error={error.page} />
+            <AnalyticsTab analytics={analytics} loading={loading.page} error={errorAnalytics} />
           )}
           {activeTab === "settings" && (
             <SettingsTab settings={settings} onSave={handleSaveSettings} loading={loading.form} error={error.form} />
@@ -430,62 +402,6 @@ function OverviewTab({ stats }) {
         ) : <div className="text-gray-400">لا توجد منتجات شعبية بعد.</div>}
       </div>
     </>
-  )
-}
-
-function ProductModal({ open, onClose, onSave, categories, initialData, loading, errors }) {
-  // عند التعديل: يجب تمرير category كـ id وليس كائن
-  const initial = initialData
-    ? { ...initialData, category: initialData.category?.id || initialData.category || '' }
-    : { name: '', price: '', category: '', description: '' }
-  const [form, setForm] = useState(initial)
-  useEffect(() => {
-    setForm(initial)
-    // eslint-disable-next-line
-  }, [initialData, open])
-  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
-  const handleCategorySelect = (catId) => setForm(f => ({ ...f, category: catId }))
-  const handleSubmit = e => { e.preventDefault(); onSave({ ...form, category: form.category }) }
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-        <button onClick={onClose} className="absolute left-2 top-2 text-gray-400 hover:text-gray-700">×</button>
-        <h2 className="text-lg font-bold mb-4">{form.id ? 'تعديل منتج' : 'إضافة منتج'}</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1">اسم المنتج <span className="text-red-500">*</span></label>
-            <input name="name" value={form.name} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-            {errors?.name && <div className="text-red-500 text-xs mt-1">{errors.name}</div>}
-          </div>
-          <div>
-            <label className="block mb-1">السعر <span className="text-red-500">*</span></label>
-            <input name="price" type="number" value={form.price} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-            {errors?.price && <div className="text-red-500 text-xs mt-1">{errors.price}</div>}
-          </div>
-          <div>
-            <label className="block mb-1">التصنيف <span className="text-red-500">*</span></label>
-            <Select value={form.category} onValueChange={handleCategorySelect} disabled={loading || categories.length === 0}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="اختر التصنيف" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(cat => (
-                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors?.category && <div className="text-red-500 text-xs mt-1">{errors.category}</div>}
-          </div>
-          <div>
-            <label className="block mb-1">الوصف</label>
-            <textarea name="description" value={form.description} onChange={handleChange} className="w-full border rounded px-3 py-2" rows={2} />
-            {errors?.description && <div className="text-red-500 text-xs mt-1">{errors.description}</div>}
-          </div>
-          <button type="submit" className="w-full bg-[#005580] text-white py-2 rounded hover:bg-[#004466]" disabled={loading || !form.category}>{loading ? 'جاري الحفظ...' : 'حفظ'}</button>
-        </form>
-      </div>
-    </div>
   )
 }
 
@@ -568,8 +484,10 @@ function OrdersTab({ orders, loading, error }) {
 
 // تبويب الإحصائيات
 function AnalyticsTab({ analytics, loading, error }) {
+  // استخدم errorAnalytics من الأعلى
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="animate-spin" size={32} /></div>
   if (error) return <div className="text-red-500 py-4">{error}</div>
+  if (!analytics) return <div className="text-red-500 py-4">{errorAnalytics || "لا توجد بيانات إحصائيات متاحة حالياً."}</div>
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div className="bg-white rounded-lg shadow p-6">

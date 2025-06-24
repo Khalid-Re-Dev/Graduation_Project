@@ -4,12 +4,10 @@ import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchProductById } from "../store/productSlice"
-import { addToFavorites, removeFromFavorites } from "../store/favoritesSlice"
-import { addToCompare, removeFromCompare } from "../store/compareSlice"
+import { toggleFavorite } from "../store/favoritesSlice"
+import { addCompare, removeCompare } from "../store/compareSlice"
 import { Heart, Minus, Plus, Monitor, Cpu, MemoryStick, BarChart2, Check } from "lucide-react"
 import ProductCard from "../components/ProductCard"
-import ReviewList from "../components/ReviewList"
-import ReviewForm from "../components/ReviewForm"
 
 // Product detail page showing full product information
 function ProductDetailPage() {
@@ -24,50 +22,87 @@ function ProductDetailPage() {
   const isInCompare = compareItems.some((item) => item.id === Number(id))
   const isInFavorites = favoriteItems.some((item) => item.id === Number(id))
 
+  // حالة تفاعل المستخدم مع المنتج
+  const [userReaction, setUserReaction] = useState("neutral");
+  const [reactionCounts, setReactionCounts] = useState({ likes: 0, dislikes: 0, neutrals: 0 });
+
+  // حالة المراجعات
+  const [reviews, setReviews] = useState([]);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
   useEffect(() => {
     if (id) {
-      dispatch(fetchProductById(id))
+      const fetchReaction = async () => {
+        try {
+          // جلب تفاصيل المنتج مع التوكن (withAuth: true)
+          const { getProductDetails, reactToProduct } = await import("../services/product.service");
+          await getProductDetails(id, true);
+          // جلب تفاعل المستخدم الحالي
+          const res = await fetch(`/api/products/${id}/reaction/`, { credentials: 'include' });
+          const data = await res.json();
+          setUserReaction(data.reaction_type || "neutral");
+          setReactionCounts({
+            likes: data.likes || 0,
+            dislikes: data.dislikes || 0,
+            neutrals: data.neutrals || 0
+          });
+          // تسجيل المشاهدة عند فتح الصفحة
+          await reactToProduct(id, "neutral");
+        } catch (e) { /* يمكن عرض رسالة خطأ */ }
+      };
+      fetchReaction();
+      dispatch(fetchProductById(id));
     }
   }, [dispatch, id])
 
-  const handleToggleFavorite = () => {
-    if (isInFavorites) {
-      dispatch(removeFromFavorites(Number(id)))
-    } else if (currentProduct) {
-      dispatch(addToFavorites(currentProduct))
+  // جلب المراجعات عند تحميل الصفحة
+  useEffect(() => {
+    if (id) {
+      fetch(`/api/reviews/?product=${id}`)
+        .then(res => res.json())
+        .then(data => setReviews(Array.isArray(data) ? data : (data.results || [])))
+        .catch(() => setReviews([]));
     }
+  }, [id]);
+
+  const handleToggleFavorite = () => {
+    dispatch(toggleFavorite(Number(id)))
   }
 
   const handleToggleCompare = () => {
     if (isInCompare) {
-      dispatch(removeFromCompare(Number(id)))
+      dispatch(removeCompare(Number(id)))
     } else if (currentProduct) {
-      dispatch(addToCompare(currentProduct))
+      dispatch(addCompare(currentProduct))
     }
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="md:w-1/2">
-              <div className="bg-gray-300 h-80 w-full rounded-lg"></div>
-            </div>
-            <div className="md:w-1/2">
-              <div className="h-8 bg-gray-300 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-gray-300 rounded w-1/2 mb-6"></div>
-              <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-3/4 mb-6"></div>
-              <div className="h-10 bg-gray-300 rounded w-1/3 mb-4"></div>
-              <div className="h-12 bg-gray-300 rounded w-full"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // إضافة مراجعة جديدة
+  const handleAddReview = async (e) => {
+    e.preventDefault();
+    setReviewLoading(true);
+    setReviewError("");
+    try {
+      const res = await fetch(`/api/reviews/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ product: id, rating: reviewRating, comment: reviewText })
+      });
+      if (!res.ok) throw new Error("فشل إرسال المراجعة");
+      const newReview = await res.json();
+      setReviews([newReview, ...reviews]);
+      setReviewText("");
+      setReviewRating(5);
+    } catch (err) {
+      setReviewError("فشل إرسال المراجعة. تأكد من تسجيل الدخول.");
+    } finally {
+      setReviewLoading(false);
+    }
+  };
 
   if (error || !currentProduct) {
     return (
@@ -111,7 +146,8 @@ function ProductDetailPage() {
               <div className="mb-4">
                 <img
                   src={
-                    currentProduct.images?.[activeImage] ||
+                    (currentProduct.images && currentProduct.images[activeImage]) ||
+                    currentProduct.image_url ||
                     currentProduct.image ||
                     "/placeholder.svg?height=400&width=500"
                   }
@@ -141,7 +177,12 @@ function ProductDetailPage() {
             {/* Product Info */}
             <div className="md:w-1/2">
               <h1 className="text-2xl font-bold mb-2">{currentProduct.name}</h1>
-              <p className="text-gray-600 mb-4">{currentProduct.category}</p>
+              <p className="text-gray-600 mb-2">
+                التصنيف: {currentProduct.category?.name || currentProduct.category_name || (typeof currentProduct.category === 'string' ? currentProduct.category : "بدون تصنيف")}
+              </p>
+              <p className="text-gray-600 mb-4">
+                الماركة: {currentProduct.brand?.name || currentProduct.brand_name || (typeof currentProduct.brand === 'string' ? currentProduct.brand : "بدون ماركة")}
+              </p>
 
               {/* Rating */}
               {currentProduct.reviews && currentProduct.reviews.length > 0 && (
@@ -239,6 +280,35 @@ function ProductDetailPage() {
                   )}
                 </button>
               </div>
+
+              {/* Like/Dislike Buttons */}
+              <div className="flex gap-4 mb-4 items-center">
+                <button
+                  onClick={async () => {
+                    try {
+                      await import("../services/product.service").then(({ reactToProduct }) => reactToProduct(currentProduct.id, "like"));
+                      setUserReaction("like");
+                      setReactionCounts(c => ({ ...c, likes: c.likes + 1, dislikes: userReaction === "dislike" ? c.dislikes - 1 : c.dislikes, neutrals: userReaction === "neutral" ? c.neutrals - 1 : c.neutrals }));
+                    } catch (e) { alert("فشل تسجيل الإعجاب"); }
+                  }}
+                  className={`px-4 py-2 rounded transition-colors ${userReaction === "like" ? "bg-green-600 text-white" : "bg-green-500 text-white hover:bg-green-600"}`}
+                >
+                  👍 إعجاب ({reactionCounts.likes})
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await import("../services/product.service").then(({ reactToProduct }) => reactToProduct(currentProduct.id, "dislike"));
+                      setUserReaction("dislike");
+                      setReactionCounts(c => ({ ...c, dislikes: c.dislikes + 1, likes: userReaction === "like" ? c.likes - 1 : c.likes, neutrals: userReaction === "neutral" ? c.neutrals - 1 : c.neutrals }));
+                    } catch (e) { alert("فشل تسجيل عدم الإعجاب"); }
+                  }}
+                  className={`px-4 py-2 rounded transition-colors ${userReaction === "dislike" ? "bg-red-600 text-white" : "bg-red-500 text-white hover:bg-red-600"}`}
+                >
+                  👎 عدم إعجاب ({reactionCounts.dislikes})
+                </button>
+                <span className="text-gray-500 text-sm">مشاهدات: {reactionCounts.neutrals}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -309,9 +379,49 @@ function ProductDetailPage() {
             )}
 
             {activeTab === "reviews" && (
-              <div className="space-y-6">
-                <ReviewList reviews={currentProduct.reviews} />
-                <ReviewForm productId={currentProduct.id} />
+              <div className="space-y-6 text-gray-500 text-center text-sm">
+                {/* نموذج إضافة مراجعة */}
+                <form onSubmit={handleAddReview} className="mb-6 bg-gray-50 p-4 rounded-lg flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <span>تقييمك:</span>
+                    {[1,2,3,4,5].map(star => (
+                      <button type="button" key={star} onClick={() => setReviewRating(star)} className={star <= reviewRating ? "text-yellow-400" : "text-gray-300"}>
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewText}
+                    onChange={e => setReviewText(e.target.value)}
+                    placeholder="اكتب تعليقك هنا..."
+                    className="w-full max-w-md p-2 border rounded"
+                    rows={2}
+                    required
+                  />
+                  <button type="submit" disabled={reviewLoading} className="bg-[#005580] text-white px-4 py-2 rounded hover:bg-[#004466] mt-2">
+                    {reviewLoading ? "جاري الإرسال..." : "إضافة مراجعة"}
+                  </button>
+                  {reviewError && <div className="text-red-500 text-xs mt-1">{reviewError}</div>}
+                </form>
+                {/* عرض المراجعات */}
+                {reviews.length === 0 ? (
+                  <div>لا توجد مراجعات بعد.</div>
+                ) : (
+                  <div className="space-y-4 w-full max-w-2xl mx-auto">
+                    {reviews.map((r) => (
+                      <div key={r.id} className="bg-white p-4 rounded shadow text-right">
+                        <div className="flex items-center gap-2 mb-1">
+                          {[1,2,3,4,5].map(star => (
+                            <span key={star} className={star <= (r.rating || 0) ? "text-yellow-400" : "text-gray-300"}>★</span>
+                          ))}
+                          <span className="text-xs text-gray-400 ml-auto">{r.user?.username || r.user || "مستخدم"}</span>
+                        </div>
+                        <div className="text-gray-800 text-sm mb-1">{r.comment}</div>
+                        <div className="text-xs text-gray-400">{r.created_at?.slice(0,10) || ""}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

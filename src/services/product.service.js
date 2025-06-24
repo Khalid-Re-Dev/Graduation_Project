@@ -1,7 +1,5 @@
-import { API_ENDPOINTS } from '../config/api.config';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api.config';
 import { apiService } from './api.service';
-// Import mock data functions for fallback
-import { fetchProducts as fetchMockProducts, fetchProductDetails as fetchMockProductDetails } from './productService';
 
 /**
  * Product service for handling product-related API requests
@@ -13,65 +11,44 @@ class ProductService {
    * @returns {Promise} - Products data
    */
   async getProducts(params = {}) {
-    try {
-      // Convert params object to query string
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        queryParams.append(key, value);
-      });
+    // Convert params object to query string
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      queryParams.append(key, value);
+    });
+    const queryString = queryParams.toString();
+    const url = queryString
+      ? `${API_ENDPOINTS.PRODUCTS.LIST}?${queryString}`
+      : API_ENDPOINTS.PRODUCTS.LIST;
 
-      const queryString = queryParams.toString();
-      const url = queryString
-        ? `${API_ENDPOINTS.PRODUCTS.LIST}?${queryString}`
-        : API_ENDPOINTS.PRODUCTS.LIST;
+    // استخدم التوكن دائماً مع المنتجات العامة
+    const apiData = await apiService.get(url, { withAuth: true });
 
-      try {
-        // First try to get data from the API
-        console.log(`Fetching products from API: ${url}`);
-        const apiData = await apiService.get(url);
+    // Log the raw API response for debugging
+    console.log('Raw API response:', typeof apiData, apiData);
 
-        // Log the raw API response for debugging
-        console.log('Raw API response:', typeof apiData, apiData);
+    // Handle different API response formats
+    let products = [];
 
-        // Handle different API response formats
-        let products = [];
-
-        if (Array.isArray(apiData)) {
-          // Direct array format
-          products = apiData;
-        } else if (apiData && typeof apiData === 'object') {
-          // Object with results property (common API format)
-          if (Array.isArray(apiData.results)) {
-            products = apiData.results;
-          } else if (Array.isArray(apiData.products)) {
-            products = apiData.products;
-          } else if (Array.isArray(apiData.data)) {
-            products = apiData.data;
-          } else {
-            // If no recognizable array property, return the object itself
-            // This might be the case if the API returns a single product
-            products = [apiData];
-          }
-        }
-
-        if (products && products.length > 0) {
-          console.log('Successfully processed products from API:', products.length);
-          return products;
-        } else {
-          console.warn('API returned empty or invalid data, using mock data instead');
-          // If API returned empty data, use mock data
-          return await fetchMockProducts(params);
-        }
-      } catch (apiError) {
-        console.warn('API request failed, using mock data instead:', apiError);
-        // If API request failed, use mock data
-        return await fetchMockProducts(params);
+    if (Array.isArray(apiData)) {
+      // Direct array format
+      products = apiData;
+    } else if (apiData && typeof apiData === 'object') {
+      // Object with results property (common API format)
+      if (Array.isArray(apiData.results)) {
+        products = apiData.results;
+      } else if (Array.isArray(apiData.products)) {
+        products = apiData.products;
+      } else if (Array.isArray(apiData.data)) {
+        products = apiData.data;
+      } else {
+        // If no recognizable array property, return the object itself
+        // This might be the case if the API returns a single product
+        products = [apiData];
       }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      // As a last resort, return mock data
-      return await fetchMockProducts(params);
     }
+
+    return products;
   }
 
   /**
@@ -80,30 +57,14 @@ class ProductService {
    * @returns {Promise} - Product details
    */
   async getProductDetails(productId) {
-    try {
-      try {
-        // First try to get data from the API
-        const apiData = await apiService.get(API_ENDPOINTS.PRODUCTS.DETAIL(productId));
+    const apiData = await apiService.get(API_ENDPOINTS.PRODUCTS.DETAIL(productId), { withAuth: false });
 
-        // Check if the API returned valid data
-        if (apiData && (apiData.id || (apiData.product && apiData.product.id))) {
-          console.log('Successfully fetched product details from API for ID:', productId);
-          return apiData;
-        } else {
-          console.warn('API returned empty or invalid product details, using mock data instead');
-          // If API returned empty data, use mock data
-          return await fetchMockProductDetails(productId);
-        }
-      } catch (apiError) {
-        console.warn(`API request failed for product ID ${productId}, using mock data instead:`, apiError);
-        // If API request failed, use mock data
-        return await fetchMockProductDetails(productId);
-      }
-    } catch (error) {
-      console.error(`Error fetching product details for ID ${productId}:`, error);
-      // As a last resort, return mock data
-      return await fetchMockProductDetails(productId);
+    // Check if the API returned valid data
+    if (apiData && (apiData.id || (apiData.product && apiData.product.id))) {
+      return apiData;
     }
+
+    throw new Error('Invalid product details from API');
   }
 
   /**
@@ -112,51 +73,14 @@ class ProductService {
    * @returns {Promise} - Featured products data
    */
   async getFeaturedProducts(limit = 10) {
-    try {
-      try {
-        // First try to get data from the API
-        const apiData = await apiService.get(`${API_ENDPOINTS.PRODUCTS.FEATURED}?limit=${limit}`);
+    const apiData = await apiService.get(`${API_ENDPOINTS.PRODUCTS.FEATURED}?limit=${limit}`, { withAuth: false });
 
-        // Check if the API returned valid data
-        if (apiData && Array.isArray(apiData) && apiData.length > 0) {
-          console.log('Successfully fetched featured products from API:', apiData.length);
-          return apiData;
-        } else {
-          console.warn('API returned empty or invalid featured products, using mock data instead');
-          // If API returned empty data, use mock data with a mix of popular and new products
-          const mockData = await fetchMockProducts();
-          // Sort by a combination of popularity and newness to simulate "featured"
-          const sortedData = mockData.sort((a, b) => {
-            const aScore = a.popularity * 0.7 + (new Date(a.created_at).getTime() * 0.3);
-            const bScore = b.popularity * 0.7 + (new Date(b.created_at).getTime() * 0.3);
-            return bScore - aScore;
-          });
-          return sortedData.slice(0, limit);
-        }
-      } catch (apiError) {
-        console.warn('API request failed for featured products, using mock data instead:', apiError);
-        // If API request failed, use mock data
-        const mockData = await fetchMockProducts();
-        // Sort by a combination of popularity and newness to simulate "featured"
-        const sortedData = mockData.sort((a, b) => {
-          const aScore = a.popularity * 0.7 + (new Date(a.created_at).getTime() * 0.3);
-          const bScore = b.popularity * 0.7 + (new Date(b.created_at).getTime() * 0.3);
-          return bScore - aScore;
-        });
-        return sortedData.slice(0, limit);
-      }
-    } catch (error) {
-      console.error('Error fetching featured products:', error);
-      // As a last resort, return mock data
-      const mockData = await fetchMockProducts();
-      // Sort by a combination of popularity and newness to simulate "featured"
-      const sortedData = mockData.sort((a, b) => {
-        const aScore = a.popularity * 0.7 + (new Date(a.created_at).getTime() * 0.3);
-        const bScore = b.popularity * 0.7 + (new Date(b.created_at).getTime() * 0.3);
-        return bScore - aScore;
-      });
-      return sortedData.slice(0, limit);
+    // Check if the API returned valid data
+    if (apiData && Array.isArray(apiData) && apiData.length > 0) {
+      return apiData;
     }
+
+    throw new Error('Invalid featured products from API');
   }
 
   /**
@@ -165,33 +89,14 @@ class ProductService {
    * @returns {Promise} - Popular products data
    */
   async getPopularProducts(limit = 10) {
-    try {
-      try {
-        // First try to get data from the API
-        const apiData = await apiService.get(`${API_ENDPOINTS.PRODUCTS.POPULAR}?limit=${limit}`);
+    const apiData = await apiService.get(`${API_ENDPOINTS.PRODUCTS.POPULAR}?limit=${limit}`, { withAuth: false });
 
-        // Check if the API returned valid data
-        if (apiData && Array.isArray(apiData) && apiData.length > 0) {
-          console.log('Successfully fetched popular products from API:', apiData.length);
-          return apiData;
-        } else {
-          console.warn('API returned empty or invalid popular products, using mock data instead');
-          // If API returned empty data, use mock data with sorting for popular products
-          const mockData = await fetchMockProducts({ sort: "popularity", order: "desc" });
-          return mockData.slice(0, limit);
-        }
-      } catch (apiError) {
-        console.warn('API request failed for popular products, using mock data instead:', apiError);
-        // If API request failed, use mock data
-        const mockData = await fetchMockProducts({ sort: "popularity", order: "desc" });
-        return mockData.slice(0, limit);
-      }
-    } catch (error) {
-      console.error('Error fetching popular products:', error);
-      // As a last resort, return mock data
-      const mockData = await fetchMockProducts({ sort: "popularity", order: "desc" });
-      return mockData.slice(0, limit);
+    // Check if the API returned valid data
+    if (apiData && Array.isArray(apiData) && apiData.length > 0) {
+      return apiData;
     }
+
+    throw new Error('Invalid popular products from API');
   }
 
   /**
@@ -200,46 +105,21 @@ class ProductService {
    * @returns {Promise} - New products data
    */
   async getNewProducts(limit = 10) {
-    try {
-      console.log('Attempting to fetch new products from API...');
+    const allProducts = await this.getProducts();
 
-      // Since the /api/products/new/ endpoint is returning 404, we'll use a different approach
-      // Instead of trying to use the specific endpoint, we'll get all products and sort them by date
-      try {
-        // First try to get all products from the API
-        const allProducts = await this.getProducts();
+    // Check if the API returned valid data
+    if (allProducts && Array.isArray(allProducts) && allProducts.length > 0) {
+      // Sort products by creation date to get the newest ones
+      const sortedProducts = [...allProducts].sort((a, b) => {
+        const dateA = new Date(a.created_at || 0);
+        const dateB = new Date(b.created_at || 0);
+        return dateB - dateA;
+      });
 
-        // Check if the API returned valid data
-        if (allProducts && Array.isArray(allProducts) && allProducts.length > 0) {
-          console.log('Successfully fetched all products, filtering for new products');
-
-          // Sort products by creation date to get the newest ones
-          const sortedProducts = [...allProducts].sort((a, b) => {
-            const dateA = new Date(a.created_at || 0);
-            const dateB = new Date(b.created_at || 0);
-            return dateB - dateA;
-          });
-
-          console.log(`Returning ${Math.min(limit, sortedProducts.length)} new products`);
-          return sortedProducts.slice(0, limit);
-        } else {
-          console.warn('API returned empty or invalid products, using mock data instead');
-          // If API returned empty data, use mock data with sorting for new products
-          const mockData = await fetchMockProducts({ sort: "created_at", order: "desc" });
-          return mockData.slice(0, limit);
-        }
-      } catch (apiError) {
-        console.warn('API request failed for products, using mock data instead:', apiError);
-        // If API request failed, use mock data
-        const mockData = await fetchMockProducts({ sort: "created_at", order: "desc" });
-        return mockData.slice(0, limit);
-      }
-    } catch (error) {
-      console.error('Error fetching new products:', error);
-      // As a last resort, return mock data
-      const mockData = await fetchMockProducts({ sort: "created_at", order: "desc" });
-      return mockData.slice(0, limit);
+      return sortedProducts.slice(0, limit);
     }
+
+    throw new Error('Invalid new products from API');
   }
 
   /**
@@ -249,15 +129,10 @@ class ProductService {
    * @returns {Promise} - Search results
    */
   async searchProducts(query, params = {}) {
-    try {
-      // Convert params object to query string
-      const queryParams = new URLSearchParams({ query, ...params });
+    // Convert params object to query string
+    const queryParams = new URLSearchParams({ query, ...params });
 
-      return await apiService.get(`${API_ENDPOINTS.PRODUCTS.SEARCH}?${queryParams.toString()}`);
-    } catch (error) {
-      console.error(`Error searching products with query "${query}":`, error);
-      throw error;
-    }
+    return await apiService.get(`${API_ENDPOINTS.PRODUCTS.SEARCH}?${queryParams.toString()}`);
   }
 
   /**
@@ -265,12 +140,16 @@ class ProductService {
    * @returns {Promise} - Categories data
    */
   async getCategories() {
-    try {
-      return await apiService.get(API_ENDPOINTS.PRODUCTS.CATEGORIES);
-    } catch (error) {
-      console.error('Error fetching product categories:', error);
-      throw error;
-    }
+    // استخدم المسار المطلق مباشرة لجلب التصنيفات
+    return await apiService.get(API_ENDPOINTS.PRODUCTS.CATEGORIES, { absolute: true });
+  }
+
+  /**
+   * Get product reviews (المسار الصحيح)
+   */
+  async getProductReviews(productId) {
+    // جلب التقييمات: /api/products/<product_id>/reviews/
+    return await apiService.get(`/products/${productId}/reviews/`);
   }
 }
 
@@ -285,3 +164,36 @@ export const getPopularProducts = (limit) => productService.getPopularProducts(l
 export const getNewProducts = (limit) => productService.getNewProducts(limit);
 export const searchProducts = (query, params) => productService.searchProducts(query, params);
 export const getCategories = () => productService.getCategories();
+export const getProductReviews = (productId) => productService.getProductReviews(productId);
+
+// طلب خاص للتصنيفات مع API_BASE_URL ثابت
+export const getCategoriesDirect = async () => {
+  const url = `${API_BASE_URL.replace(/\/$/, '')}/categories/`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('فشل في جلب التصنيفات');
+    return await response.json();
+  } catch (err) {
+    throw err;
+  }
+};
+
+/**
+ * Send a reaction (like/dislike/neutral) for a product
+ * @param {string} productId
+ * @param {string} reactionType - 'like' | 'dislike' | 'neutral'
+ * @returns {Promise}
+ */
+export async function reactToProduct(productId, reactionType) {
+  return apiService.request(`/products/${productId}/reaction/`, {
+    method: 'POST',
+    body: JSON.stringify({ reaction_type: reactionType }),
+    headers: { 'Content-Type': 'application/json' },
+    withAuth: true,
+  });
+}

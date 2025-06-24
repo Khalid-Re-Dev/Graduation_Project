@@ -46,15 +46,20 @@ class UserService {
   }
   
   /**
-   * Add product to favorites
+   * Add product to favorites or toggle favorite status
    * @param {string} productId - Product ID
+   * @param {boolean} toggleMode - If true, use toggle endpoint
    * @returns {Promise} - Response from the server
    */
-  async addToFavorites(productId) {
+  async addToFavorites(productId, toggleMode = false) {
     try {
+      if (toggleMode) {
+        // POST /api/user/favorites/toggle/{product_id}/
+        return await apiService.post(`/user/favorites/toggle/${productId}/`);
+      }
       return await apiService.post(`${API_ENDPOINTS.USER.FAVORITES}`, { product_id: productId });
     } catch (error) {
-      console.error(`Error adding product ID ${productId} to favorites:`, error);
+      console.error(`Error adding/toggling product ID ${productId} to favorites:`, error);
       throw error;
     }
   }
@@ -133,7 +138,7 @@ export const userService = new UserService();
 export const getProfile = () => userService.getProfile();
 export const updateProfile = (profileData) => userService.updateProfile(profileData);
 export const getFavorites = () => userService.getFavorites();
-export const addToFavorites = (productId) => userService.addToFavorites(productId);
+export const addToFavorites = (productId, toggleMode) => userService.addToFavorites(productId, toggleMode);
 export const removeFromFavorites = (productId) => userService.removeFromFavorites(productId);
 export const getPreferences = () => userService.getPreferences();
 export const updatePreferences = (preferencesData) => userService.updatePreferences(preferencesData);

@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom"
+import { Outlet, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Navbar from "./Navbar"
 import Footer from "./Footer"
@@ -6,6 +6,8 @@ import Footer from "./Footer"
 // Layout component that wraps all pages with common elements
 function Layout() {
   const [isLoading, setIsLoading] = useState(true)
+  const location = useLocation();
+  const hideHeaderFooter = ["/login", "/signup"].includes(location.pathname);
 
   // Simulate checking if resources are loaded
   useEffect(() => {
@@ -23,25 +25,25 @@ function Layout() {
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Navbar />
+        {!hideHeaderFooter && <Navbar />}
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-t-[#005580] border-r-[#005580] border-b-transparent border-l-transparent rounded-full animate-spin mx-auto"></div>
             <p className="mt-4 text-lg text-gray-600">Loading content...</p>
           </div>
         </main>
-        <Footer />
+        {!hideHeaderFooter && <Footer />}
       </div>
     )
   }
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
+      {!hideHeaderFooter && <Navbar />}
       <main className="flex-grow">
         <Outlet />
       </main>
-      <Footer />
+      {!hideHeaderFooter && <Footer />}
     </div>
   )
 }

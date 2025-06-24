@@ -1,165 +1,169 @@
 "use client"
 
-import { useState } from "react"
+// NOTE: تم التأكد من أن الكارد لا يعرض أي قيمة رقمية (مثل 0) أعلى الكارد. إذا استمر ظهور الرقم، السبب غالباً من مكون آخر أو من طريقة تمرير البيانات. تأكد أن الكارد يبدأ مباشرة من div الرئيسي ولا يوجد أي نص أو متغير قبله.
+
+// حل جذري لمشكلة ظهور الصفر أعلى الكارد:
+// إذا تم تمرير id=0 أو أي قيمة غير مطلوبة، تجاهلها ولا تعرضها أبداً
+// الكارد يبدأ فقط من div الرئيسي ولا يوجد أي نص أو رقم قبله
+
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { addToFavorites, removeFromFavorites } from "../store/favoritesSlice"
-import { addToCompare, removeFromCompare } from "../store/compareSlice"
+import { toggleFavorite } from "../store/favoritesSlice"
+import { addCompare, removeCompare } from "../store/compareSlice"
 import { Star, Heart, BarChart2, Check } from "lucide-react"
+import { productService } from "../services/product.service"
+import { toast } from "react-toastify"
 
 // Product card component for displaying product information
 function ProductCard({ product }) {
   const dispatch = useDispatch()
   const compareItems = useSelector((state) => state.compare.items)
   const favoriteItems = useSelector((state) => state.favorites.items)
+  const favoritesLoading = useSelector((state) => state.favorites.loading)
+  const compareLoading = useSelector((state) => state.compare.loading)
   const isInCompare = compareItems.some((item) => item.id === product.id)
   const isInFavorites = favoriteItems.some((item) => item.id === product.id)
   const [isHovered, setIsHovered] = useState(false)
+  const [reviews, setReviews] = useState([])
+  const [averageRating, setAverageRating] = useState(0)
+  const [loadingReviews, setLoadingReviews] = useState(false)
 
-  const handleToggleFavorite = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    if (isInFavorites) {
-      dispatch(removeFromFavorites(product.id))
-    } else {
-      dispatch(addToFavorites(product))
+  const handleToggleFavorite = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (favoritesLoading) return;
+    try {
+      await dispatch(toggleFavorite(product.id)).unwrap();
+      toast.success(isInFavorites ? "تمت إزالة المنتج من المفضلة" : "تمت إضافة المنتج إلى المفضلة");
+    } catch (err) {
+      toast.error("حدث خطأ أثناء تحديث المفضلة");
     }
   }
 
   const handleToggleCompare = (e) => {
     e.preventDefault()
     e.stopPropagation()
-
+    if (compareLoading) return // منع التكرار أثناء التحميل
     if (isInCompare) {
-      dispatch(removeFromCompare(product.id))
+      dispatch(removeCompare(product.id))
     } else {
-      dispatch(addToCompare(product))
+      dispatch(addCompare(product))
     }
   }
 
-  // Ensure product is valid and log for debugging
-  console.log("ProductCard received product:", product);
+  // جلب التقييمات من السيرفر عند تحميل الكارد أو تغيير المنتج
+  useEffect(() => {
+    let isMounted = true
+    setLoadingReviews(true)
+    productService.getProductReviews(product.id)
+      .then((data) => {
+        if (!isMounted) return
+        setReviews(Array.isArray(data) ? data : [])
+        if (Array.isArray(data) && data.length > 0) {
+          const avg = data.reduce((sum, r) => sum + (typeof r.rating === 'number' ? r.rating : 0), 0) / data.length
+          setAverageRating(avg)
+        } else {
+          setAverageRating(0)
+        }
+      })
+      .catch(() => {
+        setReviews([])
+        setAverageRating(0)
+      })
+      .finally(() => setLoadingReviews(false))
+    return () => { isMounted = false }
+  }, [product.id])
 
+  // Ensure product is valid and log for debugging
+  // Removed extra error handling and fallback cards, keep only minimal validation
   if (!product || typeof product !== 'object') {
-    console.error("Invalid product data received in ProductCard:", product)
-    return (
-      <div className="bg-white rounded-lg shadow-md overflow-hidden p-4">
-        <div className="text-center text-red-500">
-          <p>Error: Invalid product data</p>
-        </div>
-      </div>
-    )
+    return null;
   }
 
   // Create a safe product object with default values for all required properties
   const safeProduct = {
-    id: product.id || Math.random().toString(36).substring(2, 9),
-    name: product.name || "Unnamed Product",
-    price: product.price || 0,
-    image: product.image || product.image_url || product.thumbnail || "https://via.placeholder.com/300x300?text=Product+Image",
-    category: product.category || product.category_name || "Uncategorized",
-    reviews: product.reviews || [],
-    average_rating: product.average_rating || 0,
-    discount: product.discount || 0,
-    stock: product.stock || 0,
-    ...product // Keep all original properties
-  }
+    id: product.id,
+    name: typeof product.name === 'string' ? product.name : '',
+    price: typeof product.price === 'number' || typeof product.price === 'string' ? product.price : '-',
+    image: typeof product.image === 'string' && product.image ? product.image : (typeof product.image_url === 'string' && product.image_url ? product.image_url : (typeof product.thumbnail === 'string' && product.thumbnail ? product.thumbnail : "/placeholder.svg")),
+    category: typeof product.category === 'object' && product.category && typeof product.category.name === 'string' ? product.category.name : (typeof product.category === 'string' ? product.category : (typeof product.category_name === 'string' ? product.category_name : 'Uncategorized')),
+    brand: typeof product.brand === 'object' && product.brand && typeof product.brand.name === 'string' ? product.brand.name : (typeof product.brand === 'string' ? product.brand : '-'),
+    reviews: Array.isArray(product.reviews) ? product.reviews : [],
+    average_rating: typeof product.rating === 'number' ? product.rating : (typeof product.average_rating === 'number' ? product.average_rating : 0),
+    discount: typeof product.discount === 'number' ? product.discount : 0,
+    original_price: typeof product.original_price === 'number' ? product.original_price : null,
+    stock: typeof product.stock === 'number' || typeof product.stock === 'string' ? product.stock : (typeof product.in_stock === 'boolean' ? (product.in_stock ? 'In Stock' : 'Out of Stock') : '-'),
+    created_at: product.created_at || null,
+    likes: typeof product.likes === 'number' ? product.likes : 0,
+    dislikes: typeof product.dislikes === 'number' ? product.dislikes : 0,
+    views: typeof product.views === 'number' ? product.views : 0,
+    shop_name: typeof product.shop_name === 'string' ? product.shop_name : (product.shop && typeof product.shop.name === 'string' ? product.shop.name : '-'),
+    video_url: typeof product.video_url === 'string' ? product.video_url : null,
+    description: typeof product.description === 'string' ? product.description : '',
+  };
 
-  // Defensive: If id is not valid, show error card
-  if (!safeProduct.id || safeProduct.id === 0 || safeProduct.id === "0" || safeProduct.id === "undefined" || safeProduct.id === "null") {
-    return (
-      <div className="bg-white rounded-lg shadow-md overflow-hidden p-4">
-        <div className="text-center text-red-500">
-          <p>Error: Product ID is invalid</p>
-        </div>
-      </div>
-    )
+  // إصلاح: اعرض الكارد إذا كان الاسم موجود وليس 'Loading...'. لا تعتمد فقط على id.
+  if (!safeProduct.name || safeProduct.name === 'Loading...') {
+    return null;
   }
-
-  // Calculate average rating using the safe product object
-  const averageRating =
-    safeProduct.reviews && safeProduct.reviews.length > 0
-      ? safeProduct.reviews.reduce((sum, review) => sum + review.rating, 0) / safeProduct.reviews.length
-      : safeProduct.average_rating || 0
 
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden"
+      className="bg-white border border-gray-200 shadow-sm overflow-hidden relative flex flex-col w-full max-w-[300px] min-w-[220px] mx-auto my-4 p-4 transition-transform duration-200 hover:shadow-lg"
+      style={{ borderRadius: '8px' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Discount badge */}
-      {safeProduct.discount && safeProduct.discount > 0 && (
-        <div className="absolute top-2 left-2 bg-[#ffb700] text-black text-xs font-bold px-2 py-1 rounded">
+      {safeProduct.discount > 0 && (
+        <div className="absolute top-4 left-4 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded z-10 shadow-sm tracking-tight">
           {safeProduct.discount}% OFF
         </div>
       )}
-
-      <Link to={`/products/${encodeURIComponent(String(safeProduct.id))}`}>
-        <div className="relative p-4">
-          {/* Product image */}
-          <div className="relative">
-            <img
-              src={safeProduct.image || "https://via.placeholder.com/300x300?text=Product+Image"}
-              alt={safeProduct.name || "Product"}
-              className="w-full h-48 object-contain mb-4"
-              onError={(e) => {
-                console.warn("Image failed to load, using placeholder:", safeProduct.name)
-                e.target.src = "https://via.placeholder.com/300x300?text=Image+Not+Found"
-              }}
-            />
-
-            {/* Hover actions */}
-            <div
-              className={`absolute bottom-0 left-0 right-0 flex justify-center space-x-2 transition-opacity duration-200 ${isHovered ? "opacity-100" : "opacity-0"}`}
-            >
-              <button
-                onClick={handleToggleFavorite}
-                className={`p-2 rounded-full ${isInFavorites ? "bg-red-500 text-white" : "bg-white text-red-500"} hover:bg-opacity-90 shadow-md`}
-                title={isInFavorites ? "Remove from favorites" : "Add to favorites"}
-              >
-                <Heart size={18} className={isInFavorites ? "fill-current" : ""} />
-              </button>
-              <button
-                onClick={handleToggleCompare}
-                className={`p-2 rounded-full ${isInCompare ? "bg-green-600 text-white" : "bg-white text-gray-700"} hover:bg-opacity-90 shadow-md`}
-                title={isInCompare ? "Remove from compare" : "Add to compare"}
-              >
-                {isInCompare ? <Check size={18} /> : <BarChart2 size={18} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Product details */}
-          <h3 className="text-lg font-medium mb-1">{safeProduct.name}</h3>
-          <p className="text-sm text-gray-600 mb-2">{safeProduct.category}</p>
-
-          {/* Price and rating */}
-          <div className="flex justify-between items-center mt-2">
-            <div className="flex items-center space-x-2">
-              <div className="bg-gray-800 text-white text-xs px-2 py-1 rounded flex items-center">
-                {averageRating.toFixed(1)} <Star size={12} className="ml-1 fill-current" />
-              </div>
-              <div className="font-bold">${safeProduct.price}</div>
-            </div>
-            {safeProduct.stock !== undefined && <div className="text-gray-600 text-sm">{safeProduct.stock} in stock</div>}
-          </div>
-
-          {/* Action buttons */}
-          <div className="mt-4 flex justify-center">
+      <Link to={`/products/${encodeURIComponent(String(safeProduct.id))}`} className="flex-1 flex flex-col items-center">
+        {/* Product image */}
+        <div className="relative flex flex-col items-center justify-center w-full mb-2">
+          <img
+            src={safeProduct.image}
+            alt={safeProduct.name || "Product"}
+            className="w-full h-52 object-cover rounded-md"
+            onError={(e) => {
+              if (!e.target.src.endsWith('/placeholder.svg')) {
+                e.target.src = '/placeholder.svg';
+              }
+            }}
+          />
+          {/* Favorite & Compare icons centered at image bottom */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 pointer-events-none">
             <button
-              className={`py-1 px-4 rounded text-sm transition-colors flex items-center ${
-                isInFavorites
-                  ? "bg-red-100 text-red-600 hover:bg-red-200"
-                  : "bg-[#005580] text-white hover:bg-[#004466]"
-              }`}
               onClick={handleToggleFavorite}
+              className={`pointer-events-auto p-2 rounded-full bg-white shadow transition hover:scale-110 ${isInFavorites ? "text-red-500" : "text-gray-400 hover:text-red-500"}`}
+              title={isInFavorites ? "Remove from favorites" : "Add to favorites"}
             >
-              <Heart size={16} className={`mr-1 ${isInFavorites ? "fill-current" : ""}`} />
-              {isInFavorites ? "Saved" : "Add to Favorites"}
+              <Heart size={18} className={isInFavorites ? "fill-current" : ""} />
+            </button>
+            <button
+              onClick={handleToggleCompare}
+              className={`pointer-events-auto p-2 rounded-full bg-white shadow transition hover:scale-110 ${isInCompare ? "text-green-600" : "text-gray-400 hover:text-green-600"}`}
+              title={isInCompare ? "Remove from compare" : "Add to compare"}
+            >
+              {isInCompare ? <Check size={18} /> : <BarChart2 size={18} />}
             </button>
           </div>
+        </div>
+        {/* Product details */}
+        <div className="flex flex-col items-center w-full space-y-1.5">
+          <h3 className="text-sm sm:text-base font-semibold text-gray-900 text-center leading-snug tracking-tight mb-0.5 line-clamp-2 min-h-[1.8rem]">{safeProduct.name || 'Unnamed Product'}</h3>
+          {safeProduct.shop_name && <p className="text-xs sm:text-sm text-gray-500 text-center leading-snug mt-0 mb-0.5 line-clamp-1">{safeProduct.shop_name}</p>}
+          <div className="flex items-center justify-between w-full px-1 mb-2">
+            <span className="font-medium text-xs sm:text-sm text-gray-900 tracking-tight">{typeof safeProduct.price === 'number' || (typeof safeProduct.price === 'string' && safeProduct.price.match(/^[\d.]+$/)) ? `$${safeProduct.price}` : '-'}</span>
+            <span className="flex items-center text-xs sm:text-sm text-gray-500 font-medium gap-1">
+              <Star size={15} className="text-yellow-400" />
+              <span className="ml-1">{loadingReviews ? '...' : Number(averageRating).toFixed(1)}</span>
+            </span>
+          </div>
+          <button className="w-full mt-1 py-2 rounded-lg border border-gray-200 text-gray-900 font-medium text-sm sm:text-base hover:bg-gray-50 transition">Details</button>
         </div>
       </Link>
     </div>

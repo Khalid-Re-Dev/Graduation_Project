@@ -1,40 +1,136 @@
-import { createSlice } from "@reduxjs/toolkit"
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
+import { apiService } from "../services/api.service"
+import { API_ENDPOINTS } from "../config/api.config"
 
-// Compare slice with reducers for managing product comparison
+// Async thunk: جلب قائمة المقارنة من الباك إند
+export const fetchCompare = createAsyncThunk(
+  "compare/fetchCompare",
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      // جلب المنتجات المضافة للمقارنة من الحالة أو localStorage أو backend حسب التصميم
+      // هنا سنجلب المنتجات من الحالة الحالية (مثلاً ids محفوظة في localStorage)
+      // أو يمكن تعديل المنطق لاحقاً حسب الحاجة
+      // حالياً سنعيد مصفوفة فارغة لأن API لا يدعم جلب كل المقارنات دفعة واحدة
+      return []
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to fetch comparison list")
+    }
+  }
+)
+
+// Async thunk: إضافة منتج للمقارنة (محلي فقط)
+export const addCompare = createAsyncThunk(
+  "compare/addCompare",
+  async (product, { rejectWithValue }) => {
+    try {
+      // لا ترسل أي طلب للباك إند، فقط أعد المنتج
+      return product
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to add to comparison")
+    }
+  }
+)
+
+// Async thunk: حذف منتج من المقارنة (محلي فقط)
+export const removeCompare = createAsyncThunk(
+  "compare/removeCompare",
+  async (productId, { rejectWithValue }) => {
+    try {
+      // لا ترسل أي طلب للباك إند، فقط أعد id
+      return productId
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to remove from comparison")
+    }
+  }
+)
+
+// Async thunk: مقارنة المنتجات عبر API
+export const compareProducts = createAsyncThunk(
+  "compare/compareProducts",
+  async (productIds, { rejectWithValue }) => {
+    try {
+      // إرسال قائمة المنتجات إلى endpoint المقارنة
+      // POST /api/comparison/compare/ { product_ids: [...] }
+      const res = await apiService.post("/comparison/compare/", { product_ids: productIds });
+      return res;
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to compare products")
+    }
+  }
+)
+
 const compareSlice = createSlice({
   name: "compare",
   initialState: {
     items: [],
+    loading: false,
+    error: null,
   },
   reducers: {
-    // Add product to compare
-    addToCompare: (state, action) => {
-      const product = action.payload
-      // Check if product is already in compare
-      const existingItem = state.items.find((item) => item.id === product.id)
-
-      if (!existingItem) {
-        // Limit to 4 products for comparison
-        if (state.items.length >= 4) {
-          // Remove the oldest item
-          state.items.shift()
-        }
-        state.items.push(product)
-      }
-    },
-
-    // Remove product from compare
-    removeFromCompare: (state, action) => {
-      const productId = action.payload
-      state.items = state.items.filter((item) => item.id !== productId)
-    },
-
-    // Clear all products from compare
     clearCompare: (state) => {
       state.items = []
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCompare.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchCompare.fulfilled, (state, action) => {
+        state.loading = false
+        state.items = action.payload || []
+      })
+      .addCase(fetchCompare.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      .addCase(addCompare.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(addCompare.fulfilled, (state, action) => {
+        state.loading = false
+        // أضف المنتج إذا لم يكن موجودًا
+        if (!state.items.some((item) => item.id === action.payload.id)) {
+          // حد أقصى 4 عناصر
+          if (state.items.length >= 4) {
+            state.items.shift()
+          }
+          state.items.push(action.payload)
+        }
+      })
+      .addCase(addCompare.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      .addCase(removeCompare.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(removeCompare.fulfilled, (state, action) => {
+        state.loading = false
+        state.items = state.items.filter((item) => item.id !== action.payload)
+      })
+      .addCase(removeCompare.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      .addCase(compareProducts.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(compareProducts.fulfilled, (state, action) => {
+        state.loading = false
+        // هنا يمكنك تحديث الحالة بنتائج المقارنة إذا لزم الأمر
+        // مثلاً، يمكن تخزين النتائج في حالة جديدة أو تحديث الحالة الحالية
+      })
+      .addCase(compareProducts.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+  },
 })
 
-export const { addToCompare, removeFromCompare, clearCompare } = compareSlice.actions
+export const { clearCompare } = compareSlice.actions
 export default compareSlice.reducer

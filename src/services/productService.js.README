@@ -1,0 +1,4 @@
+# Safe to delete: legacy mock product service
+# This file was a mock for local-only product data and is not used anywhere in the codebase.
+# All product logic is now handled by product.service.js and real backend APIs.
+# If you need to restore this file, check your version control history.

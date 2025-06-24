@@ -1,0 +1,24 @@
+API Migration Summary
+====================
+
+✔️ All files and components that were updated:
+- src/config/api.config.js
+
+🔁 Old URL → New URL mapping for every endpoint:
+- Old: http://127.0.0.1:8000/api/... or http://localhost:8000/api/... or http://localhost:5000/api/...
+- New: https://binc-b-1.onrender.com/api/...
+
+✅ HTTP methods used:
+- GET, POST, PUT, PATCH, DELETE (all handled via apiService and API_BASE_URL)
+
+🔒 Token headers or authentication considerations:
+- Authorization: Bearer <token> header is preserved via apiService.getHeaders()
+- No changes to token logic; all tokens are still sent as before
+
+❗ Any broken or skipped routes:
+- None detected. All API calls are routed through API_BASE_URL and will now use the live backend.
+
+Notes:
+- If you want to make the API base URL dynamic, you can use a .env file and reference process.env.REACT_APP_API_BASE_URL in api.config.js.
+- All endpoints, including authentication, products, recommendations, favorites, comparison, dashboard, etc., are now routed to the live backend.
+- No logic, component, or state changes were made.

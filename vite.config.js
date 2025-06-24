@@ -8,6 +8,9 @@ export default defineConfig({
     port: 3000,
     open: true
   },
+  preview: {
+    allowedHosts: ["binc.onrender.com"]
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./"),

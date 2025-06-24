@@ -7,7 +7,16 @@ export const login = createAsyncThunk("auth/login", async (credentials, { reject
     const data = await loginService(credentials)
     return data
   } catch (error) {
-    return rejectWithValue(error.message || "Login failed")
+    let message = error?.response?.data?.error || error?.message || "Login failed. Please check your email and password.";
+    // CORS/Network error detection
+    if (message && (message.includes("NetworkError") || message.includes("CORS") || message.includes("Failed to fetch"))) {
+      message = "Network error or CORS issue: Unable to reach the server. Please try again later or contact support.";
+    }
+    // If backend returns Arabic error, replace with English
+    if (message.includes("بيانات الاعتماد غير صحيحة")) {
+      message = "Invalid email or password. Please try again.";
+    }
+    return rejectWithValue(message)
   }
 })
 
@@ -15,9 +24,17 @@ export const login = createAsyncThunk("auth/login", async (credentials, { reject
 export const register = createAsyncThunk("auth/register", async (userData, { rejectWithValue }) => {
   try {
     const data = await registerService(userData)
+    // Registration endpoint returns only user and message, not tokens
     return data
   } catch (error) {
-    return rejectWithValue(error.message || "Registration failed")
+    let message = error?.response?.data?.error || error?.message || "Registration failed. Please check your information.";
+    if (message && (message.includes("NetworkError") || message.includes("CORS") || message.includes("Failed to fetch"))) {
+      message = "Network error or CORS issue: Unable to reach the server. Please try again later or contact support.";
+    }
+    if (message.includes("مستخدم بنفس هذا البريد الإلكتروني موجود بالفعل")) {
+      message = "A user with this email already exists.";
+    }
+    return rejectWithValue(message)
   }
 })
 
@@ -44,19 +61,25 @@ export const checkAuth = createAsyncThunk("auth/check", async (_, { rejectWithVa
   }
 })
 
-// Auth slice with reducers and actions
+// عند بدء التطبيق أو تحديث الصفحة، تحقق من وجود بيانات مستخدم محفوظة في localStorage أو sessionStorage
+const initialUser = getUser();
+
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: null,
+    user: initialUser,
     token: null,
-    isAuthenticated: false,
+    isAuthenticated: !!initialUser,
     loading: false,
     error: null,
+    successMessage: null, // Add success message for registration
   },
   reducers: {
     clearError: (state) => {
       state.error = null
+    },
+    clearSuccess: (state) => {
+      state.successMessage = null
     },
   },
   extraReducers: (builder) => {
@@ -81,16 +104,19 @@ const authSlice = createSlice({
       .addCase(register.pending, (state) => {
         state.loading = true
         state.error = null
+        state.successMessage = null
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false
         state.user = action.payload.user
-        state.token = action.payload.access // Use access token from JWT response
-        state.isAuthenticated = true
+        state.isAuthenticated = false // User is not logged in after registration
+        state.token = null
+        state.successMessage = action.payload.message || "Registration successful! Please login."
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
+        state.successMessage = null
       })
 
       // Handle logout
@@ -138,5 +164,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { clearError } = authSlice.actions
+export const { clearError, clearSuccess } = authSlice.actions
 export default authSlice.reducer

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchAllProducts, fetchNewProducts, fetchPopularProducts } from "../store/productSlice"
+import { fetchRecommendations } from "../services/recommendations.service"
 import HeroSection from "../sections/HeroSection"
 import CategorySection from "../sections/CategorySection"
 import ProductCard from "../components/ProductCard"
@@ -17,6 +18,10 @@ function HomePage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [pageError, setPageError] = useState(null)
   const [dataFetched, setDataFetched] = useState(false)
+  const [recommendations, setRecommendations] = useState([])
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true)
+  const [recommendationsError, setRecommendationsError] = useState(null)
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
 
   // Helper function to check if an object is a valid product
   const isValidProduct = (p) => {
@@ -101,6 +106,41 @@ function HomePage() {
     fetchAllProductData();
   }, [dispatch])
 
+  useEffect(() => {
+    setRecommendationsLoading(true)
+    setRecommendationsError(null)
+    fetchRecommendations()
+      .then((data) => {
+        console.log("[Recommendations] Raw API response:", data);
+        if (data && data.error && data.error.toLowerCase().includes("unauthorized")) {
+          setRecommendationsError("You must be logged in to see recommendations.");
+          setRecommendations([]);
+          return;
+        }
+        if (!data || typeof data !== 'object') {
+          setRecommendationsError("Invalid recommendations data from server.");
+          setRecommendations([]);
+          return;
+        }
+        let recs = [
+          ...(Array.isArray(data.preferred) ? data.preferred : []),
+          ...(Array.isArray(data.liked) ? data.liked : []),
+          ...(Array.isArray(data.new) ? data.new : []),
+          ...(Array.isArray(data.popular) ? data.popular : [])
+        ];
+        // Deduplicate by id
+        const unique = recs.filter((item, idx, arr) => item && item.id && arr.findIndex(p => p.id === item.id) === idx)
+        setRecommendations(unique.slice(0, 8))
+        setRecommendationsError(null)
+      })
+      .catch((err) => {
+        console.error("[Recommendations] Fetch error:", err);
+        setRecommendationsError("Could not load recommendations. Please check your login or backend.")
+        setRecommendations([])
+      })
+      .finally(() => setRecommendationsLoading(false))
+  }, [])
+
   // Show loading state
   if (pageLoading) {
     return <FallbackLoader message="Loading products..." fullPage={true} />
@@ -127,17 +167,55 @@ function HomePage() {
     )
   }
 
-  if (!pageLoading && !pageError && (!allProducts || allProducts.length === 0)) {
+  // الزائر: فقط جميع المنتجات + رسالة وزر تسجيل الدخول
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-6 rounded-lg max-w-2xl mx-auto text-center">
-          <h2 className="text-xl font-bold mb-2">No products available</h2>
-          <p className="mb-4">No products were found. Please check your backend or try again later.</p>
-        </div>
+      <div>
+        <HeroSection />
+        <section className="py-8 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Browse By Category</h2>
+            </div>
+            <CategorySection />
+          </div>
+        </section>
+        <section className="py-8 bg-blue-50 border-b border-blue-100">
+          <div className="container mx-auto px-4 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-blue-900 mb-2">Sign in to unlock more features</h2>
+            <p className="text-blue-800 mb-4 max-w-xl">
+              To view <span className="font-semibold">popular</span>, <span className="font-semibold">new</span>, and <span className="font-semibold">recommended</span> products, please <Link to="/login" className="text-blue-700 underline hover:text-blue-900">log in</Link> or <Link to="/signup" className="text-blue-700 underline hover:text-blue-900">create an account</Link>.<br/>
+              As a guest, you can browse all available products below.
+            </p>
+            <Link
+              to="/login"
+              className="inline-block px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors font-bold text-lg"
+            >
+              Log In
+            </Link>
+          </div>
+        </section>
+        {/* All Products Section (vertical grid, like AllProductsPage) */}
+        <section className="py-8 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">All Products</h2>
+              <Link to="/products" className="text-[#005580] hover:underline flex items-center">
+                View All
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {allProducts.filter(isValidProduct).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     )
   }
 
+  // المستخدم المسجل دخوله: جميع الأقسام
   return (
     <div>
       {/* Error message if needed */}
@@ -194,7 +272,7 @@ function HomePage() {
                     <div key={index} className="min-w-[250px] bg-white rounded-lg shadow-md p-4 animate-pulse">
                       <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
                       <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
                     </div>
                   ))
               : // Actual products
@@ -210,7 +288,7 @@ function HomePage() {
                     ))
                 ) : loading ? (
                   // Still loading, show placeholders
-                  Array(4).fill({ id: 0, name: "Loading...", price: 0, image: "/placeholder.svg" }).map((product, index) => (
+                  Array(4).fill({ name: "Loading...", price: "-", image: "/placeholder.svg" }).map((product, index) => (
                     <div key={`loading-${index}`} className="min-w-[250px]">
                       <ProductCard product={product} />
                     </div>
@@ -249,7 +327,7 @@ function HomePage() {
                     <div key={index} className="min-w-[250px] bg-white rounded-lg shadow-md p-4 animate-pulse">
                       <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
                       <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
                     </div>
                   ))
               : // Actual products
@@ -265,7 +343,7 @@ function HomePage() {
                     ))
                 ) : loading ? (
                   // Still loading, show placeholders
-                  Array(4).fill({ id: 0, name: "Loading...", price: 0, image: "/placeholder.svg" }).map((product, index) => (
+                  Array(4).fill({ name: "Loading...", price: "-", image: "/placeholder.svg" }).map((product, index) => (
                     <div key={`loading-${index}`} className="min-w-[250px]">
                       <ProductCard product={product} />
                     </div>
@@ -283,6 +361,75 @@ function HomePage() {
                   </div>
                 )}
           </div>
+        </div>
+      </section>
+
+      {/* Recommended for You Section */}
+      <section className="bg-[#08597a] py-10 px-4">
+        <div className="container mx-auto">
+          <h2 className="text-center text-2xl font-bold text-white mb-6">Recommended for You</h2>
+          {recommendationsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array(4).fill().map((_, idx) => (
+                <div key={idx} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
+                  <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : recommendationsError && recommendationsError.toLowerCase().includes("login") ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+              <p className="text-lg mb-4 text-blue-900 font-semibold">You must be logged in to see your personalized recommendations.</p>
+              <Link
+                to="/login"
+                className="inline-block px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors font-bold text-lg"
+              >
+                Log In
+              </Link>
+            </div>
+          ) : recommendationsError ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+              <p className="text-lg mb-4 text-red-600">{recommendationsError}</p>
+              <button
+                onClick={() => {
+                  setRecommendationsLoading(true)
+                  setRecommendationsError(null)
+                  fetchRecommendations()
+                    .then((data) => {
+                      let recs = []
+                      if (data && typeof data === 'object') {
+                        recs = [
+                          ...(data.preferred || []),
+                          ...(data.liked || []),
+                          ...(data.new || []),
+                          ...(data.popular || [])
+                        ]
+                      }
+                      const unique = recs.filter((item, idx, arr) => item && item.id && arr.findIndex(p => p.id === item.id) === idx)
+                      setRecommendations(unique.slice(0, 8))
+                    })
+                    .catch(() => setRecommendationsError("Could not load recommendations."))
+                    .finally(() => setRecommendationsLoading(false))
+                }}
+                className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          ) : recommendations.length === 0 ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+              <p className="text-lg mb-4">No recommendations available at this time.</p>
+            </div>
+          ) : (
+            <div className="scroll-container">
+              {recommendations.map((product) => (
+                <div key={product.id} className="min-w-[250px]">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -304,7 +451,7 @@ function HomePage() {
                     <div key={index} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
                       <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
                       <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
                     </div>
                   ))
               : // Actual products - mix of new and popular
@@ -328,7 +475,7 @@ function HomePage() {
                     ))
                 ) : loading ? (
                   // Still loading, show placeholders
-                  Array(4).fill({ id: 0, name: "Loading...", price: 0, image: "/placeholder.svg" })
+                  Array(4).fill({ name: "Loading...", price: "-", image: "/placeholder.svg" })
                     .map((product, index) => <ProductCard key={`loading-${index}`} product={product} />)
                 ) : (
                   // No products and not loading, show message with retry button

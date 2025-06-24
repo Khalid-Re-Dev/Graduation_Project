@@ -1,0 +1,137 @@
+# Frontend API Integration Log
+
+## 1. API Services and Configuration
+
+- **API Base URL:**
+  - All requests use `API_BASE_URL` from `src/config/api.config.js` (default: `https://binc-b-1.onrender.com/api` or `http://localhost:8000/api/` for local dev).
+- **API Service:**
+  - All HTTP requests are made via `src/services/api.service.js` (class `ApiService`).
+  - Methods: `get`, `post`, `put`, `patch`, `delete`.
+  - Handles:
+    - Attaching JWT access token to `Authorization` header if available.
+    - Timeout, error handling, and response parsing.
+    - Automatic fallback for network errors.
+    - All requests are routed through this service (no direct fetch/axios in components).
+
+## 2. Authentication Logic
+
+- **Token Storage:**
+  - Access and refresh tokens are stored in `localStorage` or `sessionStorage` based on `rememberMe`.
+  - Keys: `access_token`, `refresh_token`, `user`.
+- **Login:**
+  - Endpoint: `POST /api/auth/login/`
+  - Service: `src/services/auth.service.js` (`login` method)
+  - Stores tokens and user data on success.
+- **Register:**
+  - Endpoint: `POST /api/auth/register/`
+  - Service: `src/services/auth.service.js` (`register` method)
+- **Logout:**
+  - Endpoint: `POST /api/auth/logout/`
+  - Service: `src/services/auth.service.js` (`logout` method)
+  - Clears tokens and user data from storage.
+- **Token Refresh:**
+  - Endpoint: `POST /api/auth/token/refresh/`
+  - Service: `src/services/auth.service.js` (`refreshToken` method)
+  - Auto-refresh logic is handled in `HttpInterceptor` and `api.service.js`.
+- **AuthProvider:**
+  - `src/components/AuthProvider.jsx` checks auth status on app load and provides state.
+- **Redux Slice:**
+  - `src/store/authSlice.jsx` manages auth state, async thunks for login/register/logout/checkAuth.
+
+## 3. Role-Based Route Protection
+
+- **Role Validation:**
+  - User roles (`customer`, `owner`, `admin`) are checked in components/pages (e.g., `OwnerDashboardPage.jsx`, `DashboardPage.jsx`).
+  - Unauthorized users are redirected to login or shown error messages.
+- **Protected Routes:**
+  - UI checks `isAuthenticated` and `user.user_type` before rendering protected content.
+
+## 4. Major API Endpoints and Usage
+
+| Endpoint                                 | HTTP Method | Service/Component                        | Description/Usage                        |
+|------------------------------------------|-------------|------------------------------------------|------------------------------------------|
+| `/api/auth/register/`                    | POST        | `auth.service.js`                        | User registration                        |
+| `/api/auth/login/`                       | POST        | `auth.service.js`                        | User login                               |
+| `/api/auth/token/refresh/`               | POST        | `auth.service.js`                        | Refresh JWT access token                 |
+| `/api/auth/logout/`                      | POST        | `auth.service.js`                        | User logout                              |
+| `/api/products/`                         | GET         | `product.service.js`                     | List all products                        |
+| `/api/products/:id/`                     | GET         | `product.service.js`                     | Product details                          |
+| `/api/user/favorites/:product_id/toggle/`| POST        | `user.service.js`                        | Toggle favorite for product              |
+| `/api/user/favorites/`                   | GET         | `user.service.js`                        | Get user favorites                       |
+| `/api/dashboard/stats/`                  | GET         | `dashboard.service.js`                   | Dashboard stats (admin/owner)            |
+| `/api/dashboard/products/`               | GET/POST    | `dashboard.service.js`, `owner.service.js`| Owner/admin product management           |
+| `/api/dashboard/products/:id/`           | GET/PUT/DEL | `dashboard.service.js`, `owner.service.js`| Owner/admin product detail/update/delete  |
+| `/api/dashboard/settings/`               | GET/PUT     | `dashboard.service.js`, `owner.service.js`| Shop settings (owner)                    |
+| `/api/dashboard/analytics/`              | GET         | `dashboard.service.js`, `owner.service.js`| Analytics (owner/admin)                  |
+| `/api/shop/check/`                       | GET         | `owner.service.js`                       | Check if owner has a shop                |
+| `/api/shop/register/`                    | POST        | `owner.service.js`                       | Register new shop (owner)                |
+| `/api/products/featured/`                | GET         | `product.service.js`                     | Featured products                        |
+| `/api/products/popular/`                 | GET         | `product.service.js`                     | Popular products                         |
+| `/api/products/new/`                     | GET         | `product.service.js`                     | New products                             |
+| `/api/products/search/`                  | GET         | `product.service.js`                     | Product search                           |
+| `/api/products/categories/`              | GET         | `product.service.js`                     | Product categories                       |
+| `/api/notifications/`                    | GET         | `notification.service.js`                | User notifications                       |
+
+## 5. Error Handling Strategy
+
+- **API Service:**
+  - All errors are caught and handled in `api.service.js`.
+  - Standard error messages for 401, 403, 404, 422, 500, network errors.
+  - Uses `react-toastify` (via `NotificationProvider.jsx`) for user feedback.
+- **UI Feedback:**
+  - Success and error toasts for login, registration, product actions, etc.
+  - Form validation errors are mapped to fields and shown inline.
+  - Unauthorized/forbidden errors redirect or show error messages.
+- **ErrorBoundary:**
+  - `src/components/ErrorBoundary.jsx` catches JS errors and displays fallback UI.
+
+## 6. Token Management
+
+- **Storage:**
+  - Access/refresh tokens and user info are stored in `localStorage` or `sessionStorage`.
+  - `auth.service.js` provides `setTokens`, `setUser`, `clearTokens`, `getToken`, `getUser`.
+- **Auto Refresh:**
+  - If a request returns 401 and a refresh token exists, the app attempts to refresh the token and retry.
+  - If refresh fails, user is logged out and redirected.
+- **HttpInterceptor:**
+  - `src/components/HttpInterceptor.jsx` monkey-patches `window.fetch` to inject tokens and handle 401 errors globally.
+
+## 7. UI Feedback & Toasts
+
+- **react-toastify** is used for all user notifications (success, error, info).
+- **Custom Toasts:**
+  - For some UI, custom hooks/components (e.g., `hooks/use-toast.ts`, `components/ui/toast.tsx`) are used for more advanced toasts.
+- **ErrorBoundary** for fatal errors.
+
+## 8. Role-Based UI
+
+- **Customer:**
+  - Can view products, add/remove favorites, compare, etc.
+- **Owner:**
+  - Can manage shop, products, brands, analytics, settings via `/dashboard` and `/owner-dashboard`.
+- **Admin:**
+  - Has access to all products, users, and dashboard analytics.
+- **All role checks are enforced in both UI and API requests.**
+
+## 9. File/Component Mapping
+
+- **Authentication:**
+  - `src/services/auth.service.js`, `src/store/authSlice.jsx`, `src/pages/LoginPage.jsx`, `src/pages/SignupPage.jsx`, `src/components/AuthProvider.jsx`
+- **Products:**
+  - `src/services/product.service.js`, `src/pages/ProductDetailPage.jsx`, `src/pages/AllProductsPage.jsx`, `src/pages/HomePage.jsx`
+- **Favorites:**
+  - `src/services/user.service.js`, `src/store/favoritesSlice.js`, `src/pages/FavoritesPage.jsx`
+- **Dashboard/Owner:**
+  - `src/services/dashboard.service.js`, `src/services/owner.service.js`, `src/pages/OwnerDashboardPage.jsx`, `src/pages/DashboardPage.jsx`
+- **Notifications:**
+  - `src/services/notification.service.js`, `src/components/NotificationDropdown.jsx`
+- **Toasts:**
+  - `src/components/NotificationProvider.jsx`, `react-toastify`, `hooks/use-toast.ts`, `components/ui/toast.tsx`
+
+---
+
+**Summary:**
+- All API requests are routed through a single service layer (`api.service.js`) with token management, error handling, and role-based logic.
+- UI provides clear feedback for all actions and errors.
+- Role-based access is enforced both in the UI and API layer.
+- All endpoints are mapped to their respective service and component for maintainability.
