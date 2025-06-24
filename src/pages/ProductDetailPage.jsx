@@ -26,6 +26,13 @@ function ProductDetailPage() {
   const [userReaction, setUserReaction] = useState("neutral");
   const [reactionCounts, setReactionCounts] = useState({ likes: 0, dislikes: 0, neutrals: 0 });
 
+  // حالة المراجعات
+  const [reviews, setReviews] = useState([]);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
   useEffect(() => {
     if (id) {
       const fetchReaction = async () => {
@@ -51,6 +58,16 @@ function ProductDetailPage() {
     }
   }, [dispatch, id])
 
+  // جلب المراجعات عند تحميل الصفحة
+  useEffect(() => {
+    if (id) {
+      fetch(`/api/reviews/?product=${id}`)
+        .then(res => res.json())
+        .then(data => setReviews(Array.isArray(data) ? data : (data.results || [])))
+        .catch(() => setReviews([]));
+    }
+  }, [id]);
+
   const handleToggleFavorite = () => {
     dispatch(toggleFavorite(Number(id)))
   }
@@ -62,6 +79,30 @@ function ProductDetailPage() {
       dispatch(addCompare(currentProduct))
     }
   }
+
+  // إضافة مراجعة جديدة
+  const handleAddReview = async (e) => {
+    e.preventDefault();
+    setReviewLoading(true);
+    setReviewError("");
+    try {
+      const res = await fetch(`/api/reviews/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify({ product: id, rating: reviewRating, comment: reviewText })
+      });
+      if (!res.ok) throw new Error("فشل إرسال المراجعة");
+      const newReview = await res.json();
+      setReviews([newReview, ...reviews]);
+      setReviewText("");
+      setReviewRating(5);
+    } catch (err) {
+      setReviewError("فشل إرسال المراجعة. تأكد من تسجيل الدخول.");
+    } finally {
+      setReviewLoading(false);
+    }
+  };
 
   if (error || !currentProduct) {
     return (
@@ -339,7 +380,48 @@ function ProductDetailPage() {
 
             {activeTab === "reviews" && (
               <div className="space-y-6 text-gray-500 text-center text-sm">
-                No reviews available.
+                {/* نموذج إضافة مراجعة */}
+                <form onSubmit={handleAddReview} className="mb-6 bg-gray-50 p-4 rounded-lg flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <span>تقييمك:</span>
+                    {[1,2,3,4,5].map(star => (
+                      <button type="button" key={star} onClick={() => setReviewRating(star)} className={star <= reviewRating ? "text-yellow-400" : "text-gray-300"}>
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewText}
+                    onChange={e => setReviewText(e.target.value)}
+                    placeholder="اكتب تعليقك هنا..."
+                    className="w-full max-w-md p-2 border rounded"
+                    rows={2}
+                    required
+                  />
+                  <button type="submit" disabled={reviewLoading} className="bg-[#005580] text-white px-4 py-2 rounded hover:bg-[#004466] mt-2">
+                    {reviewLoading ? "جاري الإرسال..." : "إضافة مراجعة"}
+                  </button>
+                  {reviewError && <div className="text-red-500 text-xs mt-1">{reviewError}</div>}
+                </form>
+                {/* عرض المراجعات */}
+                {reviews.length === 0 ? (
+                  <div>لا توجد مراجعات بعد.</div>
+                ) : (
+                  <div className="space-y-4 w-full max-w-2xl mx-auto">
+                    {reviews.map((r) => (
+                      <div key={r.id} className="bg-white p-4 rounded shadow text-right">
+                        <div className="flex items-center gap-2 mb-1">
+                          {[1,2,3,4,5].map(star => (
+                            <span key={star} className={star <= (r.rating || 0) ? "text-yellow-400" : "text-gray-300"}>★</span>
+                          ))}
+                          <span className="text-xs text-gray-400 ml-auto">{r.user?.username || r.user || "مستخدم"}</span>
+                        </div>
+                        <div className="text-gray-800 text-sm mb-1">{r.comment}</div>
+                        <div className="text-xs text-gray-400">{r.created_at?.slice(0,10) || ""}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
