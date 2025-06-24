@@ -40,23 +40,10 @@ class OwnerService {
         });
       }
       // لا ترسل Content-Type مع FormData، دعه للمتصفح
-      return await apiService.post('/shop/create/', dataToSend);
+      return await apiService.post('/shop/register/', dataToSend);
     } catch (error) {
-      // تحليل الأخطاء الشائعة وإعطاء رسائل واضحة
-      if (error?.response?.status === 403) {
-        throw new Error('ليس لديك صلاحية لإنشاء متجر. تأكد أنك سجلت الدخول كمالك (owner).');
-      }
-      if (error?.response?.status === 400) {
-        // غالباً بيانات ناقصة أو غير صحيحة
-        const details = error?.response?.data?.detail || error?.response?.data?.error || '';
-        throw new Error('فشل في إنشاء المتجر. تحقق من صحة جميع البيانات المدخلة.' + (details ? ` [${details}]` : ''));
-      }
-      if (error?.response?.status === 409) {
-        throw new Error('لديك متجر بالفعل ولا يمكنك إنشاء متجر آخر بنفس الحساب.');
-      }
-      // أخطاء أخرى غير متوقعة
       console.error('Error registering shop:', error);
-      throw new Error('حدث خطأ غير متوقع أثناء إنشاء المتجر. حاول لاحقاً أو تواصل مع الدعم.');
+      throw error;
     }
   }
 

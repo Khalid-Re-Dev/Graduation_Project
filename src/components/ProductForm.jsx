@@ -85,33 +85,47 @@ export default function ProductForm({ initialData, onSubmit, loading, errors, se
           {errors.original_price && <div className="text-red-500 text-xs mt-1">{errors.original_price}</div>}
         </div>
       </div>
-      <div>
-        <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">التصنيف *</label>
-        <Select value={form.category_id} onValueChange={val => setForm({ ...form, category_id: val })}>
-          <SelectTrigger className="w-full border rounded px-3 py-2">
-            <SelectValue placeholder="اختر تصنيفًا" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map(cat => (
-              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
-      </div>
-      <div>
-        <label htmlFor="brand_id" className="block text-sm font-medium text-gray-700">الماركة *</label>
-        <Select value={form.brand_id} onValueChange={val => setForm({ ...form, brand_id: val })}>
-          <SelectTrigger className="w-full border rounded px-3 py-2">
-            <SelectValue placeholder="اختر ماركة" />
-          </SelectTrigger>
-          <SelectContent>
-            {brands.map(brand => (
-              <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col w-full">
+          <label htmlFor="category_id" className="block text-sm font-semibold text-gray-700 w-full mb-1 tracking-wide">التصنيف *</label>
+          <Select value={form.category_id} onValueChange={val => setForm({ ...form, category_id: val })}>
+            <SelectTrigger className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right text-base shadow-sm transition-all duration-150 focus:shadow-lg">
+              <SelectValue placeholder="اختر تصنيفًا" className="text-gray-700" />
+            </SelectTrigger>
+            <SelectContent className="z-[1000] max-h-60 overflow-y-auto bg-white shadow-xl rounded-lg border text-right w-full min-w-0">
+              {categories.length === 0 ? (
+                <div className="px-4 py-2 text-gray-400">لا توجد تصنيفات</div>
+              ) : (
+                categories.map(cat => (
+                  <SelectItem key={cat.id} value={cat.id} className="hover:bg-blue-100 focus:bg-blue-100 cursor-pointer text-right transition-colors w-full min-w-0 text-base rounded-md px-3 py-2 font-medium aria-selected:bg-blue-50 aria-selected:text-blue-700">
+                    {cat.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
+        </div>
+        <div className="flex flex-col w-full">
+          <label htmlFor="brand_id" className="block text-sm font-semibold text-gray-700 w-full mb-1 tracking-wide">الماركة *</label>
+          <Select value={form.brand_id} onValueChange={val => setForm({ ...form, brand_id: val })}>
+            <SelectTrigger className="w-full border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right text-base shadow-sm transition-all duration-150 focus:shadow-lg">
+              <SelectValue placeholder="اختر ماركة" className="text-gray-700" />
+            </SelectTrigger>
+            <SelectContent className="z-[1000] max-h-60 overflow-y-auto bg-white shadow-xl rounded-lg border text-right w-full min-w-0">
+              {brands.length === 0 ? (
+                <div className="px-4 py-2 text-gray-400">لا توجد ماركات</div>
+              ) : (
+                brands.map(brand => (
+                  <SelectItem key={brand.id} value={brand.id} className="hover:bg-blue-100 focus:bg-blue-100 cursor-pointer text-right transition-colors w-full min-w-0 text-base rounded-md px-3 py-2 font-medium aria-selected:bg-blue-50 aria-selected:text-blue-700">
+                    {brand.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
+        </div>
       </div>
       <div>
         <label className="block mb-1">رابط الصورة (أو ارفع صورة)</label>
@@ -135,10 +149,8 @@ export default function ProductForm({ initialData, onSubmit, loading, errors, se
       </div>
       <div className="flex gap-4 items-center">
         <label className="flex items-center gap-2">
-          <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} /> نشط
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" name="in_stock" checked={form.in_stock} onChange={handleChange} /> متوفر
+          <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+          <span className="text-gray-700 text-sm">نشط</span>
         </label>
       </div>
       <button type="submit" className="w-full bg-[#005580] text-white py-2 rounded hover:bg-[#004466]" disabled={loading}>
