@@ -182,3 +182,18 @@ export const getCategoriesDirect = async () => {
     throw err;
   }
 };
+
+/**
+ * Send a reaction (like/dislike/neutral) for a product
+ * @param {string} productId
+ * @param {string} reactionType - 'like' | 'dislike' | 'neutral'
+ * @returns {Promise}
+ */
+export async function reactToProduct(productId, reactionType) {
+  return apiService.request(`/products/${productId}/reaction/`, {
+    method: 'POST',
+    body: JSON.stringify({ reaction_type: reactionType }),
+    headers: { 'Content-Type': 'application/json' },
+    withAuth: true,
+  });
+}

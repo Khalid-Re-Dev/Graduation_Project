@@ -25,6 +25,10 @@ function ProductDetailPage() {
   useEffect(() => {
     if (id) {
       dispatch(fetchProductById(id))
+      // تسجيل المشاهدة عند فتح الصفحة
+      import("../services/product.service").then(({ reactToProduct }) => {
+        reactToProduct(id, "neutral");
+      });
     }
   }, [dispatch, id])
 
@@ -214,6 +218,32 @@ function ProductDetailPage() {
                       ADD TO COMPARE
                     </>
                   )}
+                </button>
+              </div>
+
+              {/* Like/Dislike Buttons */}
+              <div className="flex gap-4 mb-4">
+                <button
+                  onClick={async () => {
+                    try {
+                      await import("../services/product.service").then(({ reactToProduct }) => reactToProduct(currentProduct.id, "like"));
+                      window.location.reload();
+                    } catch (e) { alert("فشل تسجيل الإعجاب"); }
+                  }}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                >
+                  👍 إعجاب
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await import("../services/product.service").then(({ reactToProduct }) => reactToProduct(currentProduct.id, "dislike"));
+                      window.location.reload();
+                    } catch (e) { alert("فشل تسجيل عدم الإعجاب"); }
+                  }}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                >
+                  👎 عدم إعجاب
                 </button>
               </div>
             </div>
