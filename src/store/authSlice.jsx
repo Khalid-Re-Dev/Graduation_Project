@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { login as loginService, register as registerService, logout as logoutService, getUser } from "../services/auth.service"
+import { login as loginService, register as registerService, logout as logoutService, getUser, getToken } from "../services/auth.service"
 
 // Async thunk for user login
 export const login = createAsyncThunk("auth/login", async (credentials, { rejectWithValue }) => {
@@ -63,13 +63,14 @@ export const checkAuth = createAsyncThunk("auth/check", async (_, { rejectWithVa
 
 // عند بدء التطبيق أو تحديث الصفحة، تحقق من وجود بيانات مستخدم محفوظة في localStorage أو sessionStorage
 const initialUser = getUser();
+const initialToken = getToken();
 
 const authSlice = createSlice({
   name: "auth",
   initialState: {
     user: initialUser,
-    token: null,
-    isAuthenticated: !!initialUser,
+    token: initialToken,
+    isAuthenticated: !!(initialUser && initialToken),
     loading: false,
     error: null,
     successMessage: null, // Add success message for registration

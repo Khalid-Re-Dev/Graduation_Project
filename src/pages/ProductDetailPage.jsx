@@ -1,43 +1,150 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchProductById } from "../store/productSlice"
 import { toggleFavorite } from "../store/favoritesSlice"
 import { addCompare, removeCompare } from "../store/compareSlice"
-import { Heart, Minus, Plus, Monitor, Cpu, MemoryStick, BarChart2, Check } from "lucide-react"
+import { Heart, BarChart2, Check } from "lucide-react"
 import ProductCard from "../components/ProductCard"
+import { toast } from "react-toastify"
+import { apiService } from "../services/api.service"
 
-// Product detail page showing full product information
+// Helper to validate UUID (v4)
+function isValidUUID(uuid) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)
+}
+
 function ProductDetailPage() {
   const { id } = useParams()
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { currentProduct, relatedProducts, loading, error } = useSelector((state) => state.products)
   const compareItems = useSelector((state) => state.compare.items)
   const favoriteItems = useSelector((state) => state.favorites.items)
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
   const [activeImage, setActiveImage] = useState(0)
   const [activeTab, setActiveTab] = useState("description")
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [localError, setLocalError] = useState(null)
 
-  const isInCompare = compareItems.some((item) => item.id === Number(id))
-  const isInFavorites = favoriteItems.some((item) => item.id === Number(id))
-
+  // Validate UUID and block if invalid
   useEffect(() => {
-    if (id) {
-      dispatch(fetchProductById(id))
+    if (!id || !isValidUUID(id)) {
+      setLocalError("Invalid or missing product ID.")
     }
-  }, [dispatch, id])
+  }, [id])
+
+  // Block unauthenticated users
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+    } else {
+      setShowLoginModal(false)
+    }
+  }, [isAuthenticated])
+
+  // Fetch product details for authenticated users only
+  useEffect(() => {
+    if (!id || !isValidUUID(id) || !isAuthenticated) return
+    dispatch(fetchProductById(id))
+  }, [dispatch, id, isAuthenticated])
+
+  // Increment view count for authenticated users
+  useEffect(() => {
+    const incrementView = async () => {
+      if (isAuthenticated && id && isValidUUID(id)) {
+        try {
+          // If your backend uses a different endpoint, adjust here
+          await apiService.post(`/products/${id}/track-view/`, {}, { withAuth: true })
+        } catch (err) {
+          toast.error("Failed to register product view.")
+        }
+      }
+    }
+    incrementView()
+  }, [id, isAuthenticated])
+
+  // Error handling for product fetch
+  useEffect(() => {
+    if (error) {
+      toast.error(typeof error === "string" ? error : "Failed to load product details.")
+    }
+  }, [error])
+
+  // Modal close handler
+  const handleCloseModal = () => setShowLoginModal(false)
+  // Login redirect
+  const handleLogin = () => {
+    setShowLoginModal(false)
+    navigate("/login")
+  }
+
+  // UI: Modal for unauthenticated users
+  const LoginModal = () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        <h2 className="text-xl font-bold mb-4">Please log in to view product details</h2>
+        <p className="mb-6 text-gray-600">You must be logged in to access product details. Please log in to continue.</p>
+        <button
+          onClick={handleLogin}
+          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Login
+        </button>
+        <button
+          onClick={handleCloseModal}
+          className="ml-4 px-6 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+
+  // UI: Modal for local errors (invalid UUID, etc)
+  const ErrorModal = ({ message }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        <h2 className="text-xl font-bold mb-4 text-red-600">Error</h2>
+        <p className="mb-6 text-gray-600">{message}</p>
+        <button
+          onClick={() => navigate("/products")}
+          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Back to Products
+        </button>
+      </div>
+    </div>
+  )
+
+  // Compare/favorite logic (use UUIDs)
+  const isInCompare = compareItems.some((item) => item.id === id)
+  const isInFavorites = favoriteItems.some((item) => item.id === id)
 
   const handleToggleFavorite = () => {
-    dispatch(toggleFavorite(Number(id)))
+    dispatch(toggleFavorite(id))
   }
 
   const handleToggleCompare = () => {
     if (isInCompare) {
-      dispatch(removeCompare(Number(id)))
+      dispatch(removeCompare(id))
     } else if (currentProduct) {
       dispatch(addCompare(currentProduct))
     }
+  }
+
+  // Render modals if needed
+  if (localError) return <ErrorModal message={localError} />
+  if (showLoginModal) return <LoginModal />
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-lg text-gray-500">Loading product details...</div>
+      </div>
+    )
   }
 
   if (error || !currentProduct) {
@@ -113,10 +220,14 @@ function ProductDetailPage() {
             <div className="md:w-1/2">
               <h1 className="text-2xl font-bold mb-2">{currentProduct.name}</h1>
               <p className="text-gray-600 mb-2">
-                التصنيف: {currentProduct.category_name || currentProduct.category || "بدون تصنيف"}
+                التصنيف: {typeof currentProduct.category === 'object'
+                  ? currentProduct.category?.name
+                  : currentProduct.category_name || currentProduct.category || "بدون تصنيف"}
               </p>
               <p className="text-gray-600 mb-4">
-                الماركة: {currentProduct.brand_name || currentProduct.brand || "بدون ماركة"}
+                الماركة: {typeof currentProduct.brand === 'object'
+                  ? currentProduct.brand?.name
+                  : currentProduct.brand_name || currentProduct.brand || "بدون ماركة"}
               </p>
 
               {/* Rating */}
@@ -165,16 +276,7 @@ function ProductDetailPage() {
                 ) : (
                   <>
                     <div className="flex items-center mb-2">
-                      <Monitor className="w-5 h-5 mr-2 text-gray-600" />
-                      <span>Display: {currentProduct.display || "High-quality display"}</span>
-                    </div>
-                    <div className="flex items-center mb-2">
-                      <Cpu className="w-5 h-5 mr-2 text-gray-600" />
-                      <span>Processor: {currentProduct.processor || "Latest processor"}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <MemoryStick className="w-5 h-5 mr-2 text-gray-600" />
-                      <span>Memory: {currentProduct.memory || "Sufficient memory"}</span>
+                      {/* ...fallback spec UI... */}
                     </div>
                   </>
                 )}
@@ -286,7 +388,17 @@ function ProductDetailPage() {
 
             {activeTab === "reviews" && (
               <div className="space-y-6 text-gray-500 text-center text-sm">
-                No reviews available.
+                {Array.isArray(currentProduct.reviews) && currentProduct.reviews.length > 0 ? (
+                  currentProduct.reviews.map((review) => (
+                    <div key={review.id} className="border-b pb-4 mb-4 text-left">
+                      <div className="font-semibold text-gray-800 mb-1">{review.user_name || review.user || "مستخدم مجهول"}</div>
+                      <div className="mb-1">{review.text || review.comment || "لا يوجد نص للمراجعة."}</div>
+                      <div className="text-yellow-500">{`التقييم: ${review.rating || 0}/5`}</div>
+                    </div>
+                  ))
+                ) : (
+                  "لا توجد مراجعات متاحة لهذا المنتج."
+                )}
               </div>
             )}
           </div>

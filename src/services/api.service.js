@@ -117,6 +117,13 @@ class ApiService {
             // Only clear tokens if refresh token exists
             if (typeof localStorage !== 'undefined' && localStorage.getItem('refresh_token')) {
               clearTokens();
+              toast.error('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجددًا.');
+              // إعادة التوجيه إلى صفحة تسجيل الدخول إذا لم يكن المستخدم فيها بالفعل
+              if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                setTimeout(() => {
+                  window.location.href = '/login';
+                }, 1200); // تأخير بسيط لإظهار الرسالة
+              }
             }
             throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
           case 403:
