@@ -35,7 +35,7 @@ function Navbar() {
           <div className="w-14 h-14 bg-transparent flex items-center justify-center">
             <img src="/best-in-click-logo.png" alt="Logo" className="w-14 h-14 object-contain drop-shadow-sm" loading="eager" />
           </div>
-          <span className="text-xl font-extrabold text-gray-900 tracking-tight hidden sm:inline-block">Best On Click</span>
+          <span className="text-xl font-extrabold text-gray-900 tracking-tight whitespace-nowrap hidden sm:inline-block">Best On Click</span>
         </Link>
 
         {/* Desktop Navigation */}

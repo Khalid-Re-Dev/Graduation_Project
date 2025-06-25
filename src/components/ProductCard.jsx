@@ -109,19 +109,19 @@ function ProductCard({ product }) {
         <h3 className="text-base font-semibold text-gray-900 text-center leading-snug tracking-tight mb-2 line-clamp-2 min-h-[1.8rem]">{safeProduct.name || 'Unnamed Product'}</h3>
         {/* Shop row with likes/dislikes */}
         <div className="flex items-center justify-between w-full px-1 mb-2 relative min-h-[32px]">
-          {/* Like icon (left) */}
-          <div className={`flex items-center transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'} pointer-events-none`}> 
-            <ThumbsUp size={20} className="text-green-500 mr-1" />
-            <span className="text-xs text-gray-700 font-medium">{safeProduct.likes}</span>
+          {/* Dislike icon (right) */}
+          <div className={`flex items-center transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'} pointer-events-none`}>
+            <span className="text-xs text-gray-700 font-medium">{safeProduct.dislikes}</span>
+            <ThumbsDown size={20} className="text-red-500 ml-1" />
           </div>
           {/* Shop name (center) */}
           <div className="flex-1 flex justify-center">
             <span className="text-xs sm:text-sm text-gray-500 font-medium text-center line-clamp-1">{safeProduct.shop_name}</span>
           </div>
-          {/* Dislike icon (right) */}
+          {/* Like icon (left) */}
           <div className={`flex items-center transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'} pointer-events-none`}>
-            <span className="text-xs text-gray-700 font-medium">{safeProduct.dislikes}</span>
-            <ThumbsDown size={20} className="text-red-500 ml-1" />
+            <ThumbsUp size={20} className="text-green-500 mr-1" />
+            <span className="text-xs text-gray-700 font-medium">{safeProduct.likes}</span>
           </div>
         </div>
         {/* Rating and price row */}
