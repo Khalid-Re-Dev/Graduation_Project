@@ -34,7 +34,7 @@ export const API_ENDPOINTS = {
     POPULAR: '/products/popular/',
     NEW: '/products/new/',
     SEARCH: '/products/search/',
-    CATEGORIES: 'https://binc-b-1.onrender.com/categories/',
+    CATEGORIES: '/categories/',
   },
   
   // User endpoints
@@ -51,7 +51,7 @@ export const API_ENDPOINTS = {
 };
 
 // Request timeout in milliseconds
-export const REQUEST_TIMEOUT = 30000;
+export const REQUEST_TIMEOUT = 60000;
 
 // Default headers for API requests
 export const DEFAULT_HEADERS = {
