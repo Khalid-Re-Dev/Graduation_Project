@@ -175,7 +175,6 @@ export const getNewProducts = (limit) => productService.getNewProducts(limit);
 export const searchProducts = (query, params) => productService.searchProducts(query, params);
 export const getCategories = () => productService.getCategories();
 export const getProductReviews = (productId) => productService.getProductReviews(productId);
-<<<<<<< HEAD
 
 // طلب خاص للتصنيفات مع API_BASE_URL ثابت
 export const getCategoriesDirect = async () => {
@@ -208,6 +207,5 @@ export async function reactToProduct(productId, reactionType) {
     withAuth: true,
   });
 }
-=======
+
 export const addProductReview = (productId, rating) => productService.addProductReview(productId, rating);
->>>>>>> 0e2d3739ee4974815accb30856f498f2d1cd9947
