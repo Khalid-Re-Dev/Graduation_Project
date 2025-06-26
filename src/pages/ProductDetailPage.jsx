@@ -80,6 +80,7 @@ function ProductDetailPage() {
     }
   }
 
+<<<<<<< HEAD
   // إضافة مراجعة جديدة
   const handleAddReview = async (e) => {
     e.preventDefault();
@@ -103,6 +104,30 @@ function ProductDetailPage() {
       setReviewLoading(false);
     }
   };
+=======
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="md:w-1/2">
+              <div className="bg-gray-300 h-80 w-full rounded-lg"></div>
+            </div>
+            <div className="md:w-1/2">
+              <div className="h-8 bg-gray-300 rounded w-3/4 mb-4"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/2 mb-6"></div>
+              <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-3/4 mb-6"></div>
+              <div className="h-10 bg-gray-300 rounded w-1/3 mb-4"></div>
+              <div className="h-12 bg-gray-300 rounded w-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+>>>>>>> 0e2d3739ee4974815accb30856f498f2d1cd9947
 
   if (error || !currentProduct) {
     return (
@@ -177,12 +202,16 @@ function ProductDetailPage() {
             {/* Product Info */}
             <div className="md:w-1/2">
               <h1 className="text-2xl font-bold mb-2">{currentProduct.name}</h1>
+<<<<<<< HEAD
               <p className="text-gray-600 mb-2">
                 التصنيف: {currentProduct.category?.name || currentProduct.category_name || (typeof currentProduct.category === 'string' ? currentProduct.category : "بدون تصنيف")}
               </p>
               <p className="text-gray-600 mb-4">
                 الماركة: {currentProduct.brand?.name || currentProduct.brand_name || (typeof currentProduct.brand === 'string' ? currentProduct.brand : "بدون ماركة")}
               </p>
+=======
+              <p className="text-gray-600 mb-4">{currentProduct.category}</p>
+>>>>>>> 0e2d3739ee4974815accb30856f498f2d1cd9947
 
               {/* Rating */}
               {currentProduct.reviews && currentProduct.reviews.length > 0 && (
@@ -379,6 +408,7 @@ function ProductDetailPage() {
             )}
 
             {activeTab === "reviews" && (
+<<<<<<< HEAD
               <div className="space-y-6 text-gray-500 text-center text-sm">
                 {/* نموذج إضافة مراجعة */}
                 <form onSubmit={handleAddReview} className="mb-6 bg-gray-50 p-4 rounded-lg flex flex-col items-center gap-2">
@@ -421,6 +451,23 @@ function ProductDetailPage() {
                       </div>
                     ))}
                   </div>
+=======
+              <div className="space-y-6">
+                {/* تم حذف المراجعات التفاعلية. عرض التقييم فقط */}
+                {currentProduct.reviews && currentProduct.reviews.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-600 font-bold text-lg">
+                      {(
+                        currentProduct.reviews.reduce((sum, review) => sum + review.rating, 0) /
+                        currentProduct.reviews.length
+                      ).toFixed(1)}
+                    </span>
+                    <span className="text-gray-600">/ 5.0</span>
+                    <span className="text-gray-500">({currentProduct.reviews.length} تقييم)</span>
+                  </div>
+                ) : (
+                  <span className="text-gray-500">No reviews available for this product.</span>
+>>>>>>> 0e2d3739ee4974815accb30856f498f2d1cd9947
                 )}
               </div>
             )}

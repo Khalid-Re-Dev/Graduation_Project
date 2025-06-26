@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux"
 import CompareTable from "../components/CompareTable"
 import ProductCard from "../components/ProductCard"
 import { Search, Filter } from "lucide-react"
-import { fetchCompare, compareProducts } from "../store/compareSlice"
+import { fetchCompare } from "../store/compareSlice"
 
 // Compare page for product comparison
 function ComparePage() {
@@ -15,9 +15,6 @@ function ComparePage() {
 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
-  const [comparisonResult, setComparisonResult] = useState(null)
-  const [comparisonLoading, setComparisonLoading] = useState(false)
-  const [comparisonError, setComparisonError] = useState(null)
 
   // Get all unique categories (as objects)
   const categories = [
@@ -58,21 +55,6 @@ function ComparePage() {
   // Check if product is already in compare
   const isInCompare = (productId) => {
     return compareItems.some((item) => item.id === productId)
-  }
-
-  const handleCompare = async () => {
-    setComparisonLoading(true)
-    setComparisonError(null)
-    setComparisonResult(null)
-    try {
-      const productIds = compareItems.map((item) => item.id)
-      const res = await dispatch(compareProducts(productIds)).unwrap()
-      setComparisonResult(res)
-    } catch (err) {
-      setComparisonError(err.message || "Failed to compare products")
-    } finally {
-      setComparisonLoading(false)
-    }
   }
 
   useEffect(() => {
@@ -149,24 +131,6 @@ function ComparePage() {
             ))}
           </div>
         )}
-
-        {/* Compare Button */}
-        <div className="mt-4">
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
-            onClick={handleCompare}
-            disabled={compareItems.length < 2 || comparisonLoading}
-          >
-            {comparisonLoading ? "Comparing..." : "قارن المنتجات"}
-          </button>
-          {comparisonError && <div className="text-red-600 mt-2">{comparisonError}</div>}
-          {comparisonResult && (
-            <div className="bg-green-50 border border-green-200 rounded p-4 mt-4">
-              <h3 className="font-bold mb-2">نتيجة المقارنة من الخادم:</h3>
-              <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(comparisonResult, null, 2)}</pre>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )

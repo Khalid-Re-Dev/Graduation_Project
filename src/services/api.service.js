@@ -117,6 +117,13 @@ class ApiService {
             // Only clear tokens if refresh token exists
             if (typeof localStorage !== 'undefined' && localStorage.getItem('refresh_token')) {
               clearTokens();
+              toast.error('Session expired. Please login again.');
+              // Redirect to login page if not already there
+              if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                setTimeout(() => {
+                  window.location.href = '/login';
+                }, 1200);
+              }
             }
             throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
           case 403:

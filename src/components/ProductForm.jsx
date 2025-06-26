@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../components/ui/select";
-import { getCategoriesDirect } from "../services/product.service";
+import { getCategories } from "../services/product.service";
 import { getOwnerBrands } from "../services/owner.service";
 import { toast } from "react-toastify";
 
@@ -11,7 +11,7 @@ export default function ProductForm({ initialData, onSubmit, loading, errors, se
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const cats = await getCategoriesDirect();
+        const cats = await getCategories();
         let categoryList = Array.isArray(cats) ? cats : cats.results || [];
         categoryList = categoryList.map(cat => ({ ...cat, id: String(cat.id) }));
         setCategories(categoryList);

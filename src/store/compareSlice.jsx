@@ -44,21 +44,6 @@ export const removeCompare = createAsyncThunk(
   }
 )
 
-// Async thunk: مقارنة المنتجات عبر API
-export const compareProducts = createAsyncThunk(
-  "compare/compareProducts",
-  async (productIds, { rejectWithValue }) => {
-    try {
-      // إرسال قائمة المنتجات إلى endpoint المقارنة
-      // POST /api/comparison/compare/ { product_ids: [...] }
-      const res = await apiService.post("/comparison/compare/", { product_ids: productIds });
-      return res;
-    } catch (error) {
-      return rejectWithValue(error.message || "Failed to compare products")
-    }
-  }
-)
-
 const compareSlice = createSlice({
   name: "compare",
   initialState: {
@@ -113,19 +98,6 @@ const compareSlice = createSlice({
         state.items = state.items.filter((item) => item.id !== action.payload)
       })
       .addCase(removeCompare.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.payload
-      })
-      .addCase(compareProducts.pending, (state) => {
-        state.loading = true
-        state.error = null
-      })
-      .addCase(compareProducts.fulfilled, (state, action) => {
-        state.loading = false
-        // هنا يمكنك تحديث الحالة بنتائج المقارنة إذا لزم الأمر
-        // مثلاً، يمكن تخزين النتائج في حالة جديدة أو تحديث الحالة الحالية
-      })
-      .addCase(compareProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })

@@ -21,6 +21,9 @@ function HomePage() {
   const [recommendations, setRecommendations] = useState([])
   const [recommendationsLoading, setRecommendationsLoading] = useState(true)
   const [recommendationsError, setRecommendationsError] = useState(null)
+  const [promotions, setPromotions] = useState([])
+  const [promotionsLoading, setPromotionsLoading] = useState(true)
+  const [promotionsError, setPromotionsError] = useState(null)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
 
   // Helper function to check if an object is a valid product
@@ -269,7 +272,7 @@ function HomePage() {
                     <div key={index} className="min-w-[250px] bg-white rounded-lg shadow-md p-4 animate-pulse">
                       <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
                       <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                     </div>
                   ))
               : // Actual products
@@ -324,7 +327,7 @@ function HomePage() {
                     <div key={index} className="min-w-[250px] bg-white rounded-lg shadow-md p-4 animate-pulse">
                       <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
                       <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                     </div>
                   ))
               : // Actual products
@@ -424,6 +427,35 @@ function HomePage() {
         </div>
       </section>
 
+      {/* Promotions Section */}
+      {promotionsLoading ? (
+        <div className="w-full flex justify-center items-center py-6">
+          <span className="text-gray-500">Loading promotions...</span>
+        </div>
+      ) : promotionsError ? (
+        <div className="w-full flex justify-center items-center py-6">
+          <span className="text-red-500">{promotionsError}</span>
+        </div>
+      ) : promotions.length > 0 ? (
+        <section className="py-6 bg-gradient-to-r from-[#e0f7fa] to-[#fffde4]">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
+              {promotions.slice(0, 3).map((promo) => (
+                <div key={promo.id} className="flex-1 bg-white rounded-lg shadow-lg p-6 m-2 border border-[#b2ebf2] relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-[#00bcd4] text-white px-3 py-1 rounded-bl-lg text-xs font-bold">Limited Time</div>
+                  <h3 className="text-xl font-bold text-[#005580] mb-2">{promo.name}</h3>
+                  <p className="text-gray-700 mb-2">{promo.description}</p>
+                  {promo.start_date && promo.end_date && (
+                    <div className="text-xs text-gray-500 mb-2">{new Date(promo.start_date).toLocaleDateString()} - {new Date(promo.end_date).toLocaleDateString()}</div>
+                  )}
+                  {promo.is_active && <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Active</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {/* All Products Preview Section */}
       <section className="py-8 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -442,7 +474,7 @@ function HomePage() {
                     <div key={index} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
                       <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
                       <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                     </div>
                   ))
               : // Actual products - mix of new and popular

@@ -1,4 +1,4 @@
-import { API_ENDPOINTS, API_BASE_URL } from '../config/api.config';
+import { API_ENDPOINTS } from '../config/api.config';
 import { apiService } from './api.service';
 
 /**
@@ -21,8 +21,8 @@ class ProductService {
       ? `${API_ENDPOINTS.PRODUCTS.LIST}?${queryString}`
       : API_ENDPOINTS.PRODUCTS.LIST;
 
-    // استخدم التوكن دائماً مع المنتجات العامة
-    const apiData = await apiService.get(url, { withAuth: true });
+    // Only use API, no mock fallback
+    const apiData = await apiService.get(url, { withAuth: false });
 
     // Log the raw API response for debugging
     console.log('Raw API response:', typeof apiData, apiData);
@@ -140,16 +140,26 @@ class ProductService {
    * @returns {Promise} - Categories data
    */
   async getCategories() {
-    // استخدم المسار المطلق مباشرة لجلب التصنيفات
-    return await apiService.get(API_ENDPOINTS.PRODUCTS.CATEGORIES, { absolute: true });
+    return await apiService.get(API_ENDPOINTS.PRODUCTS.CATEGORIES);
   }
 
   /**
-   * Get product reviews (المسار الصحيح)
+   * Get product reviews
+   * @param {string} productId - Product ID
+   * @returns {Promise} - Array of reviews
    */
   async getProductReviews(productId) {
-    // جلب التقييمات: /api/products/<product_id>/reviews/
     return await apiService.get(`/products/${productId}/reviews/`);
+  }
+
+  /**
+   * Add a review for a product
+   * @param {string} productId - Product ID
+   * @param {number} rating - Rating value (1-5)
+   * @returns {Promise}
+   */
+  async addProductReview(productId, rating) {
+    return await apiService.post(`/products/${productId}/reviews/create/`, { rating });
   }
 }
 
@@ -165,6 +175,7 @@ export const getNewProducts = (limit) => productService.getNewProducts(limit);
 export const searchProducts = (query, params) => productService.searchProducts(query, params);
 export const getCategories = () => productService.getCategories();
 export const getProductReviews = (productId) => productService.getProductReviews(productId);
+<<<<<<< HEAD
 
 // طلب خاص للتصنيفات مع API_BASE_URL ثابت
 export const getCategoriesDirect = async () => {
@@ -197,3 +208,6 @@ export async function reactToProduct(productId, reactionType) {
     withAuth: true,
   });
 }
+=======
+export const addProductReview = (productId, rating) => productService.addProductReview(productId, rating);
+>>>>>>> 0e2d3739ee4974815accb30856f498f2d1cd9947
