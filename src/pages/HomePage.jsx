@@ -122,16 +122,13 @@ function HomePage() {
           setRecommendations([]);
           return;
         }
-        let recs = [
-          ...(Array.isArray(data.preferred) ? data.preferred : []),
-          ...(Array.isArray(data.liked) ? data.liked : []),
-          ...(Array.isArray(data.new) ? data.new : []),
-          ...(Array.isArray(data.popular) ? data.popular : [])
-        ];
-        // Deduplicate by id
-        const unique = recs.filter((item, idx, arr) => item && item.id && arr.findIndex(p => p.id === item.id) === idx)
-        setRecommendations(unique.slice(0, 8))
-        setRecommendationsError(null)
+        // استخدم فقط results إذا كانت موجودة
+        if (Array.isArray(data.results)) {
+          setRecommendations(data.results);
+        } else {
+          setRecommendations([]);
+        }
+        setRecommendationsError(null);
       })
       .catch((err) => {
         console.error("[Recommendations] Fetch error:", err);
@@ -397,17 +394,11 @@ function HomePage() {
                   setRecommendationsError(null)
                   fetchRecommendations()
                     .then((data) => {
-                      let recs = []
-                      if (data && typeof data === 'object') {
-                        recs = [
-                          ...(data.preferred || []),
-                          ...(data.liked || []),
-                          ...(data.new || []),
-                          ...(data.popular || [])
-                        ]
+                      if (Array.isArray(data.results)) {
+                        setRecommendations(data.results);
+                      } else {
+                        setRecommendations([]);
                       }
-                      const unique = recs.filter((item, idx, arr) => item && item.id && arr.findIndex(p => p.id === item.id) === idx)
-                      setRecommendations(unique.slice(0, 8))
                     })
                     .catch(() => setRecommendationsError("Could not load recommendations."))
                     .finally(() => setRecommendationsLoading(false))
