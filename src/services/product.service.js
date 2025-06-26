@@ -285,4 +285,37 @@ export const getNewProducts = (limit) => productService.getNewProducts(limit);
 export const searchProducts = (query, params) => productService.searchProducts(query, params);
 export const getCategories = () => productService.getCategories();
 export const getProductReviews = (productId) => productService.getProductReviews(productId);
+
+// طلب خاص للتصنيفات مع API_BASE_URL ثابت
+export const getCategoriesDirect = async () => {
+  const url = `${API_BASE_URL.replace(/\/$/, '')}/categories/`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('فشل في جلب التصنيفات');
+    return await response.json();
+  } catch (err) {
+    throw err;
+  }
+};
+
+/**
+ * Send a reaction (like/dislike/neutral) for a product
+ * @param {string} productId
+ * @param {string} reactionType - 'like' | 'dislike' | 'neutral'
+ * @returns {Promise}
+ */
+export async function reactToProduct(productId, reactionType) {
+  return apiService.request(`/products/${productId}/reaction/`, {
+    method: 'POST',
+    body: JSON.stringify({ reaction_type: reactionType }),
+    headers: { 'Content-Type': 'application/json' },
+    withAuth: true,
+  });
+}
+
 export const addProductReview = (productId, rating) => productService.addProductReview(productId, rating);

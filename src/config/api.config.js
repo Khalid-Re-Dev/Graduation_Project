@@ -34,11 +34,15 @@ export const API_ENDPOINTS = {
     POPULAR: '/products/popular/',
     NEW: '/products/new/',
     SEARCH: '/products/search/',
+<<<<<<< HEAD
     CATEGORIES: '/categories/',
     REACTIONS: {
       TOGGLE: (id) => `/products/${id}/reaction/`,
       GET_USER_REACTION: (id) => `/products/${id}/reaction/`,
     },
+=======
+    CATEGORIES: '/products/categories/',
+>>>>>>> 4896dde5262c4b71df7c49a42dd5043f51aa31ae
   },
   
   // User endpoints

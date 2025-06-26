@@ -92,6 +92,7 @@ function HomePage() {
     loadProducts();
   }, [dispatch, dataFetched]);
 
+<<<<<<< HEAD
   // Helper function to render product grid
   const renderProductGrid = useMemo(() => (productList, loading, error, emptyMessage) => {
     if (loading) {
@@ -126,6 +127,39 @@ function HomePage() {
       </div>
     );
   }, [isValidProduct]);
+=======
+  useEffect(() => {
+    setRecommendationsLoading(true)
+    setRecommendationsError(null)
+    fetchRecommendations()
+      .then((data) => {
+        console.log("[Recommendations] Raw API response:", data);
+        if (data && data.error && data.error.toLowerCase().includes("unauthorized")) {
+          setRecommendationsError("You must be logged in to see recommendations.");
+          setRecommendations([]);
+          return;
+        }
+        if (!data || typeof data !== 'object') {
+          setRecommendationsError("Invalid recommendations data from server.");
+          setRecommendations([]);
+          return;
+        }
+        // استخدم فقط results إذا كانت موجودة
+        if (Array.isArray(data.results)) {
+          setRecommendations(data.results);
+        } else {
+          setRecommendations([]);
+        }
+        setRecommendationsError(null);
+      })
+      .catch((err) => {
+        console.error("[Recommendations] Fetch error:", err);
+        setRecommendationsError("Could not load recommendations. Please check your login or backend.")
+        setRecommendations([])
+      })
+      .finally(() => setRecommendationsLoading(false))
+  }, [])
+>>>>>>> 4896dde5262c4b71df7c49a42dd5043f51aa31ae
 
   // Show loading state
   if (pageLoading) {
@@ -153,9 +187,62 @@ function HomePage() {
     )
   }
 
+<<<<<<< HEAD
+=======
+  // الزائر: فقط جميع المنتجات + رسالة وزر تسجيل الدخول
+  if (!isAuthenticated) {
+    return (
+      <div>
+        <HeroSection />
+        <section className="py-8 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Browse By Category</h2>
+            </div>
+            <CategorySection />
+          </div>
+        </section>
+        <section className="py-8 bg-blue-50 border-b border-blue-100">
+          <div className="container mx-auto px-4 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-blue-900 mb-2">Sign in to unlock more features</h2>
+            <p className="text-blue-800 mb-4 max-w-xl">
+              To view <span className="font-semibold">popular</span>, <span className="font-semibold">new</span>, and <span className="font-semibold">recommended</span> products, please <Link to="/login" className="text-blue-700 underline hover:text-blue-900">log in</Link> or <Link to="/signup" className="text-blue-700 underline hover:text-blue-900">create an account</Link>.<br/>
+              As a guest, you can browse all available products below.
+            </p>
+            <Link
+              to="/login"
+              className="inline-block px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors font-bold text-lg"
+            >
+              Log In
+            </Link>
+          </div>
+        </section>
+        {/* All Products Section (vertical grid, like AllProductsPage) */}
+        <section className="py-8 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">All Products</h2>
+              <Link to="/products" className="text-[#005580] hover:underline flex items-center">
+                View All
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {allProducts.filter(isValidProduct).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  // المستخدم المسجل دخوله: جميع الأقسام
+>>>>>>> 4896dde5262c4b71df7c49a42dd5043f51aa31ae
   return (
     <div className="min-h-screen bg-gray-50">
       <HeroSection />
+<<<<<<< HEAD
       <CategorySection />
       <div className="container mx-auto px-4 py-8">
         {/* All Products Section */}
@@ -166,6 +253,196 @@ function HomePage() {
             loading,
             error,
             'No products available. Please check back later.'
+=======
+
+      {/* Categories Section */}
+      <section className="py-8 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Browse By Category</h2>
+            <div className="flex space-x-2">
+              <button className="p-2 border rounded-full hover:bg-gray-100">
+                <ArrowRight className="rotate-180" size={16} />
+              </button>
+              <button className="p-2 border rounded-full hover:bg-gray-100">
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+          <CategorySection />
+        </div>
+      </section>
+
+      {/* New Products Section */}
+      <section className="py-8 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">New Arrivals</h2>
+            <Link to="/new-products" className="text-[#005580] hover:underline flex items-center">
+              View All <ArrowRight size={16} className="ml-1" />
+            </Link>
+          </div>
+          <div className="scroll-container">
+            {loading
+              ? // Loading skeleton
+                Array(4)
+                  .fill()
+                  .map((_, index) => (
+                    <div key={index} className="min-w-[250px] bg-white rounded-lg shadow-md p-4 animate-pulse">
+                      <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
+                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  ))
+              : // Actual products
+                (newProducts && newProducts.length > 0) ? (
+                  // We have new products, display them
+                  newProducts
+                    .filter(isValidProduct)
+                    .slice(0, 8)
+                    .map((product) => (
+                      <div key={product.id || Math.random()} className="min-w-[250px]">
+                        <ProductCard product={product} />
+                      </div>
+                    ))
+                ) : loading ? (
+                  // Still loading, show placeholders
+                  Array(4).fill({ name: "Loading...", price: "-", image: "/placeholder.svg" }).map((product, index) => (
+                    <div key={`loading-${index}`} className="min-w-[250px]">
+                      <ProductCard product={product} />
+                    </div>
+                  ))
+                ) : (
+                  // No products and not loading, show message with retry button
+                  <div className="w-full p-8 bg-white rounded-lg shadow-sm text-center">
+                    <p className="text-lg mb-4">Unable to load new products at this time.</p>
+                    <button
+                      onClick={retryLoading}
+                      className="px-4 py-2 bg-[#005580] text-white rounded hover:bg-[#004466] transition-colors"
+                    >
+                      Retry Loading
+                    </button>
+                  </div>
+                )}
+          </div>
+        </div>
+      </section>
+
+      {/* Popular Products Section */}
+      <section className="py-8 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Popular Products</h2>
+            <Link to="/popular-products" className="text-[#005580] hover:underline flex items-center">
+              View All <ArrowRight size={16} className="ml-1" />
+            </Link>
+          </div>
+          <div className="scroll-container">
+            {loading
+              ? // Loading skeleton
+                Array(4)
+                  .fill()
+                  .map((_, index) => (
+                    <div key={index} className="min-w-[250px] bg-white rounded-lg shadow-md p-4 animate-pulse">
+                      <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
+                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  ))
+              : // Actual products
+                (popularProducts && popularProducts.length > 0) ? (
+                  // We have popular products, display them
+                  popularProducts
+                    .filter(isValidProduct)
+                    .slice(0, 8)
+                    .map((product) => (
+                      <div key={product.id || Math.random()} className="min-w-[250px]">
+                        <ProductCard product={product} />
+                      </div>
+                    ))
+                ) : loading ? (
+                  // Still loading, show placeholders
+                  Array(4).fill({ name: "Loading...", price: "-", image: "/placeholder.svg" }).map((product, index) => (
+                    <div key={`loading-${index}`} className="min-w-[250px]">
+                      <ProductCard product={product} />
+                    </div>
+                  ))
+                ) : (
+                  // No products and not loading, show message with retry button
+                  <div className="w-full p-8 bg-white rounded-lg shadow-sm text-center">
+                    <p className="text-lg mb-4">Unable to load popular products at this time.</p>
+                    <button
+                      onClick={retryLoading}
+                      className="px-4 py-2 bg-[#005580] text-white rounded hover:bg-[#004466] transition-colors"
+                    >
+                      Retry Loading
+                    </button>
+                  </div>
+                )}
+          </div>
+        </div>
+      </section>
+
+      {/* Recommended for You Section */}
+      <section className="bg-[#08597a] py-10 px-4">
+        <div className="container mx-auto">
+          <h2 className="text-center text-2xl font-bold text-white mb-6">Recommended for You</h2>
+          {recommendationsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array(4).fill().map((_, idx) => (
+                <div key={idx} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
+                  <div className="w-full h-48 bg-gray-300 rounded-md mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : recommendationsError && recommendationsError.toLowerCase().includes("login") ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+              <p className="text-lg mb-4 text-blue-900 font-semibold">You must be logged in to see your personalized recommendations.</p>
+              <Link
+                to="/login"
+                className="inline-block px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors font-bold text-lg"
+              >
+                Log In
+              </Link>
+            </div>
+          ) : recommendationsError ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+              <p className="text-lg mb-4 text-red-600">{recommendationsError}</p>
+              <button
+                onClick={() => {
+                  setRecommendationsLoading(true)
+                  setRecommendationsError(null)
+                  fetchRecommendations()
+                    .then((data) => {
+                      if (Array.isArray(data.results)) {
+                        setRecommendations(data.results);
+                      } else {
+                        setRecommendations([]);
+                      }
+                    })
+                    .catch(() => setRecommendationsError("Could not load recommendations."))
+                    .finally(() => setRecommendationsLoading(false))
+                }}
+                className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          ) : recommendations.length === 0 ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+              <p className="text-lg mb-4">No recommendations available at this time.</p>
+            </div>
+          ) : (
+            <div className="scroll-container">
+              {recommendations.map((product) => (
+                <div key={product.id} className="min-w-[250px]">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+>>>>>>> 4896dde5262c4b71df7c49a42dd5043f51aa31ae
           )}
         </section>
 
