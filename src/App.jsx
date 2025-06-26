@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react"
 import { useDispatch } from "react-redux"
 import { Routes, Route } from "react-router-dom"
-import { fetchAllProducts } from "./store/productSlice"
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+import { fetchProducts } from "./store/productSlice"
 import AuthProvider from "./components/AuthProvider"
 import ErrorBoundary from "./components/ErrorBoundary"
 import NotificationProvider from "./components/NotificationProvider"
+import ProtectedRoute from "./components/ProtectedRoute"
 
 // Layout and Pages
 import Layout from "./components/Layout"
@@ -32,71 +35,66 @@ function App() {
 
   // Load all products when the app starts
   useEffect(() => {
-    const loadProducts = async () => {
+    const initializeApp = async () => {
       try {
-        await dispatch(fetchAllProducts()).unwrap()
+        await dispatch(fetchProducts()).unwrap()
       } catch (error) {
-        console.error("Error loading products:", error)
+        console.error("Error initializing app:", error)
       } finally {
         setProductsLoaded(true)
       }
     }
 
-    loadProducts()
+    initializeApp()
   }, [dispatch])
 
-  // Function to reload products data
-  const reloadProducts = () => {
-    console.log("Reloading products data...")
-    dispatch(fetchAllProducts())
-  }
-
   return (
-    <NotificationProvider>
-      <ErrorBoundary
-        fallbackTitle="Application Error"
-        fallbackMessage="Sorry, something went wrong with the application. Please try again."
-        onRefresh={reloadProducts}
-      >
-        <AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <NotificationProvider>
           <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={
-                <ErrorBoundary
-                  fallbackTitle="Home Page Error"
-                  fallbackMessage="There was a problem loading the home page. This might be due to a data loading issue."
-                  onRefresh={reloadProducts}
-                >
-                  <HomePage />
-                </ErrorBoundary>
-              } />
-              <Route path="compare" element={<ComparePage />} />
-              <Route path="favorites" element={<FavoritesPage />} />
-              <Route path="new-products" element={<NewProductsPage />} />
-              <Route path="popular-products" element={<PopularProductsPage />} />
-              <Route path="products" element={
-                <ErrorBoundary
-                  fallbackTitle="Products Page Error"
-                  fallbackMessage="There was a problem loading the products page. This might be due to a data loading issue."
-                  onRefresh={reloadProducts}
-                >
-                  <AllProductsPage />
-                </ErrorBoundary>
-              } />
-              <Route path="products/:id" element={<ProductDetailPage />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="owner-dashboard" element={<OwnerDashboardPage />} />
-              <Route path="dashboard/add-product" element={<ProductUpsert />} />
-              <Route path="dashboard/edit-product/:productId" element={<ProductUpsert />} />
-              <Route path="login" element={<LoginPage />} />
-              <Route path="signup" element={<SignupPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="*" element={<NotFoundPage />} />
+            {/* Public routes */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/products" element={<AllProductsPage />} />
+              <Route path="/new" element={<NewProductsPage />} />
+              <Route path="/popular" element={<PopularProductsPage />} />
+              <Route path="/products/:id" element={<ProductDetailPage />} />
             </Route>
+
+            {/* Auth routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+
+            {/* Protected routes */}
+            <Route element={<Layout />}>
+              <Route path="/compare" element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
+              <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/dashboard/products/new" element={<ProtectedRoute><ProductUpsert /></ProtectedRoute>} />
+              <Route path="/dashboard/products/:id/edit" element={<ProtectedRoute><ProductUpsert /></ProtectedRoute>} />
+              <Route path="/owner/dashboard" element={<ProtectedRoute><OwnerDashboardPage /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            </Route>
+
+            {/* 404 route */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
-        </AuthProvider>
-      </ErrorBoundary>
-    </NotificationProvider>
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+          />
+        </NotificationProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
 

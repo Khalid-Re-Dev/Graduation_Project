@@ -3,6 +3,7 @@ import productReducer from "./productSlice"
 import authReducer from "./authSlice"
 import compareReducer from "./compareSlice"
 import favoritesReducer from "./favoritesSlice"
+import reactionsReducer from "./reactionsSlice"
 
 const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ const store = configureStore({
     auth: authReducer,
     compare: compareReducer,
     favorites: favoritesReducer,
+    reactions: reactionsReducer,
   },
 })
 

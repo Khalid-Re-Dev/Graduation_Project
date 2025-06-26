@@ -52,16 +52,20 @@ export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValu
 export const checkAuth = createAsyncThunk("auth/check", async (_, { rejectWithValue }) => {
   try {
     const user = getUser()
-    if (!user) {
+    const token = getToken()
+    
+    // Only consider authenticated if both user and token exist
+    if (!user || !token) {
       return null
     }
-    return { user }
+    
+    return { user, token }
   } catch (error) {
     return rejectWithValue(error.message || "Authentication check failed")
   }
 })
 
-// عند بدء التطبيق أو تحديث الصفحة، تحقق من وجود بيانات مستخدم محفوظة في localStorage أو sessionStorage
+// Initialize state from storage, but don't assume authenticated just because data exists
 const initialUser = getUser();
 const initialToken = getToken();
 
@@ -70,10 +74,10 @@ const authSlice = createSlice({
   initialState: {
     user: initialUser,
     token: initialToken,
-    isAuthenticated: !!(initialUser && initialToken),
-    loading: false,
+    isAuthenticated: false, // Start as false, let checkAuth determine this
+    loading: true, // Start as true until initial check completes
     error: null,
-    successMessage: null, // Add success message for registration
+    successMessage: null,
   },
   reducers: {
     clearError: (state) => {
@@ -148,6 +152,7 @@ const authSlice = createSlice({
         state.loading = false
         if (action.payload) {
           state.user = action.payload.user
+          state.token = action.payload.token
           state.isAuthenticated = true
         } else {
           state.user = null

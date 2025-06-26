@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
-import { fetchAllProducts } from "../store/productSlice"
+import { fetchProducts } from "../store/productSlice"
 import { BarChart, PieChart, Edit, Trash2, Plus, Star, Loader2, AlertCircle } from "lucide-react"
 import { getStats, getProducts, createProduct, updateProduct, deleteProduct, getAnalytics } from "../services/dashboard.service"
 import { getUsers } from "../services/user.service"
 import { isAdmin, isAuthenticated as checkAuth } from "../services/auth.service"
+import { useNavigate } from "react-router-dom"
 
 // Dashboard page for admin functionality
 function DashboardPage() {
   const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
+  const navigate = useNavigate()
 
   // State for API data
   const [products, setProducts] = useState([])
@@ -55,7 +57,7 @@ function DashboardPage() {
   const isUserAdmin = isAdmin()
 
   // Fetch products from API
-  const fetchProducts = async () => {
+  const fetchProductsFromAPI = async () => {
     setLoading(prev => ({ ...prev, products: true }))
     setError(prev => ({ ...prev, products: null }))
 
@@ -142,7 +144,7 @@ function DashboardPage() {
   useEffect(() => {
     if (!isAuthenticated || !isUserAdmin) return
 
-    fetchProducts()
+    fetchProductsFromAPI()
 
     if (activeTab === "analytics") {
       fetchStats()
@@ -152,7 +154,7 @@ function DashboardPage() {
     if (activeTab === "reviews") {
       // Reviews are extracted from products
       if (products.length === 0) {
-        fetchProducts()
+        fetchProductsFromAPI()
       } else {
         setReviews(extractReviews(products))
       }
@@ -206,7 +208,7 @@ function DashboardPage() {
       await createProduct(productData)
 
       // Refresh products list
-      fetchProducts()
+      fetchProductsFromAPI()
 
       // Reset form
       setShowAddForm(false)
@@ -261,7 +263,7 @@ function DashboardPage() {
       await updateProduct(editingProduct.id, productData)
 
       // Refresh products list
-      fetchProducts()
+      fetchProductsFromAPI()
 
       // Reset form
       setShowAddForm(false)
@@ -296,7 +298,7 @@ function DashboardPage() {
       await deleteProduct(productId)
 
       // Refresh products list
-      fetchProducts()
+      fetchProductsFromAPI()
     } catch (err) {
       console.error("Error deleting product:", err)
       setError(prev => ({ ...prev, products: err.message }))

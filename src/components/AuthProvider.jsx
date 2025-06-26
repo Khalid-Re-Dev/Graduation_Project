@@ -19,7 +19,6 @@ function AuthProvider({ children }) {
       } catch (error) {
         console.error("Authentication check failed:", error)
       } finally {
-        // Mark auth check as complete regardless of result
         setAuthCheckComplete(true)
       }
     }

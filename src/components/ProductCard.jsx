@@ -1,22 +1,58 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { toggleFavorite, fetchFavorites } from "../store/favoritesSlice"
 import { addCompare, removeCompare } from "../store/compareSlice"
+import { toggleReaction, fetchUserReaction } from "../store/reactionsSlice"
 import { ThumbsUp, ThumbsDown, Heart, BarChart2, Check } from "lucide-react"
+import { toast } from "react-toastify"
 
 // Product card component for displaying product information
 function ProductCard({ product }) {
   const dispatch = useDispatch()
   const compareItems = useSelector((state) => state.compare.items)
   const favoriteItems = useSelector((state) => state.favorites.items)
+  const { userReactions, productStats, loading: reactionsLoading } = useSelector((state) => state.reactions)
+  const { isAuthenticated } = useSelector((state) => state.auth)
   const favoritesLoading = useSelector((state) => state.favorites.loading)
   const compareLoading = useSelector((state) => state.compare.loading)
   const isInCompare = compareItems.some((item) => item.id === product.id)
   const isInFavorites = favoriteItems.some((item) => item.id === product.id)
+  const userReaction = userReactions[product.id] || null
+  const stats = productStats[product.id] || { likes: product.likes || 0, dislikes: product.dislikes || 0 }
   const [isHovered, setIsHovered] = useState(false)
+  const [localStats, setLocalStats] = useState(stats)
+
+  // Update local stats when redux stats change
+  useEffect(() => {
+    setLocalStats(stats)
+  }, [stats])
+
+  // Fetch user reaction when component mounts or auth state changes
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchReaction = async () => {
+      if (isAuthenticated && product.id && isMounted) {
+        try {
+          await dispatch(fetchUserReaction(product.id)).unwrap();
+        } catch (error) {
+          // Ignore 404 errors for reactions that don't exist yet
+          if (error?.response?.status !== 404) {
+            console.error('Error fetching reaction:', error);
+          }
+        }
+      }
+    };
+
+    fetchReaction();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch, product.id, isAuthenticated]);
 
   // Safe product object
   const safeProduct = {
@@ -27,8 +63,8 @@ function ProductCard({ product }) {
     shop_name: typeof product.shop_name === 'string' ? product.shop_name : (product.shop && typeof product.shop.name === 'string' ? product.shop.name : '-'),
     average_rating: typeof product.rating === 'number' ? product.rating : (typeof product.average_rating === 'number' ? product.average_rating : 0),
     discount: typeof product.discount === 'number' ? product.discount : 0,
-    likes: typeof product.likes === 'number' ? product.likes : 0,
-    dislikes: typeof product.dislikes === 'number' ? product.dislikes : 0,
+    likes: localStats.likes,
+    dislikes: localStats.dislikes,
   };
 
   if (!safeProduct.name || safeProduct.name === 'Loading...') {
@@ -39,18 +75,69 @@ function ProductCard({ product }) {
     e.preventDefault && e.preventDefault();
     e.stopPropagation && e.stopPropagation();
     if (favoritesLoading) return;
+    if (!isAuthenticated) {
+      toast.error("Please login to add to favorites");
+      return;
+    }
     await dispatch(toggleFavorite(product.id));
     dispatch(fetchFavorites());
   }
 
   const handleToggleCompare = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (compareLoading) return
+    e.preventDefault();
+    e.stopPropagation();
+    if (compareLoading) return;
     if (isInCompare) {
-      dispatch(removeCompare(product.id))
+      dispatch(removeCompare(product.id));
     } else {
-      dispatch(addCompare(product))
+      dispatch(addCompare(product));
+    }
+  }
+
+  // Like/Dislike handlers
+  const handleLike = async (e) => {
+    e.preventDefault && e.preventDefault();
+    e.stopPropagation && e.stopPropagation();
+    if (reactionsLoading) return;
+    if (!isAuthenticated) {
+      toast.error("Please login to like products");
+      return;
+    }
+
+    try {
+      const result = await dispatch(toggleReaction({ productId: safeProduct.id, action: "like" })).unwrap();
+      if (result.success) {
+        toast.success(result.message);
+      }
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        toast.info("Reaction feature is not available yet");
+      } else {
+        toast.error("Failed to update reaction. Please try again.");
+      }
+    }
+  }
+
+  const handleDislike = async (e) => {
+    e.preventDefault && e.preventDefault();
+    e.stopPropagation && e.stopPropagation();
+    if (reactionsLoading) return;
+    if (!isAuthenticated) {
+      toast.error("Please login to dislike products");
+      return;
+    }
+
+    try {
+      const result = await dispatch(toggleReaction({ productId: safeProduct.id, action: "dislike" })).unwrap();
+      if (result.success) {
+        toast.success(result.message);
+      }
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        toast.info("Reaction feature is not available yet");
+      } else {
+        toast.error("Failed to update reaction. Please try again.");
+      }
     }
   }
 
@@ -110,19 +197,33 @@ function ProductCard({ product }) {
         {/* Shop row with likes/dislikes */}
         <div className="flex items-center justify-between w-full px-1 mb-2 relative min-h-[32px]">
           {/* Dislike icon (right) */}
-          <div className={`flex items-center transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'} pointer-events-none`}>
-            <span className="text-xs text-gray-700 font-medium">{safeProduct.dislikes}</span>
-            <ThumbsDown size={20} className="text-red-500 ml-1" />
-          </div>
+          <button
+            type="button"
+            onClick={handleDislike}
+            disabled={reactionsLoading}
+            className={`flex items-center transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'} ${userReaction === 'dislike' ? 'text-red-600' : 'text-gray-500'} hover:text-red-600 focus:outline-none ${reactionsLoading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            style={{ pointerEvents: isHovered ? 'auto' : 'none' }}
+            title="Dislike"
+          >
+            <span className="text-xs font-medium">{safeProduct.dislikes}</span>
+            <ThumbsDown size={20} className={`ml-1 ${userReaction === 'dislike' ? 'fill-current' : ''}`} />
+          </button>
           {/* Shop name (center) */}
           <div className="flex-1 flex justify-center">
             <span className="text-xs sm:text-sm text-gray-500 font-medium text-center line-clamp-1">{safeProduct.shop_name}</span>
           </div>
           {/* Like icon (left) */}
-          <div className={`flex items-center transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'} pointer-events-none`}>
-            <ThumbsUp size={20} className="text-green-500 mr-1" />
-            <span className="text-xs text-gray-700 font-medium">{safeProduct.likes}</span>
-          </div>
+          <button
+            type="button"
+            onClick={handleLike}
+            disabled={reactionsLoading}
+            className={`flex items-center transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-0'} ${userReaction === 'like' ? 'text-green-600' : 'text-gray-500'} hover:text-green-600 focus:outline-none ${reactionsLoading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            style={{ pointerEvents: isHovered ? 'auto' : 'none' }}
+            title="Like"
+          >
+            <ThumbsUp size={20} className={`mr-1 ${userReaction === 'like' ? 'fill-current' : ''}`} />
+            <span className="text-xs font-medium">{safeProduct.likes}</span>
+          </button>
         </div>
         {/* Rating and price row */}
         <div className="flex items-center justify-between w-full px-1 mb-2">

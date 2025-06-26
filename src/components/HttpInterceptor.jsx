@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
 import { logout } from "../store/authSlice"
 import { API_BASE_URL } from "../config/api.config"
 
@@ -9,6 +10,7 @@ import { API_BASE_URL } from "../config/api.config"
  */
 function HttpInterceptor() {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { token, isAuthenticated } = useSelector((state) => state.auth)
 
   useEffect(() => {
@@ -18,10 +20,17 @@ function HttpInterceptor() {
     // Helper to check if refresh token exists
     const hasRefreshToken = () => {
       try {
-        return !!localStorage.getItem("refresh_token")
+        return !!localStorage.getItem("refresh_token") || !!sessionStorage.getItem("refresh_token")
       } catch {
         return false
       }
+    }
+
+    // Helper to check if URL is for a public route
+    const isPublicRoute = (url) => {
+      return ["/login", "/signup", "/products", "/", "/new", "/popular"].some(route => 
+        typeof url === "string" && url.includes(route)
+      )
     }
 
     // Override fetch to add auth token and handle errors
@@ -41,14 +50,13 @@ function HttpInterceptor() {
           const response = await originalFetch(url, options)
 
           // Handle 401 Unauthorized errors
-          if (
-            response.status === 401 &&
-            !(typeof url === "string" && url.includes("/recommendations/")) &&
-            isAuthenticated &&
-            hasRefreshToken()
-          ) {
-            // Logout user on authentication error
-            dispatch(logout())
+          if (response.status === 401 && !isPublicRoute(url)) {
+            // If we have a refresh token, let the auth service handle refresh
+            // Otherwise, logout and redirect to login
+            if (!hasRefreshToken()) {
+              await dispatch(logout())
+              navigate("/login", { state: { from: window.location.pathname } })
+            }
           }
 
           return response
@@ -66,7 +74,7 @@ function HttpInterceptor() {
     return () => {
       window.fetch = originalFetch
     }
-  }, [dispatch, token, isAuthenticated])
+  }, [dispatch, token, isAuthenticated, navigate])
 
   // This component doesn't render anything
   return null
