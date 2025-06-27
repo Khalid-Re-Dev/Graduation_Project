@@ -27,6 +27,7 @@ import NotFoundPage from "./pages/NotFoundPage"
 import OwnerDashboardPage from "./pages/OwnerDashboardPage"
 import ProfilePage from "./pages/ProfilePage"
 import ProductUpsert from "./pages/dashboard/ProductUpsert"
+import ErrorExplanationPage from "./pages/ErrorExplanationPage"
 
 // Main App component that sets up routing and initial data loading
 function App() {
@@ -79,6 +80,8 @@ function App() {
 
             {/* 404 route */}
             <Route path="*" element={<NotFoundPage />} />
+            {/* صفحة شرح الأخطاء */}
+            <Route path="/error-explanation" element={<ErrorExplanationPage />} />
           </Routes>
           <ToastContainer
             position="top-right"
