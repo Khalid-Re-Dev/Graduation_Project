@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from "react-redux"
 import { logout } from "../store/authSlice"
 import { ShoppingCart, Heart, Search, Menu, X, ListOrdered, UserCircle } from "lucide-react"
 
-// Navbar component with search, favorites, and navigation
 function Navbar() {
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -14,6 +13,7 @@ function Navbar() {
   const dispatch = useDispatch()
   const auth = useSelector((state) => state.auth)
   const favoritesCount = useSelector((state) => state.favorites.items.length)
+  const userType = auth.user?.user_type // "owner" أو "customer"
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -43,11 +43,18 @@ function Navbar() {
           <Link to="/" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Home</Link>
           <Link to="/products" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Products</Link>
           <Link to="/favorites" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Favorite</Link>
-          <Link to="/owner-dashboard" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Dashboard</Link>
+
+          {userType === "customer" && (
+            <Link to="/compare" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Compare</Link>
+          )}
+          {userType === "owner" && (
+            <Link to="/owner-dashboard" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Dashboard</Link>
+          )}
+
           {auth.isAuthenticated ? (
             <button onClick={handleLogout} className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1 bg-transparent border-none">Logout</button>
           ) : (
-            <Link to="/signup" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Sign Up</Link>
+            <Link to="/login" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Sign In</Link>
           )}
         </div>
 
@@ -70,9 +77,13 @@ function Navbar() {
           <Link to="/favorites" className="relative p-2 rounded-full hover:bg-gray-100 transition group">
             <Heart size={22} className="text-gray-900 group-hover:text-[#005580]" />
           </Link>
-          <Link to="/compare" className="relative p-2 rounded-full hover:bg-gray-100 transition group">
-            <ListOrdered size={22} className="text-gray-900 group-hover:text-[#005580]" />
-          </Link>
+
+          {userType === "customer" && (
+            <Link to="/compare" className="relative p-2 rounded-full hover:bg-gray-100 transition group">
+              <ListOrdered size={22} className="text-gray-900 group-hover:text-[#005580]" />
+            </Link>
+          )}
+
           {auth.isAuthenticated && (
             <Link to="/profile" className="relative p-2 rounded-full hover:bg-gray-100 transition group">
               <UserCircle size={24} className="text-gray-900 group-hover:text-[#005580]" />
@@ -92,13 +103,22 @@ function Navbar() {
               <Link to="/" className="text-lg font-semibold text-gray-900 hover:text-[#005580] py-2" onClick={() => setMobileMenuOpen(false)}>Home</Link>
               <Link to="/products" className="text-lg font-semibold text-gray-900 hover:text-[#005580] py-2" onClick={() => setMobileMenuOpen(false)}>Products</Link>
               <Link to="/favorites" className="text-lg font-semibold text-gray-900 hover:text-[#005580] py-2" onClick={() => setMobileMenuOpen(false)}>Favorite</Link>
-              <Link to="/compare" className="text-lg font-semibold text-gray-900 hover:text-[#005580] py-2" onClick={() => setMobileMenuOpen(false)}>Compare</Link>
+
+              {userType === "customer" && (
+                <Link to="/compare" className="text-lg font-semibold text-gray-900 hover:text-[#005580] py-2" onClick={() => setMobileMenuOpen(false)}>Compare</Link>
+              )}
+              {userType === "owner" && (
+                <Link to="/owner-dashboard" className="text-lg font-semibold text-gray-900 hover:text-[#005580] py-2" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+              )}
+
               {auth.isAuthenticated ? (
                 <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="text-lg font-semibold text-gray-900 hover:text-[#005580] py-2 bg-transparent border-none w-full text-left">Logout</button>
               ) : (
                 <Link to="/signup" className="text-lg font-semibold text-gray-900 hover:text-[#005580] py-2" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
               )}
             </div>
+
+            {/* Mobile Search */}
             <form onSubmit={handleSearch} className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-[#005580] transition">
               <input
                 type="text"
@@ -111,13 +131,17 @@ function Navbar() {
                 <Search size={18} />
               </button>
             </form>
+
+            {/* Mobile Icons */}
             <div className="flex items-center justify-center gap-6 mt-2">
               <Link to="/favorites" className="relative p-2 rounded-full hover:bg-gray-100 transition group" onClick={() => setMobileMenuOpen(false)}>
                 <Heart size={22} className="text-gray-900 group-hover:text-[#005580]" />
               </Link>
-              <Link to="/compare" className="relative p-2 rounded-full hover:bg-gray-100 transition group" onClick={() => setMobileMenuOpen(false)}>
-                <ListOrdered size={22} className="text-gray-900 group-hover:text-[#005580]" />
-              </Link>
+              {userType === "customer" && (
+                <Link to="/compare" className="relative p-2 rounded-full hover:bg-gray-100 transition group" onClick={() => setMobileMenuOpen(false)}>
+                  <ListOrdered size={22} className="text-gray-900 group-hover:text-[#005580]" />
+                </Link>
+              )}
             </div>
           </div>
         )}
