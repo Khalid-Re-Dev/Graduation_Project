@@ -1,95 +1,100 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import {
+  getProducts,
   getProductDetails,
   getFeaturedProducts,
   getPopularProducts,
-  getNewProducts
-} from "../services/product.service";
+  getNewProducts,
+} from '../services/product.service';
 
 // Async thunk: fetch all products
-export const fetchAllProducts = createAsyncThunk(
-  "products/fetchAll",
+export const fetchProducts = createAsyncThunk(
+  'products/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
       const data = await getProducts();
-      if (!data || !Array.isArray(data)) {
-        return rejectWithValue("Invalid data format received from API");
+      if (!Array.isArray(data)) {
+        return rejectWithValue('Invalid data format received from API');
       }
       return data;
     } catch (error) {
-      return rejectWithValue(error.message || "Failed to fetch products");
+      return rejectWithValue(error.message || 'Failed to fetch products');
     }
   }
 );
 
 // Async thunk: fetch new products
 export const fetchNewProducts = createAsyncThunk(
-  "products/fetchNew",
+  'products/fetchNew',
   async (_, { rejectWithValue, getState }) => {
     try {
       const data = await getNewProducts(10);
-      if (!data || !Array.isArray(data)) {
+      if (!Array.isArray(data)) {
+        // fallback to store data
         const { allProducts } = getState().products;
-        if (allProducts?.length) {
+        if (allProducts && allProducts.length) {
           const sorted = [...allProducts].sort(
             (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
           );
           return sorted.slice(0, 10);
         }
-        return rejectWithValue("Invalid data format for new products");
+        return rejectWithValue('Invalid data format received from API');
       }
       return data;
     } catch (error) {
+      // fallback to store data
       const { allProducts } = getState().products;
-      if (allProducts?.length) {
+      if (allProducts && allProducts.length) {
         const sorted = [...allProducts].sort(
           (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
         );
         return sorted.slice(0, 10);
       }
-      return rejectWithValue(error.message || "Failed to fetch new products");
+      return rejectWithValue(error.message || 'Failed to fetch new products');
     }
   }
 );
 
 // Async thunk: fetch popular products
 export const fetchPopularProducts = createAsyncThunk(
-  "products/fetchPopular",
+  'products/fetchPopular',
   async (_, { rejectWithValue, getState }) => {
     try {
       const data = await getPopularProducts(10);
-      if (!data || !Array.isArray(data)) {
+      if (!Array.isArray(data)) {
+        // fallback to store data
         const { allProducts } = getState().products;
-        if (allProducts?.length) {
+        if (allProducts && allProducts.length) {
           const sorted = [...allProducts].sort(
             (a, b) => (b.popularity || b.likes || 0) - (a.popularity || a.likes || 0)
           );
           return sorted.slice(0, 10);
         }
-        return rejectWithValue("Invalid data format for popular products");
+        return rejectWithValue('Invalid data format received from API');
       }
       return data;
     } catch (error) {
+      // fallback to store data
       const { allProducts } = getState().products;
-      if (allProducts?.length) {
+      if (allProducts && allProducts.length) {
         const sorted = [...allProducts].sort(
           (a, b) => (b.popularity || b.likes || 0) - (a.popularity || a.likes || 0)
         );
         return sorted.slice(0, 10);
       }
-      return rejectWithValue(error.message || "Failed to fetch popular products");
+      return rejectWithValue(error.message || 'Failed to fetch popular products');
     }
   }
 );
 
-// Async thunk: fetch product details by ID
+// Async thunk: fetch single product details by ID
 export const fetchProductById = createAsyncThunk(
-  "products/fetchById",
+  'products/fetchById',
   async (id, { rejectWithValue }) => {
     try {
       const productData = await getProductDetails(id);
       if (!productData) {
-        return rejectWithValue("Invalid product details from API");
+        return rejectWithValue('Invalid data format received from API');
       }
       return {
         product: productData.product || productData,
@@ -101,9 +106,9 @@ export const fetchProductById = createAsyncThunk(
   }
 );
 
-// Slice
+// The products slice
 const productSlice = createSlice({
-  name: "products",
+  name: 'products',
   initialState: {
     allProducts: [],
     newProducts: [],
@@ -116,11 +121,12 @@ const productSlice = createSlice({
   reducers: {
     addReview: (state, action) => {
       const { productId, review } = action.payload;
+
       const updateInArray = (arr) =>
-        arr.map((prod) =>
-          prod.id === productId
-            ? { ...prod, reviews: [...(prod.reviews || []), review] }
-            : prod
+        arr.map((product) =>
+          product.id === productId
+            ? { ...product, reviews: [...(product.reviews || []), review] }
+            : product
         );
 
       state.allProducts = updateInArray(state.allProducts);
@@ -137,45 +143,22 @@ const productSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAllProducts.pending, (state) => {
+      // fetchProducts
+      .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchAllProducts.fulfilled, (state, action) => {
+      .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-        let products = [];
-
-        if (Array.isArray(action.payload)) {
-          products = action.payload;
-        } else if (action.payload && typeof action.payload === "object") {
-          if (Array.isArray(action.payload.results)) products = action.payload.results;
-          else if (Array.isArray(action.payload.products)) products = action.payload.products;
-          else if (Array.isArray(action.payload.data)) products = action.payload.data;
-          else products = [action.payload];
-        }
-
-        products = products.filter(
-          (p) => p && typeof p === "object" && (p.id || p.name)
-        );
-
-        products = products.map((product) => ({
-          id: product.id || Math.random().toString(36).substr(2, 9),
-          name: product.name || "Unnamed Product",
-          price: product.price || 0,
-          image:
-            product.image || product.image_url || product.thumbnail || "https://via.placeholder.com/300x300?text=Product+Image",
-          category: product.category || product.category_name || "Uncategorized",
-          ...product,
-        }));
-
-        state.allProducts = products;
+        state.allProducts = action.payload;
       })
-      .addCase(fetchAllProducts.rejected, (state, action) => {
+      .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch products";
+        state.error = action.payload || 'Failed to fetch products';
       })
 
+      // fetchNewProducts
       .addCase(fetchNewProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -183,14 +166,15 @@ const productSlice = createSlice({
       .addCase(fetchNewProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-        state.newProducts = Array.isArray(action.payload) ? action.payload : [];
+        state.newProducts = action.payload;
       })
       .addCase(fetchNewProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch new products";
+        state.error = action.payload || 'Failed to fetch new products';
         state.newProducts = [];
       })
 
+      // fetchPopularProducts
       .addCase(fetchPopularProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -198,14 +182,15 @@ const productSlice = createSlice({
       .addCase(fetchPopularProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-        state.popularProducts = Array.isArray(action.payload) ? action.payload : [];
+        state.popularProducts = action.payload;
       })
       .addCase(fetchPopularProducts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch popular products";
+        state.error = action.payload || 'Failed to fetch popular products';
         state.popularProducts = [];
       })
 
+      // fetchProductById
       .addCase(fetchProductById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -214,31 +199,26 @@ const productSlice = createSlice({
         state.loading = false;
         state.error = null;
         state.currentProduct = action.payload.product;
-        state.relatedProducts = Array.isArray(action.payload.relatedProducts)
-          ? action.payload.relatedProducts
-          : [];
+        state.relatedProducts = action.payload.relatedProducts;
       })
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch product details";
-        if (!state.currentProduct) {
-          state.currentProduct = {
-            id: 0,
-            name: "Product Not Found",
-            price: 0,
-            description:
-              "Sorry, we couldn't find the product you're looking for. Please try another product.",
-            image: "/placeholder.svg",
-            category: "Unknown",
-            reviews: [],
-          };
-        }
-        if (!Array.isArray(state.relatedProducts)) {
-          state.relatedProducts = [];
-        }
+        state.error = action.payload || 'Failed to fetch product details';
+        state.currentProduct = null;
+        state.relatedProducts = [];
       });
   },
 });
 
 export const { addReview } = productSlice.actions;
+
+// Selectors
+export const selectAllProducts = (state) => state.products.allProducts;
+export const selectNewProducts = (state) => state.products.newProducts;
+export const selectPopularProducts = (state) => state.products.popularProducts;
+export const selectCurrentProduct = (state) => state.products.currentProduct;
+export const selectRelatedProducts = (state) => state.products.relatedProducts;
+export const selectLoading = (state) => state.products.loading;
+export const selectError = (state) => state.products.error;
+
 export default productSlice.reducer;
