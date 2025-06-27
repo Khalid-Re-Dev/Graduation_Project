@@ -79,7 +79,7 @@ export default function ProductForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = { ...form, stock: 3 }; // Fixed stock value
-    onSubmit(formData);
+    onSubmit(e, formData); // مرر e أيضًا
   };
 
   return (
