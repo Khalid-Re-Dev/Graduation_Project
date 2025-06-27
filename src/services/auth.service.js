@@ -137,13 +137,12 @@ class AuthService {
    * @param {string} refreshToken - Refresh token
    * @param {boolean} rememberMe - If true, use localStorage; else sessionStorage
    */
-  setTokens(accessToken, refreshToken, rememberMe = false) {
-    const storage = rememberMe ? localStorage : sessionStorage;
-    storage.setItem(ACCESS_TOKEN_KEY, accessToken);
-    storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    // Remove from the other storage to avoid conflict
-    (rememberMe ? sessionStorage : localStorage).removeItem(ACCESS_TOKEN_KEY);
-    (rememberMe ? sessionStorage : localStorage).removeItem(REFRESH_TOKEN_KEY);
+  setTokens(accessToken, refreshToken) {
+    // دائماً استخدم localStorage فقط
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   }
 
   /**
@@ -151,10 +150,10 @@ class AuthService {
    * @param {Object} user - User data
    * @param {boolean} rememberMe - If true, use localStorage; else sessionStorage
    */
-  setUser(user, rememberMe = false) {
-    const storage = rememberMe ? localStorage : sessionStorage;
-    storage.setItem(USER_KEY, JSON.stringify(user));
-    (rememberMe ? sessionStorage : localStorage).removeItem(USER_KEY);
+  setUser(user) {
+    // دائماً استخدم localStorage فقط
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    sessionStorage.removeItem(USER_KEY);
   }
   
   /**
