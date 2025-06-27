@@ -19,7 +19,7 @@ export const selectProducts = createSelector(
 )
 
 // Async thunk for fetching all products
-export const fetchProducts = createAsyncThunk(
+export const fetchAllProducts = createAsyncThunk(
   "products/fetchAll",
   async (_, { getState }) => {
     // Check if we already have products and they're not being loaded
@@ -151,17 +151,17 @@ const productSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Handle fetchProducts
-      .addCase(fetchProducts.pending, (state) => {
+      // Handle fetchAllProducts
+      .addCase(fetchAllProducts.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
+      .addCase(fetchAllProducts.fulfilled, (state, action) => {
         state.loading = false
         state.items = action.payload
         state.error = null
       })
-      .addCase(fetchProducts.rejected, (state, action) => {
+      .addCase(fetchAllProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
         // Keep existing items on error
