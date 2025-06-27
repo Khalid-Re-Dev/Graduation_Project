@@ -8,7 +8,7 @@ import {
 } from '../services/product.service';
 
 // Async thunk: fetch all products
-export const fetchProducts = createAsyncThunk(
+export const fetchAllProducts = createAsyncThunk(
   'products/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
@@ -144,16 +144,16 @@ const productSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // fetchProducts
-      .addCase(fetchProducts.pending, (state) => {
+      .addCase(fetchAllProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
+      .addCase(fetchAllProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
         state.allProducts = action.payload;
       })
-      .addCase(fetchProducts.rejected, (state, action) => {
+      .addCase(fetchAllProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch products';
       })
