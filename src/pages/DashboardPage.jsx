@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
-import { fetchProducts } from "../store/productSlice"
+import { fetchAllProducts } from "../store/productSlice"
 import { BarChart, PieChart, Edit, Trash2, Plus, Star, Loader2, AlertCircle } from "lucide-react"
 import { getStats, getProducts, createProduct, updateProduct, deleteProduct, getAnalytics } from "../services/dashboard.service"
 import { getUsers } from "../services/user.service"

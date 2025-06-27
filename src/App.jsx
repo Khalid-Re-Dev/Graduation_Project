@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useDispatch } from "react-redux"
 import { Routes, Route } from "react-router-dom"
-import { fetchAllProducts } from "./store/productSlice"
+import { fetchProducts } from "./store/productSlice"
 import AuthProvider from "./components/AuthProvider"
 import ErrorBoundary from "./components/ErrorBoundary"
 import NotificationProvider from "./components/NotificationProvider"
@@ -34,7 +34,7 @@ function App() {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        await dispatch(fetchAllProducts()).unwrap()
+        await dispatch(fetchProducts()).unwrap()
       } catch (error) {
         console.error("Error loading products:", error)
       } finally {
@@ -48,7 +48,7 @@ function App() {
   // Function to reload products data
   const reloadProducts = () => {
     console.log("Reloading products data...")
-    dispatch(fetchAllProducts())
+    dispatch(fetchProducts())
   }
 
   return (

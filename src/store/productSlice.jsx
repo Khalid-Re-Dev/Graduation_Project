@@ -1,73 +1,135 @@
-import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit"
-import { getProductById, getNewProducts, getPopularProducts } from "../services/product.service"
-import { productService } from '../services/product.service'
-
-// Memoized selectors
-export const selectProducts = createSelector(
-  [(state) => state.products],
-  (products) => ({
-    items: products.items || [],
-    newProducts: products.newProducts || [],
-    popularProducts: products.popularProducts || [],
-    loading: products.loading,
-    newProductsLoading: products.newProductsLoading,
-    popularProductsLoading: products.popularProductsLoading,
-    error: products.error,
-    newProductsError: products.newProductsError,
-    popularProductsError: products.popularProductsError
-  })
-)
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
+import {
+  getProducts,
+  getProductDetails,
+  getFeaturedProducts,
+  getPopularProducts,
+  getNewProducts
+} from "../services/product.service"
 
 // Async thunk for fetching all products
-export const fetchProducts = createAsyncThunk(
-  "products/fetchAll",
-  async (_, { getState }) => {
-    // Check if we already have products and they're not being loaded
-    const state = getState().products
-    if (state.items?.length > 0 && !state.loading) {
-      return state.items
-    }
+export const fetchAllProducts = createAsyncThunk("products/fetchAll", async (_, { rejectWithValue }) => {
+  try {
     console.log("Fetching all products...")
-    const products = await productService.getAllProducts()
-    return products
+    const data = await getProducts()
+
+    // Validate the response data
+    if (!data || !Array.isArray(data)) {
+      console.error("Invalid data format received from API:", data)
+      return rejectWithValue("Invalid data format received from API")
+    }
+
+    console.log(`Successfully fetched ${data.length} products`)
+    return data
+  } catch (error) {
+    console.error("Failed to fetch products:", error)
+    return rejectWithValue(error.message || "Failed to fetch products")
   }
-)
+})
 
 // Async thunk for fetching new products
-export const fetchNewProducts = createAsyncThunk(
-  "products/fetchNew",
-  async (limit = 10, { getState }) => {
-    // Check if we already have new products and they're not being loaded
-    const state = getState().products
-    if (state.newProducts?.length > 0 && !state.newProductsLoading) {
-      return state.newProducts
-    }
+export const fetchNewProducts = createAsyncThunk("products/fetchNew", async (_, { rejectWithValue, getState }) => {
+  try {
     console.log("Fetching new products...")
-    const products = await productService.getNewProducts(limit)
-    return products
+
+    // Try to get new products from the API (which now uses a fallback strategy)
+    const data = await getNewProducts(10)
+
+    // Validate the response data
+    if (!data || !Array.isArray(data)) {
+      console.error("Invalid data format received from API for new products:", data)
+
+      // Check if we already have all products in the store
+      const { allProducts } = getState().products
+      if (allProducts && allProducts.length > 0) {
+        console.log("Using existing products from store to create new products list")
+        // Sort by creation date to get newest products
+        const sortedProducts = [...allProducts].sort((a, b) => {
+          const dateA = new Date(a.created_at || 0)
+          const dateB = new Date(b.created_at || 0)
+          return dateB - dateA
+        })
+        return sortedProducts.slice(0, 10)
+      }
+
+      return rejectWithValue("Invalid data format received from API")
+    }
+
+    console.log(`Successfully fetched ${data.length} new products`)
+    return data
+  } catch (error) {
+    console.error("Failed to fetch new products:", error)
+
+    // Check if we already have all products in the store
+    const { allProducts } = getState().products
+    if (allProducts && allProducts.length > 0) {
+      console.log("Using existing products from store to create new products list")
+      // Sort by creation date to get newest products
+      const sortedProducts = [...allProducts].sort((a, b) => {
+        const dateA = new Date(a.created_at || 0)
+        const dateB = new Date(b.created_at || 0)
+        return dateB - dateA
+      })
+      return sortedProducts.slice(0, 10)
+    }
+
+    return rejectWithValue(error.message || "Failed to fetch new products")
   }
-)
+})
 
 // Async thunk for fetching popular products
-export const fetchPopularProducts = createAsyncThunk(
-  "products/fetchPopular",
-  async (limit = 10, { getState }) => {
-    // Check if we already have popular products and they're not being loaded
-    const state = getState().products
-    if (state.popularProducts?.length > 0 && !state.popularProductsLoading) {
-      return state.popularProducts
-    }
+export const fetchPopularProducts = createAsyncThunk("products/fetchPopular", async (_, { rejectWithValue, getState }) => {
+  try {
     console.log("Fetching popular products...")
-    const products = await productService.getPopularProducts(limit)
-    return products
+    const data = await getPopularProducts(10)
+
+    // Validate the response data
+    if (!data || !Array.isArray(data)) {
+      console.error("Invalid data format received from API for popular products:", data)
+
+      // Check if we already have all products in the store
+      const { allProducts } = getState().products
+      if (allProducts && allProducts.length > 0) {
+        console.log("Using existing products from store to create popular products list")
+        // Sort by popularity to get most popular products
+        const sortedProducts = [...allProducts].sort((a, b) => {
+          const popularityA = a.popularity || a.likes || 0
+          const popularityB = b.popularity || b.likes || 0
+          return popularityB - popularityA
+        })
+        return sortedProducts.slice(0, 10)
+      }
+
+      return rejectWithValue("Invalid data format received from API")
+    }
+
+    console.log(`Successfully fetched ${data.length} popular products`)
+    return data
+  } catch (error) {
+    console.error("Failed to fetch popular products:", error)
+
+    // Check if we already have all products in the store
+    const { allProducts } = getState().products
+    if (allProducts && allProducts.length > 0) {
+      console.log("Using existing products from store to create popular products list")
+      // Sort by popularity to get most popular products
+      const sortedProducts = [...allProducts].sort((a, b) => {
+        const popularityA = a.popularity || a.likes || 0
+        const popularityB = b.popularity || b.likes || 0
+        return popularityB - popularityA
+      })
+      return sortedProducts.slice(0, 10)
+    }
+
+    return rejectWithValue(error.message || "Failed to fetch popular products")
   }
-)
+})
 
 // Async thunk for fetching a single product by ID
 export const fetchProductById = createAsyncThunk("products/fetchById", async (id, { rejectWithValue }) => {
   try {
     console.log(`Fetching product details for ID ${id}...`)
-    const productData = await getProductById(id)
+    const productData = await getProductDetails(id)
 
     // Validate the response data
     if (!productData) {
@@ -100,17 +162,13 @@ export const fetchProductById = createAsyncThunk("products/fetchById", async (id
 const productSlice = createSlice({
   name: "products",
   initialState: {
-    items: [],
+    allProducts: [],
     newProducts: [],
     popularProducts: [],
     currentProduct: null,
     relatedProducts: [],
     loading: false,
     error: null,
-    newProductsLoading: false,
-    popularProductsLoading: false,
-    newProductsError: null,
-    popularProductsError: null,
   },
   reducers: {
     // Add a review to a product
@@ -131,7 +189,7 @@ const productSlice = createSlice({
       }
 
       // Update in all arrays
-      state.items = updateProductInArray(state.items)
+      state.allProducts = updateProductInArray(state.allProducts)
       state.newProducts = updateProductInArray(state.newProducts)
       state.popularProducts = updateProductInArray(state.popularProducts)
 
@@ -143,69 +201,100 @@ const productSlice = createSlice({
         }
       }
     },
-    clearErrors: (state) => {
-      state.error = null
-      state.newProductsError = null
-      state.popularProductsError = null
-    },
   },
   extraReducers: (builder) => {
     builder
-      // Handle fetchProducts
-      .addCase(fetchProducts.pending, (state) => {
+      // Handle fetchAllProducts
+      .addCase(fetchAllProducts.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
+      .addCase(fetchAllProducts.fulfilled, (state, action) => {
         state.loading = false
-        state.items = action.payload
         state.error = null
-      })
-      .addCase(fetchProducts.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.payload
-        // Keep existing items on error
-        if (!state.items.length) {
-          state.items = []
+
+        // Log the received payload for debugging
+        console.log("Received products payload:", action.payload);
+
+        // Handle different API response formats
+        let products = [];
+
+        if (Array.isArray(action.payload)) {
+          // Direct array format
+          products = action.payload;
+        } else if (action.payload && typeof action.payload === 'object') {
+          // Object with results property (common API format)
+          if (Array.isArray(action.payload.results)) {
+            products = action.payload.results;
+          } else if (Array.isArray(action.payload.products)) {
+            products = action.payload.products;
+          } else if (Array.isArray(action.payload.data)) {
+            products = action.payload.data;
+          } else {
+            // If no recognizable array property, return the object itself
+            products = [action.payload];
+          }
         }
+
+        // Filter out any invalid product objects
+        products = products.filter(p => p && typeof p === 'object' && (p.id || p.name));
+        if (products.length === 0) {
+          console.error("No valid products found in API response:", action.payload);
+        }
+
+        // Ensure each product has required properties
+        products = products.map(product => ({
+          id: product.id || Math.random().toString(36).substr(2, 9),
+          name: product.name || 'Unnamed Product',
+          price: product.price || 0,
+          image: product.image || product.image_url || product.thumbnail || "https://via.placeholder.com/300x300?text=Product+Image",
+          category: product.category || product.category_name || 'Uncategorized',
+          ...product // Keep all original properties
+        }));
+
+        console.log(`Processed ${products.length} products`, products);
+        state.allProducts = products;
+      })
+      .addCase(fetchAllProducts.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || "Failed to fetch products"
+        // Do not use mock data fallback
       })
 
       // Handle fetchNewProducts
       .addCase(fetchNewProducts.pending, (state) => {
-        state.newProductsLoading = true
-        state.newProductsError = null
+        state.loading = true
+        state.error = null
       })
       .addCase(fetchNewProducts.fulfilled, (state, action) => {
-        state.newProductsLoading = false
-        state.newProducts = action.payload
-        state.newProductsError = null
+        state.loading = false
+        state.error = null
+        // Ensure we have an array, even if the API returns null or undefined
+        state.newProducts = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchNewProducts.rejected, (state, action) => {
-        state.newProductsLoading = false
-        state.newProductsError = action.payload
-        // Keep existing items on error
-        if (!state.newProducts.length) {
-          state.newProducts = []
-        }
+        state.loading = false
+        state.error = action.payload || "Failed to fetch new products"
+        // Do not use mock data fallback
+        state.newProducts = []
       })
 
       // Handle fetchPopularProducts
       .addCase(fetchPopularProducts.pending, (state) => {
-        state.popularProductsLoading = true
-        state.popularProductsError = null
+        state.loading = true
+        state.error = null
       })
       .addCase(fetchPopularProducts.fulfilled, (state, action) => {
-        state.popularProductsLoading = false
-        state.popularProducts = action.payload
-        state.popularProductsError = null
+        state.loading = false
+        state.error = null
+        // Ensure we have an array, even if the API returns null or undefined
+        state.popularProducts = Array.isArray(action.payload) ? action.payload : []
       })
       .addCase(fetchPopularProducts.rejected, (state, action) => {
-        state.popularProductsLoading = false
-        state.popularProductsError = action.payload
-        // Keep existing items on error
-        if (!state.popularProducts.length) {
-          state.popularProducts = []
-        }
+        state.loading = false
+        state.error = action.payload || "Failed to fetch popular products"
+        // Do not use mock data fallback
+        state.popularProducts = []
       })
 
       // Handle fetchProductById
@@ -243,5 +332,5 @@ const productSlice = createSlice({
   },
 })
 
-export const { addReview, clearErrors } = productSlice.actions
+export const { addReview } = productSlice.actions
 export default productSlice.reducer
