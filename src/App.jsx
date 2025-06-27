@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useDispatch } from "react-redux"
 import { Routes, Route } from "react-router-dom"
-import { fetchProducts } from "./store/productSlice"
+import { fetchAllProducts } from "./store/productSlice"
 import AuthProvider from "./components/AuthProvider"
 import ErrorBoundary from "./components/ErrorBoundary"
 import NotificationProvider from "./components/NotificationProvider"

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useSearchParams } from "react-router-dom"
-import { fetchProducts } from "../store/productSlice"
+import { fetchAllProducts } from "../store/productSlice"
 import ProductCard from "../components/ProductCard"
 import FallbackLoader from "../components/FallbackLoader"
 import { Filter, Grid3X3, Grid2X2, Search, AlertCircle, RefreshCw } from "lucide-react"
@@ -39,7 +39,7 @@ function AllProductsPage() {
 
     try {
       console.log("AllProductsPage: Loading products...")
-      const result = await dispatch(fetchProducts()).unwrap()
+      const result = await dispatch(fetchAllProducts()).unwrap()
 
       console.log("AllProductsPage: Products loaded:", result ? result.length : 0)
 
@@ -480,7 +480,7 @@ function AllProductsPage() {
                       });
                       setSearchQuery("");
                       setSortOption("newest");
-                      dispatch(fetchProducts());
+                      dispatch(fetchAllProducts());
                     }}
                     className="px-4 py-2 bg-[#005580] text-white rounded hover:bg-[#004466] transition-colors"
                   >

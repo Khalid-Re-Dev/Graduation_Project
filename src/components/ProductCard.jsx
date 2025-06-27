@@ -14,7 +14,8 @@ function ProductCard({ product }) {
   const dispatch = useDispatch()
   const compareItems = useSelector((state) => state.compare.items)
   const favoriteItems = useSelector((state) => state.favorites.items)
-  const { userReactions, productStats, loading: reactionsLoading } = useSelector((state) => state.reactions)
+  const reactionsState = useSelector((state) => state.reactions || {});
+  const { userReactions = {}, productStats = {}, loading: reactionsLoading = false } = reactionsState;
   const { isAuthenticated } = useSelector((state) => state.auth)
   const favoritesLoading = useSelector((state) => state.favorites.loading)
   const compareLoading = useSelector((state) => state.compare.loading)
