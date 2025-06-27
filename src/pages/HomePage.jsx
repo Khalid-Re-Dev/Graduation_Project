@@ -235,7 +235,7 @@ function HomePage() {
         </section>
         {/* All Products Section (vertical grid, like AllProductsPage) */}
         <section className="py-8 bg-gray-50">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4"> {/* Always display All Products section */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">All Products</h2>
               <Link to="/products" className="text-[#005580] hover:underline flex items-center">

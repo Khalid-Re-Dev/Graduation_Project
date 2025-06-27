@@ -4,8 +4,8 @@ import {
   SelectTrigger,
   SelectContent,
   SelectItem,
-  SelectValue,
-} from "../../components/ui/select";
+  SelectValue,} from "./ui/select";
+import { Label } from "./ui/label"; // Import Label component
 import { getCategories } from "../services/product.service";
 import { getOwnerBrands } from "../services/owner.service";
 import { toast } from "react-toastify";

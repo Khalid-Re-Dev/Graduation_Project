@@ -25,6 +25,7 @@ export default function AddProduct() {
   const [form, setForm] = useState(initialState);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -50,6 +51,16 @@ export default function AddProduct() {
     }
   };
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch (error) {}
+    };
+    fetchCategories();
+  }, []);
+
   return (
     <ProductForm
       form={form}
@@ -57,6 +68,7 @@ export default function AddProduct() {
       onSubmit={handleSubmit}
       loading={loading}
       errors={errors}
+      categories={categories}
       mode="add"
     />
   );
