@@ -105,7 +105,7 @@ export default function ProductForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block mb-1 font-medium">Price *</label>
           <input
@@ -134,7 +134,7 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">Categorie *</label>
+        <label htmlFor="category_id" className="block mb-1 font-medium">Category *</label>
         <Select value={form.category_id} onValueChange={val => setForm({ ...form, category_id: val })}>
           <SelectTrigger className="w-full border rounded px-3 py-2">
  <SelectValue placeholder="" className="bg-white" />
@@ -148,7 +148,7 @@ export default function ProductForm({
         {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
       </div>
       <div>
-        <label htmlFor="brand_id" className="block text-sm font-medium text-gray-700">Brand *</label>
+        <label htmlFor="brand_id" className="block mb-1 font-medium">Brand *</label>
         <Select value={form.brand_id} onValueChange={val => setForm({ ...form, brand_id: val })}>
           <SelectTrigger className="w-full border rounded px-3 py-2">
  <SelectValue placeholder="" className="bg-white" />
@@ -187,7 +187,7 @@ export default function ProductForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block mb-1 font-medium">Release Date</label>
           <input
