@@ -374,11 +374,6 @@ function OverviewTab({ stats }) {
           <div className="text-lg font-bold">{stats?.total_customers ?? 0}</div>
           <div className="text-gray-500">عدد العملاء</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-          <TrendingUp className="text-[#005580] mb-2" size={32} />
-          <div className="text-lg font-bold">{stats?.customers_change ?? 0}</div>
-          <div className="text-gray-500">تغير العملاء</div>
-        </div>
       </div>
       {/* المنتجات الأكثر شعبية */}
       <div className="bg-white rounded-lg shadow p-6 mt-4">
