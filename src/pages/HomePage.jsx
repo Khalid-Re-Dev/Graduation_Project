@@ -28,6 +28,8 @@ function HomePage() {
   const [pageLoading, setPageLoading] = useState(true)
   const [pageError, setPageError] = useState(null)
   const [dataFetched, setDataFetched] = useState(false)
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [recommendationsError, setRecommendationsError] = useState(null);
   const { isAuthenticated } = useSelector((state) => state.auth)
 
   // Helper function to check if an object is a valid product
