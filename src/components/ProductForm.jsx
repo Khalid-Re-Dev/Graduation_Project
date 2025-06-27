@@ -134,10 +134,10 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">التصنيف *</label>
+        <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">Categorie *</label>
         <Select value={form.category_id} onValueChange={val => setForm({ ...form, category_id: val })}>
           <SelectTrigger className="w-full border rounded px-3 py-2">
-            <SelectValue placeholder="اختر تصنيفًا" />
+            <SelectValue placeholder="" />
           </SelectTrigger>
           <SelectContent>
             {categories.map(cat => (
@@ -148,10 +148,10 @@ export default function ProductForm({
         {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
       </div>
       <div>
-        <label htmlFor="brand_id" className="block text-sm font-medium text-gray-700">الماركة *</label>
+        <label htmlFor="brand_id" className="block text-sm font-medium text-gray-700">Brand *</label>
         <Select value={form.brand_id} onValueChange={val => setForm({ ...form, brand_id: val })}>
           <SelectTrigger className="w-full border rounded px-3 py-2">
-            <SelectValue placeholder="اختر ماركة" />
+            <SelectValue placeholder="" />
           </SelectTrigger>
           <SelectContent>
             {brands.map(brand => (
