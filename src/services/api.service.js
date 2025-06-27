@@ -67,18 +67,17 @@ class ApiService {
       '/auth/login/',
       '/auth/register/',
     ];
-    
-    // Remove the base URL if present
+    // لا تعتبر أي endpoint فيها /reaction/ أو /favorites/ أو /reviews/create/ عامة
     const path = url?.replace(API_BASE_URL, '');
-    // Remove query parameters
     const cleanPath = path?.split('?')[0];
-    
+    if (cleanPath?.includes('/reaction/') || cleanPath?.includes('/favorites/') || cleanPath?.includes('/reviews/create/')) {
+      return false;
+    }
     // First try exact match
     if (publicPaths.includes(cleanPath)) {
       console.log(`Exact match - endpoint ${cleanPath} is public`);
       return true;
     }
-    
     // Then try checking if it starts with any of the public paths
     const isPublic = publicPaths.some(endpoint => cleanPath?.startsWith(endpoint));
     console.log(`Checking endpoint ${cleanPath} (from ${url}) - Public:`, isPublic);
