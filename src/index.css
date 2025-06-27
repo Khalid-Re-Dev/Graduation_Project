@@ -1,9 +1,14 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   /* الألوان الأساسية */
+  --color-red-500: hsl(6, 78%, 57%);
+  --color-green-500: #07bc0c;
+  --color-blue-500: #3498db;
+  --color-orange-500: #f1c40f;
   --primary-color: #005580;
   --secondary-color: #f0f0f0;
   --accent-color: #ffb700;

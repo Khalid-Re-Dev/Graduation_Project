@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,} from "./ui/select";
-import { Label } from "./ui/label"; // Import Label component
-import { getCategories } from "../services/product.service";
+import { Label } from "./ui/label"; // Import Label compon { getCategories } from "../services/product.service";
 import { getOwnerBrands } from "../services/owner.service";
 import { toast } from "react-toastify";
 
@@ -134,31 +127,35 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">Categorie *</label>
-        <Select value={form.category_id} onValueChange={val => setForm({ ...form, category_id: val })}>
-          <SelectTrigger className="w-full border rounded px-3 py-2">
-            <SelectValue placeholder="" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map(cat => (
-              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">Category *</label>
+        <select
+          id="category_id"
+          name="category_id"
+          value={form.category_id}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2"
+        >
+          <option value="">Select Category</option>
+          {categories.map(cat => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
         {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
       </div>
       <div>
         <label htmlFor="brand_id" className="block text-sm font-medium text-gray-700">Brand *</label>
-        <Select value={form.brand_id} onValueChange={val => setForm({ ...form, brand_id: val })}>
-          <SelectTrigger className="w-full border rounded px-3 py-2">
-            <SelectValue placeholder="" />
-          </SelectTrigger>
-          <SelectContent>
-            {brands.map(brand => (
-              <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <select
+          id="brand_id"
+          name="brand_id"
+          value={form.brand_id}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2"
+        >
+          <option value="">Select Brand</option>
+          {brands.map(brand => (
+            <option key={brand.id} value={brand.id}>{brand.name}</option>
+          ))}
+        </select>
         {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
       </div>
       <div>
