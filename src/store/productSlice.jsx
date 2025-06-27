@@ -222,10 +222,3 @@ export const selectLoading = (state) => state.products.loading;
 export const selectError = (state) => state.products.error;
 
 export default productSlice.reducer;
-
-export {
-  fetchProducts,
-  fetchNewProducts,
-  fetchPopularProducts,
-  fetchProductById,
-};
