@@ -8,7 +8,7 @@ import {
 } from "../services/product.service"
 
 // Async thunk for fetching all products
-export const fetchAllProducts = createAsyncThunk("products/fetchAll", async (_, { rejectWithValue }) => {
+export const fetchProducts  = createAsyncThunk("products/fetchAll", async (_, { rejectWithValue }) => {
   try {
     console.log("Fetching all products...")
     const data = await getProducts()
@@ -205,11 +205,11 @@ const productSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Handle fetchAllProducts
-      .addCase(fetchAllProducts.pending, (state) => {
+      .addCase(fetchProducts .pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(fetchAllProducts.fulfilled, (state, action) => {
+      .addCase(fetchProducts .fulfilled, (state, action) => {
         state.loading = false
         state.error = null
 
@@ -255,7 +255,7 @@ const productSlice = createSlice({
         console.log(`Processed ${products.length} products`, products);
         state.allProducts = products;
       })
-      .addCase(fetchAllProducts.rejected, (state, action) => {
+      .addCase(fetchProducts .rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch products"
         // Do not use mock data fallback
