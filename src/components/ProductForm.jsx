@@ -1,10 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "../../components/ui/select";
 import { getCategories } from "../services/product.service";
 import { getOwnerBrands } from "../services/owner.service";
 import { toast } from "react-toastify";
 
-export default function ProductForm({ initialData, onSubmit, loading, errors, setImageFile, form, setForm, mode }) {
+export default function ProductForm({
+  initialData,
+  onSubmit,
+  loading,
+  errors,
+  setImageFile,
+  form,
+  setForm,
+  mode,
+}) {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
 
@@ -13,46 +28,45 @@ export default function ProductForm({ initialData, onSubmit, loading, errors, se
       try {
         const cats = await getCategories();
         let categoryList = Array.isArray(cats) ? cats : cats.results || [];
-        categoryList = categoryList.map(cat => ({ ...cat, id: String(cat.id) }));
+        categoryList = categoryList.map((cat) => ({ ...cat, id: String(cat.id) }));
         setCategories(categoryList);
         if (categoryList.length === 0) {
-          toast.warn("لم يتم العثور على تصنيفات. يرجى إضافة تصنيفات أولاً.");
+          toast.warn("No categories found. Please add categories first.");
         }
       } catch {
-        toast.error("فشل في جلب التصنيفات. يرجى المحاولة لاحقاً.");
+        toast.error("Failed to fetch categories. Please try again later.");
       }
     }
-    fetchCategories();
+
     async function fetchBrands() {
       try {
         const brandsData = await getOwnerBrands();
         let brandList = Array.isArray(brandsData) ? brandsData : brandsData.results || [];
-        brandList = brandList.map(brand => ({ ...brand, id: String(brand.id) }));
+        brandList = brandList.map((brand) => ({ ...brand, id: String(brand.id) }));
         setBrands(brandList);
         if (brandList.length === 0) {
-          toast.warn("لم يتم العثور على ماركات. يرجى إضافة ماركات أولاً.");
+          toast.warn("No brands found. Please add brands first.");
         }
       } catch {
-        toast.error("فشل في جلب الماركات. يرجى المحاولة لاحقاً.");
+        toast.error("Failed to fetch brands. Please try again later.");
       }
     }
+
+    fetchCategories();
     fetchBrands();
   }, []);
 
-  // إشعار عند نجاح أو فشل الحفظ/التعديل
   useEffect(() => {
     if (errors && Object.keys(errors).length > 0) {
-      toast.error("فشل في حفظ المنتج. تحقق من البيانات.");
+      toast.error("Failed to save product. Please check the form.");
     }
-    // يمكن إضافة إشعار نجاح هنا إذا كان هناك متغير يدل على النجاح (مثلاً success أو redirect)
-    // لكن حالياً يتم ذلك في الصفحة الأم (AddProduct, EditProduct) بعد نجاح الطلب
   }, [errors]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -62,87 +76,179 @@ export default function ProductForm({ initialData, onSubmit, loading, errors, se
     setForm((prev) => ({ ...prev, image_url: "" }));
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const formData = { ...form, stock: 3 }; // Fixed stock value
+    onSubmit(formData);
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl mx-auto">
       <div>
-        <label className="block mb-1">اسم المنتج *</label>
-        <input name="name" value={form.name} onChange={handleChange} className="w-full border rounded px-3 py-2" />
-        {errors.name && <div className="text-red-500 text-xs mt-1">{errors.name}</div>}
+        <label className="block mb-1 font-medium">Product Name *</label>
+        <input
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2"
+        />
+        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
       </div>
+
       <div>
-        <label className="block mb-1">الوصف</label>
-        <textarea name="description" value={form.description} onChange={handleChange} className="w-full border rounded px-3 py-2" />
+        <label className="block mb-1 font-medium">Description</label>
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2"
+        />
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block mb-1">السعر *</label>
-          <input name="price" type="number" value={form.price} onChange={handleChange} className="w-full border rounded px-3 py-2" />
-          {errors.price && <div className="text-red-500 text-xs mt-1">{errors.price}</div>}
+          <label className="block mb-1 font-medium">Price *</label>
+          <input
+            name="price"
+            type="number"
+            value={form.price}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2"
+          />
+          {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
         </div>
+
         <div>
-          <label className="block mb-1">السعر الأصلي *</label>
-          <input name="original_price" type="number" value={form.original_price} onChange={handleChange} className="w-full border rounded px-3 py-2" />
-          {errors.original_price && <div className="text-red-500 text-xs mt-1">{errors.original_price}</div>}
+          <label className="block mb-1 font-medium">Original Price *</label>
+          <input
+            name="original_price"
+            type="number"
+            value={form.original_price}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2"
+          />
+          {errors.original_price && (
+            <p className="text-red-500 text-xs mt-1">{errors.original_price}</p>
+          )}
         </div>
       </div>
-      <div>
-        <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">التصنيف *</label>
-        <Select value={form.category_id} onValueChange={val => setForm({ ...form, category_id: val })}>
-          <SelectTrigger className="w-full border rounded px-3 py-2">
-            <SelectValue placeholder="اختر تصنيفًا" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map(cat => (
-              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
-      </div>
-      <div>
-        <label htmlFor="brand_id" className="block text-sm font-medium text-gray-700">الماركة *</label>
-        <Select value={form.brand_id} onValueChange={val => setForm({ ...form, brand_id: val })}>
-          <SelectTrigger className="w-full border rounded px-3 py-2">
-            <SelectValue placeholder="اختر ماركة" />
-          </SelectTrigger>
-          <SelectContent>
-            {brands.map(brand => (
-              <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
-      </div>
-      <div>
-        <label className="block mb-1">رابط الصورة (أو ارفع صورة)</label>
-        <input name="image_url" value={form.image_url} onChange={handleChange} className="w-full border rounded px-3 py-2 mb-2" />
-        <input type="file" accept="image/*" onChange={handleImageChange} className="w-full" />
-      </div>
-      <div>
-        <label className="block mb-1">رابط الفيديو</label>
-        <input name="video_url" value={form.video_url} onChange={handleChange} className="w-full border rounded px-3 py-2" />
-      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block mb-1">تاريخ الإصدار</label>
-          <input name="release_date" type="date" value={form.release_date} onChange={handleChange} className="w-full border rounded px-3 py-2" />
+          <label className="block mb-1 font-medium">Category *</label>
+          <Select
+            value={form.category_id}
+            onValueChange={(val) => setForm({ ...form, category_id: val })}
+          >
+            <SelectTrigger className="w-full border rounded px-3 py-2">
+              <SelectValue placeholder="Select a category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
         </div>
+
         <div>
-          <label className="block mb-1">المخزون *</label>
-          <input name="stock" type="number" value={form.stock} onChange={handleChange} className="w-full border rounded px-3 py-2" />
-          {errors.stock && <div className="text-red-500 text-xs mt-1">{errors.stock}</div>}
+          <label className="block mb-1 font-medium">Brand *</label>
+          <Select
+            value={form.brand_id}
+            onValueChange={(val) => setForm({ ...form, brand_id: val })}
+          >
+            <SelectTrigger className="w-full border rounded px-3 py-2">
+              <SelectValue placeholder="Select a brand" />
+            </SelectTrigger>
+            <SelectContent>
+              {brands.map((brand) => (
+                <SelectItem key={brand.id} value={brand.id}>
+                  {brand.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
         </div>
       </div>
-      <div className="flex gap-4 items-center">
+
+      <div>
+        <label className="block mb-1 font-medium">Image URL (or upload an image)</label>
+        <input
+          name="image_url"
+          value={form.image_url}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2 mb-2"
+        />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="w-full"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1 font-medium">Video URL</label>
+        <input
+          name="video_url"
+          value={form.video_url}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block mb-1 font-medium">Release Date</label>
+          <input
+            name="release_date"
+            type="date"
+            value={form.release_date}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+        {/* Removed stock field */}
+      </div>
+
+      <div className="flex items-center gap-6">
         <label className="flex items-center gap-2">
-          <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} /> نشط
+          <input
+            type="checkbox"
+            name="is_active"
+            checked={form.is_active}
+            onChange={handleChange}
+          />
+          Active
         </label>
+
         <label className="flex items-center gap-2">
-          <input type="checkbox" name="in_stock" checked={form.in_stock} onChange={handleChange} /> متوفر
+          <input
+            type="checkbox"
+            name="in_stock"
+            checked={form.in_stock}
+            onChange={handleChange}
+          />
+          In Stock
         </label>
       </div>
-      <button type="submit" className="w-full bg-[#005580] text-white py-2 rounded hover:bg-[#004466]" disabled={loading}>
-        {loading ? (mode === "edit" ? "جاري التحديث..." : "جاري الحفظ...") : (mode === "edit" ? "تحديث المنتج" : "حفظ المنتج")}
+
+      <button
+        type="submit"
+        className="w-full bg-blue-700 text-white py-2 rounded hover:bg-blue-800 transition"
+        disabled={loading}
+      >
+        {loading
+          ? mode === "edit"
+            ? "Updating..."
+            : "Saving..."
+          : mode === "edit"
+          ? "Update Product"
+          : "Save Product"}
       </button>
     </form>
   );

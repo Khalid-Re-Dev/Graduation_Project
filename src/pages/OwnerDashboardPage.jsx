@@ -352,12 +352,6 @@ function OwnerDashboardPage() {
               />
             </>
           )}
-          {activeTab === "orders" && (
-            <OrdersTab orders={orders} loading={loading.page} error={error.page} />
-          )}
-          {activeTab === "analytics" && (
-            <AnalyticsTab analytics={analytics} loading={loading.page} error={errorAnalytics} />
-          )}
           {activeTab === "settings" && (
             <SettingsTab settings={settings} onSave={handleSaveSettings} loading={loading.form} error={error.form} />
           )}
@@ -445,83 +439,6 @@ function ProductsTab({ products, onAdd, onEdit, onDelete }) {
     </div>
   )
 }
-
-// تبويب الطلبات
-function OrdersTab({ orders, loading, error }) {
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="animate-spin" size={32} /></div>
-  if (error) return <div className="text-red-500 py-4">{error}</div>
-  return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="font-bold text-lg mb-4">الطلبات</div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="py-2 px-4">رقم الطلب</th>
-              <th className="py-2 px-4">العميل</th>
-              <th className="py-2 px-4">المجموع</th>
-              <th className="py-2 px-4">الحالة</th>
-              <th className="py-2 px-4">التاريخ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders?.length ? orders.map((order) => (
-              <tr key={order.id} className="border-b">
-                <td className="py-2 px-4">{order.id}</td>
-                <td className="py-2 px-4">{order.customer_name || '-'}</td>
-                <td className="py-2 px-4">{order.total_price ?? '-'}</td>
-                <td className="py-2 px-4">{order.status}</td>
-                <td className="py-2 px-4">{order.created_at?.slice(0, 10)}</td>
-              </tr>
-            )) : (
-              <tr><td colSpan={5} className="text-center text-gray-400 py-4">لا توجد طلبات</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// تبويب الإحصائيات
-function AnalyticsTab({ analytics, loading, error }) {
-  // استخدم errorAnalytics من الأعلى
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="animate-spin" size={32} /></div>
-  if (error) return <div className="text-red-500 py-4">{error}</div>
-  if (!analytics) return <div className="text-red-500 py-4">{errorAnalytics || "لا توجد بيانات إحصائيات متاحة حالياً."}</div>
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="font-bold mb-4 flex items-center gap-2"><BarChart size={20}/> مبيعات الشهور الأخيرة</div>
-        {/* رسم بياني بسيط */}
-        {analytics?.monthly_sales ? (
-          <div className="h-48 flex items-end gap-2">
-            {analytics.monthly_sales.map((m, i) => (
-              <div key={i} className="flex flex-col items-center">
-                <div className="bg-[#005580] w-6" style={{height: `${m.sales/10}px`}}></div>
-                <span className="text-xs mt-1">{m.month}</span>
-              </div>
-            ))}
-          </div>
-        ) : <div className="text-gray-400">لا توجد بيانات مبيعات</div>}
-      </div>
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="font-bold mb-4 flex items-center gap-2"><PieChart size={20}/> المنتجات الأكثر مبيعًا</div>
-        {analytics?.top_products?.length ? (
-          <ul className="divide-y">
-            {analytics.top_products.map((prod, idx) => (
-              <li key={prod.id || idx} className="py-2 flex items-center justify-between">
-                <span>{prod.name}</span>
-                <span className="text-gray-500 text-xs">{prod.sales ?? 0} مبيعة</span>
-              </li>
-            ))}
-          </ul>
-        ) : <div className="text-gray-400">لا توجد منتجات</div>}
-      </div>
-    </div>
-  )
-}
-
 // تبويب إعدادات المتجر
 function SettingsTab({ settings, onSave, loading, error }) {
   const [form, setForm] = useState(settings || { name: '', description: '', address: '', phone: '', email: '', url: '' })
