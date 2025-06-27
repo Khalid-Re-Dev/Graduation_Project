@@ -92,7 +92,6 @@ function HomePage() {
     loadProducts();
   }, [dispatch, dataFetched]);
 
-<<<<<<< HEAD
   // Helper function to render product grid
   const renderProductGrid = useMemo(() => (productList, loading, error, emptyMessage) => {
     if (loading) {
@@ -127,7 +126,7 @@ function HomePage() {
       </div>
     );
   }, [isValidProduct]);
-=======
+
   useEffect(() => {
     setRecommendationsLoading(true)
     setRecommendationsError(null)
@@ -159,7 +158,6 @@ function HomePage() {
       })
       .finally(() => setRecommendationsLoading(false))
   }, [])
->>>>>>> 4896dde5262c4b71df7c49a42dd5043f51aa31ae
 
   // Show loading state
   if (pageLoading) {
@@ -187,8 +185,6 @@ function HomePage() {
     )
   }
 
-<<<<<<< HEAD
-=======
   // الزائر: فقط جميع المنتجات + رسالة وزر تسجيل الدخول
   if (!isAuthenticated) {
     return (
@@ -238,23 +234,9 @@ function HomePage() {
   }
 
   // المستخدم المسجل دخوله: جميع الأقسام
->>>>>>> 4896dde5262c4b71df7c49a42dd5043f51aa31ae
   return (
     <div className="min-h-screen bg-gray-50">
       <HeroSection />
-<<<<<<< HEAD
-      <CategorySection />
-      <div className="container mx-auto px-4 py-8">
-        {/* All Products Section */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">All Products</h2>
-          {renderProductGrid(
-            products,
-            loading,
-            error,
-            'No products available. Please check back later.'
-=======
-
       {/* Categories Section */}
       <section className="py-8 bg-white">
         <div className="container mx-auto px-4">
@@ -442,32 +424,9 @@ function HomePage() {
                 </div>
               ))}
             </div>
->>>>>>> 4896dde5262c4b71df7c49a42dd5043f51aa31ae
           )}
-        </section>
-
-        {/* New Products Section */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">New Arrivals</h2>
-          {renderProductGrid(
-            newProducts,
-            newProductsLoading,
-            newProductsError,
-            'No new products available at the moment.'
-          )}
-        </section>
-
-        {/* Popular Products Section */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Popular Products</h2>
-          {renderProductGrid(
-            popularProducts,
-            popularProductsLoading,
-            popularProductsError,
-            'No popular products available at the moment.'
-          )}
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   )
 }
