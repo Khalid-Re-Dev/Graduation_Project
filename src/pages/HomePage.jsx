@@ -31,6 +31,7 @@ function HomePage() {
   const [dataFetched, setDataFetched] = useState(false)
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
   const { isAuthenticated } = useSelector((state) => state.auth)
 
   // Helper function to check if an object is a valid product
@@ -48,6 +49,17 @@ function HomePage() {
     }
     return valid;
   }, [])
+
+  // Helper function to filter out duplicate products by id
+  const filterUniqueProducts = (arr) => {
+    const seen = new Set();
+    return arr.filter((item) => {
+      if (!item || !item.id) return false;
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  };
 
   // Function to retry loading products if there's an error
   const retryLoading = async () => {
@@ -131,36 +143,28 @@ function HomePage() {
   }, [isValidProduct]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setRecommendations([]);
+      return;
+    }
     setRecommendationsLoading(true)
     setRecommendationsError(null)
     fetchRecommendations()
       .then((data) => {
-        console.log("[Recommendations] Raw API response:", data);
-        if (data && data.error && data.error.toLowerCase().includes("unauthorized")) {
-          setRecommendationsError("You must be logged in to see recommendations.");
+        if (!Array.isArray(data)) {
+          setRecommendationsError("No recommendations available.");
           setRecommendations([]);
           return;
         }
-        if (!data || typeof data !== 'object') {
-          setRecommendationsError("Invalid recommendations data from server.");
-          setRecommendations([]);
-          return;
-        }
-        // استخدم فقط results إذا كانت موجودة
-        if (Array.isArray(data.results)) {
-          setRecommendations(data.results);
-        } else {
-          setRecommendations([]);
-        }
+        setRecommendations(data);
         setRecommendationsError(null);
       })
       .catch((err) => {
-        console.error("[Recommendations] Fetch error:", err);
         setRecommendationsError("Could not load recommendations. Please check your login or backend.")
         setRecommendations([])
       })
       .finally(() => setRecommendationsLoading(false))
-  }, [])
+  }, [isAuthenticated])
 
   // Show loading state
   if (pageLoading) {

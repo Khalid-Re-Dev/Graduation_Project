@@ -27,6 +27,9 @@ class ApiService {
           // Optionally redirect to login
           window.location.href = '/login';
         }
+        if (error.message && (error.message.includes('Network Error') || error.message.includes('timeout'))) {
+          alert('Network error: Unable to reach the server. Please check your connection.');
+        }
         return Promise.reject(error);
       }
     );

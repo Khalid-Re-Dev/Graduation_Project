@@ -112,7 +112,7 @@ class ProductService {
     try {
       // Get all products and sort them by date
       const allProducts = await this.getAllProducts();
-      return allProducts
+      return [...allProducts]
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, limit);
     } catch (error) {
@@ -130,7 +130,7 @@ class ProductService {
     try {
       // Get all products and sort them by rating/views
       const allProducts = await this.getAllProducts();
-      return allProducts
+      return [...allProducts]
         .sort((a, b) => (b.rating || 0) - (a.rating || 0))
         .slice(0, limit);
     } catch (error) {

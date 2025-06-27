@@ -56,6 +56,12 @@ function DashboardPage() {
   const isAuthenticated = checkAuth()
   const isUserAdmin = isAdmin()
 
+  useEffect(() => {
+    if (!isAuthenticated || !isUserAdmin) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, isUserAdmin, navigate])
+
   // Fetch products from API
   const fetchProductsFromAPI = async () => {
     setLoading(prev => ({ ...prev, products: true }))

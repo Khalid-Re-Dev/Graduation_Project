@@ -57,9 +57,10 @@ function ProductCard({ product }) {
   // Safe product object
   const safeProduct = {
     id: product.id,
-    name: typeof product.name === 'string' ? product.name : '',
-    price: typeof product.price === 'number' || typeof product.price === 'string' ? product.price : '-',
-    image: typeof product.image === 'string' && product.image ? product.image : (typeof product.image_url === 'string' && product.image_url ? product.image_url : (typeof product.thumbnail === 'string' && product.thumbnail ? product.thumbnail : "/placeholder.svg")),
+    name: typeof product.name === 'string' && product.name.length > 0 ? product.name : 'Unnamed Product',
+    price: typeof product.price !== 'undefined' && !isNaN(Number(product.price)) ? product.price : '-',
+    image: product.image || '/placeholder.jpg',
+    description: product.description || 'No description available',
     shop_name: typeof product.shop_name === 'string' ? product.shop_name : (product.shop && typeof product.shop.name === 'string' ? product.shop.name : '-'),
     average_rating: typeof product.rating === 'number' ? product.rating : (typeof product.average_rating === 'number' ? product.average_rating : 0),
     discount: typeof product.discount === 'number' ? product.discount : 0,
