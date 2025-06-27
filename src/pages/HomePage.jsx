@@ -194,6 +194,8 @@ function HomePage() {
 
   // الزائر: فقط جميع المنتجات + رسالة وزر تسجيل الدخول
   if (!isAuthenticated) {
+    // استخدم products بدلاً من allProducts
+    const allProducts = products || [];
     return (
       <div>
         {/* إعلان صورة مع نص أعلى الصفحة */}
