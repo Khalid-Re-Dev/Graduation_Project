@@ -13,7 +13,7 @@ export const mockProducts = [
  * @param {Object} params - Query parameters for filtering
  * @returns {Promise} - Resolves with filtered products
  */
-export const fetchProducts = async (params = {}) => {
+export const fetchAllProducts = async (params = {}) => {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
   

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
-import { fetchProducts  } from "../store/productSlice"
+import { fetchAllProducts  } from "../store/productSlice"
 import { BarChart, PieChart, Edit, Trash2, Plus, Star, Loader2, AlertCircle } from "lucide-react"
 import { getStats, getProducts, createProduct, updateProduct, deleteProduct, getAnalytics } from "../services/dashboard.service"
 import { getUsers } from "../services/user.service"
@@ -55,7 +55,7 @@ function DashboardPage() {
   const isUserAdmin = isAdmin()
 
   // Fetch products from API
-  const fetchProducts = async () => {
+  const fetchAllProducts = async () => {
     setLoading(prev => ({ ...prev, products: true }))
     setError(prev => ({ ...prev, products: null }))
 
@@ -142,7 +142,7 @@ function DashboardPage() {
   useEffect(() => {
     if (!isAuthenticated || !isUserAdmin) return
 
-    fetchProducts()
+    fetchAllProducts()
 
     if (activeTab === "analytics") {
       fetchStats()
@@ -152,7 +152,7 @@ function DashboardPage() {
     if (activeTab === "reviews") {
       // Reviews are extracted from products
       if (products.length === 0) {
-        fetchProducts()
+        fetchAllProducts()
       } else {
         setReviews(extractReviews(products))
       }
@@ -206,7 +206,7 @@ function DashboardPage() {
       await createProduct(productData)
 
       // Refresh products list
-      fetchProducts()
+      fetchAllProducts()
 
       // Reset form
       setShowAddForm(false)
@@ -261,7 +261,7 @@ function DashboardPage() {
       await updateProduct(editingProduct.id, productData)
 
       // Refresh products list
-      fetchProducts()
+      fetchAllProducts()
 
       // Reset form
       setShowAddForm(false)
@@ -296,7 +296,7 @@ function DashboardPage() {
       await deleteProduct(productId)
 
       // Refresh products list
-      fetchProducts()
+      fetchAllProducts()
     } catch (err) {
       console.error("Error deleting product:", err)
       setError(prev => ({ ...prev, products: err.message }))

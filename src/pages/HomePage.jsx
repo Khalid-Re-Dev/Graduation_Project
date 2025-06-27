@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { fetchProducts, fetchNewProducts, fetchPopularProducts, selectProducts } from "../store/productSlice"
+import { fetchAllProducts, fetchNewProducts, fetchPopularProducts, selectProducts } from "../store/productSlice"
 import { fetchRecommendations } from "../services/recommendations.service"
 import HeroSection from "../sections/HeroSection"
 import CategorySection from "../sections/CategorySection"
@@ -69,7 +69,7 @@ function HomePage() {
 
     try {
       await Promise.all([
-        dispatch(fetchProducts()).unwrap(),
+        dispatch(fetchAllProducts()).unwrap(),
         dispatch(fetchNewProducts(10)).unwrap(),
         dispatch(fetchPopularProducts(10)).unwrap()
       ])
@@ -90,7 +90,7 @@ function HomePage() {
       try {
         console.log('HomePage: Fetching all product data...');
         await Promise.all([
-          dispatch(fetchProducts()).unwrap(),
+          dispatch(fetchAllProducts()).unwrap(),
           dispatch(fetchNewProducts(10)).unwrap(),
           dispatch(fetchPopularProducts(10)).unwrap(),
         ]);
