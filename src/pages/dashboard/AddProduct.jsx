@@ -21,7 +21,7 @@ const initialState = {
   shop_id: ""
 };
 
-export default function AddProduct() {
+export default function AddProduct({ onSubmit }) {
   const [form, setForm] = useState(initialState);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -29,7 +29,7 @@ export default function AddProduct() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setLoading(true); // Ensure loading state is set
     setErrors({});
     try {
       // طباعة البيانات قبل الإرسال
