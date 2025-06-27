@@ -57,10 +57,11 @@ class AuthService {
     try {
       // Only call logout endpoint if refresh token exists
       if (refreshToken) {
-        await apiService.post(API_ENDPOINTS.AUTH.LOGOUT);
+        await apiService.post(API_ENDPOINTS.AUTH.LOGOUT, { refresh_token: refreshToken });
       }
     } catch (error) {
       console.error('Logout error:', error);
+      // Don't throw the error, just log it since we want to clear tokens regardless
     } finally {
       // Always clear tokens and user data
       this.clearTokens();

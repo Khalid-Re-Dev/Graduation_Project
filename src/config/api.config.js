@@ -35,6 +35,10 @@ export const API_ENDPOINTS = {
     NEW: '/products/new/',
     SEARCH: '/products/search/',
     CATEGORIES: '/products/categories/',
+    // Alternative endpoints in case the main ones don't work
+    POPULAR_ALT: '/products/?ordering=-likes',
+    FEATURED_ALT: '/products/?featured=true',
+    NEW_ALT: '/products/?ordering=-created_at',
   },
   
   // User endpoints

@@ -73,14 +73,43 @@ class ProductService {
    * @returns {Promise} - Featured products data
    */
   async getFeaturedProducts(limit = 10) {
-    const apiData = await apiService.get(`${API_ENDPOINTS.PRODUCTS.FEATURED}?limit=${limit}`, { withAuth: false });
+    try {
+      const apiData = await apiService.get(`${API_ENDPOINTS.PRODUCTS.FEATURED}?limit=${limit}`, { withAuth: false });
 
-    // Check if the API returned valid data
-    if (apiData && Array.isArray(apiData) && apiData.length > 0) {
-      return apiData;
+      // Check if the API returned valid data
+      if (apiData && Array.isArray(apiData) && apiData.length > 0) {
+        return apiData;
+      }
+
+      throw new Error('Invalid featured products from API');
+    } catch (error) {
+      console.log('Featured products API failed, falling back to creating featured list from existing products');
+      
+      // Fallback: Get all products and create a featured list
+      try {
+        const allProducts = await this.getProducts();
+        
+        if (allProducts && Array.isArray(allProducts) && allProducts.length > 0) {
+          // Sort products to simulate "featured" - get the most recent active products
+          const featuredProducts = [...allProducts]
+            .filter(product => product.is_active !== false) // Only active products
+            .sort((a, b) => {
+              // Sort by creation date (newest first)
+              const dateA = new Date(a.created_at || 0);
+              const dateB = new Date(b.created_at || 0);
+              return dateB - dateA;
+            })
+            .slice(0, limit);
+
+          console.log('Using existing products from store to create featured products list');
+          return featuredProducts;
+        }
+      } catch (fallbackError) {
+        console.error('Failed to get products for featured fallback:', fallbackError);
+      }
+
+      throw new Error('Failed to fetch featured products and fallback failed');
     }
-
-    throw new Error('Invalid featured products from API');
   }
 
   /**
@@ -89,14 +118,45 @@ class ProductService {
    * @returns {Promise} - Popular products data
    */
   async getPopularProducts(limit = 10) {
-    const apiData = await apiService.get(`${API_ENDPOINTS.PRODUCTS.POPULAR}?limit=${limit}`, { withAuth: false });
+    try {
+      const apiData = await apiService.get(`${API_ENDPOINTS.PRODUCTS.POPULAR}?limit=${limit}`, { withAuth: false });
 
-    // Check if the API returned valid data
-    if (apiData && Array.isArray(apiData) && apiData.length > 0) {
-      return apiData;
+      // Check if the API returned valid data
+      if (apiData && Array.isArray(apiData) && apiData.length > 0) {
+        return apiData;
+      }
+
+      throw new Error('Invalid popular products from API');
+    } catch (error) {
+      console.log('Popular products API failed, falling back to creating popular list from existing products');
+      
+      // Fallback: Get all products and create a popular list based on some criteria
+      try {
+        const allProducts = await this.getProducts();
+        
+        if (allProducts && Array.isArray(allProducts) && allProducts.length > 0) {
+          // Sort products to simulate "popular" - you can modify this logic
+          // For now, we'll sort by price (lower prices might be more popular)
+          // or you could sort by name, or randomly shuffle
+          const popularProducts = [...allProducts]
+            .filter(product => product.is_active !== false) // Only active products
+            .sort((a, b) => {
+              // Sort by price (ascending) - cheaper products first
+              const priceA = parseFloat(a.price) || 0;
+              const priceB = parseFloat(b.price) || 0;
+              return priceA - priceB;
+            })
+            .slice(0, limit);
+
+          console.log('Using existing products from store to create popular products list');
+          return popularProducts;
+        }
+      } catch (fallbackError) {
+        console.error('Failed to get products for popular fallback:', fallbackError);
+      }
+
+      throw new Error('Failed to fetch popular products and fallback failed');
     }
-
-    throw new Error('Invalid popular products from API');
   }
 
   /**

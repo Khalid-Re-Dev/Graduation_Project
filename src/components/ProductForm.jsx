@@ -133,48 +133,34 @@ export default function ProductForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block mb-1 font-medium">Category *</label>
-          <Select
-            value={form.category_id}
-            onValueChange={(val) => setForm({ ...form, category_id: val })}
-          >
-            <SelectTrigger className="w-full border rounded px-3 py-2">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Brand *</label>
-          <Select
-            value={form.brand_id}
-            onValueChange={(val) => setForm({ ...form, brand_id: val })}
-          >
-            <SelectTrigger className="w-full border rounded px-3 py-2">
-              <SelectValue placeholder="Select a brand" />
-            </SelectTrigger>
-            <SelectContent>
-              {brands.map((brand) => (
-                <SelectItem key={brand.id} value={brand.id}>
-                  {brand.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
-        </div>
+      <div>
+        <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">التصنيف *</label>
+        <Select value={form.category_id} onValueChange={val => setForm({ ...form, category_id: val })}>
+          <SelectTrigger className="w-full border rounded px-3 py-2">
+            <SelectValue placeholder="اختر تصنيفًا" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map(cat => (
+              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.category_id && <p className="text-red-500 text-xs mt-1">{errors.category_id}</p>}
       </div>
-
+      <div>
+        <label htmlFor="brand_id" className="block text-sm font-medium text-gray-700">الماركة *</label>
+        <Select value={form.brand_id} onValueChange={val => setForm({ ...form, brand_id: val })}>
+          <SelectTrigger className="w-full border rounded px-3 py-2">
+            <SelectValue placeholder="اختر ماركة" />
+          </SelectTrigger>
+          <SelectContent>
+            {brands.map(brand => (
+              <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.brand_id && <p className="text-red-500 text-xs mt-1">{errors.brand_id}</p>}
+      </div>
       <div>
         <label className="block mb-1 font-medium">Image URL (or upload an image)</label>
         <input
