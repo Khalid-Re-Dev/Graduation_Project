@@ -2,20 +2,19 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { Link } from "react-router-dom"
-import { useDispatch, useSelector } from "react-redux"
-import { fetchAllProducts, fetchNewProducts, fetchPopularProducts, selectProducts } from "../store/productSlice"
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAllProducts, fetchNewProducts, fetchPopularProducts } from "../store/productSlice";
 import { fetchRecommendations } from "../services/recommendations.service"
 import HeroSection from "../sections/HeroSection"
 import CategorySection from "../sections/CategorySection"
 import ProductCard from "../components/ProductCard"
 import FallbackLoader from "../components/FallbackLoader"
 import { ArrowRight, AlertCircle } from "lucide-react"
-
 // Home page component with hero, categories, and product sections
 function HomePage() {
   const dispatch = useDispatch()
-  const { 
-    items: products,
+  const {
+    allProducts: products,
     newProducts,
     popularProducts,
     loading,
@@ -23,8 +22,8 @@ function HomePage() {
     popularProductsLoading,
     error,
     newProductsError,
-    popularProductsError
-  } = useSelector(selectProducts)
+    popularProductsError,
+  } = useSelector((state) => state.products);
   
   const [pageLoading, setPageLoading] = useState(true)
   const [pageError, setPageError] = useState(null)
