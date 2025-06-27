@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from '../config/api.config';
 import { apiService } from './api.service';
-
+// Define the ProductService class
 class ProductService {
   async getProducts(params = {}) {
     const queryParams = new URLSearchParams(params).toString();
@@ -62,6 +62,7 @@ class ProductService {
   }
 }
 
+// Create a singleton instance of ProductService
 const productService = new ProductService();
 
 export const getProducts = (params) => productService.getProducts(params);
