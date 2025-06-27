@@ -332,8 +332,6 @@ function OwnerDashboardPage() {
         <div className="flex gap-4 border-b mb-8">
           <button className={`py-2 px-4 font-medium ${activeTab === "overview" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("overview")}>نظرة عامة</button>
           <button className={`py-2 px-4 font-medium ${activeTab === "products" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("products")}>المنتجات</button>
-          <button className={`py-2 px-4 font-medium ${activeTab === "orders" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("orders")}>الطلبات</button>
-          <button className={`py-2 px-4 font-medium ${activeTab === "analytics" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("analytics")}>الإحصائيات</button>
           <button className={`py-2 px-4 font-medium ${activeTab === "settings" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("settings")}>إعدادات المتجر</button>
         </div>
 

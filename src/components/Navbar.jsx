@@ -43,7 +43,7 @@ function Navbar() {
           <Link to="/" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Home</Link>
           <Link to="/products" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Products</Link>
           <Link to="/favorites" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Favorite</Link>
-          <Link to="/compare" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Compare</Link>
+          <Link to="/owner-dashboard" className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1">Dashboard</Link>
           {auth.isAuthenticated ? (
             <button onClick={handleLogout} className="text-base font-medium text-gray-900 hover:text-[#005580] transition-colors px-2 py-1 bg-transparent border-none">Logout</button>
           ) : (
