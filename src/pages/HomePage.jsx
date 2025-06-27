@@ -196,6 +196,18 @@ function HomePage() {
   if (!isAuthenticated) {
     return (
       <div>
+        {/* إعلان صورة مع نص أعلى الصفحة */}
+        <div className="w-full flex flex-col md:flex-row items-center justify-center gap-4 bg-blue-100 border-b border-blue-200 py-4 px-2 md:px-0">
+          <img
+            src="/best-in-click-logo.png"
+            alt="إعلان ترويجي"
+            className="w-24 h-24 object-contain rounded-lg shadow-md bg-white border border-blue-200"
+          />
+          <span className="text-lg md:text-xl font-bold text-blue-900 text-center md:text-right">
+            احصل على خصم خاص لفترة محدودة على أفضل المنتجات! تسوق الآن واستفد من العروض.
+          </span>
+        </div>
+
         <HeroSection />
         <section className="py-8 bg-white">
           <div className="container mx-auto px-4">
