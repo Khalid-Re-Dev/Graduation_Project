@@ -19,10 +19,9 @@ export const selectProducts = createSelector(
 )
 
 // Async thunk for fetching all products
-export const fetchProducts = createAsyncThunk(
+export const fetchAllProducts = createAsyncThunk(
   "products/fetchAll",
   async (_, { getState }) => {
-    // Check if we already have products and they're not being loaded
     const state = getState().products
     if (state.items?.length > 0 && !state.loading) {
       return state.items
@@ -37,7 +36,6 @@ export const fetchProducts = createAsyncThunk(
 export const fetchNewProducts = createAsyncThunk(
   "products/fetchNew",
   async (limit = 10, { getState }) => {
-    // Check if we already have new products and they're not being loaded
     const state = getState().products
     if (state.newProducts?.length > 0 && !state.newProductsLoading) {
       return state.newProducts
@@ -52,7 +50,6 @@ export const fetchNewProducts = createAsyncThunk(
 export const fetchPopularProducts = createAsyncThunk(
   "products/fetchPopular",
   async (limit = 10, { getState }) => {
-    // Check if we already have popular products and they're not being loaded
     const state = getState().products
     if (state.popularProducts?.length > 0 && !state.popularProductsLoading) {
       return state.popularProducts
@@ -69,20 +66,16 @@ export const fetchProductById = createAsyncThunk("products/fetchById", async (id
     console.log(`Fetching product details for ID ${id}...`)
     const productData = await getProductById(id)
 
-    // Validate the response data
     if (!productData) {
       console.error("Invalid data format received from API for product details:", productData)
       return rejectWithValue("Invalid data format received from API")
     }
 
-    // API might return data in a different structure than the mock data
-    // Ensure we have a consistent structure for the component
     const result = {
       product: productData.product || productData,
       relatedProducts: productData.relatedProducts || []
     }
 
-    // Additional validation for product object
     if (!result.product || typeof result.product !== 'object') {
       console.error("Invalid product object in response:", result.product)
       return rejectWithValue("Invalid product data received from API")
@@ -113,11 +106,9 @@ const productSlice = createSlice({
     popularProductsError: null,
   },
   reducers: {
-    // Add a review to a product
     addReview: (state, action) => {
       const { productId, review } = action.payload
 
-      // Find the product in all product arrays
       const updateProductInArray = (array) => {
         return array.map((product) => {
           if (product.id === productId) {
@@ -130,12 +121,10 @@ const productSlice = createSlice({
         })
       }
 
-      // Update in all arrays
       state.items = updateProductInArray(state.items)
       state.newProducts = updateProductInArray(state.newProducts)
       state.popularProducts = updateProductInArray(state.popularProducts)
 
-      // Update current product if it's the one being reviewed
       if (state.currentProduct && state.currentProduct.id === productId) {
         state.currentProduct = {
           ...state.currentProduct,
@@ -151,26 +140,25 @@ const productSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Handle fetchProducts
-      .addCase(fetchProducts.pending, (state) => {
+      // fetchAllProducts
+      .addCase(fetchAllProducts.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
+      .addCase(fetchAllProducts.fulfilled, (state, action) => {
         state.loading = false
         state.items = action.payload
         state.error = null
       })
-      .addCase(fetchProducts.rejected, (state, action) => {
+      .addCase(fetchAllProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
-        // Keep existing items on error
         if (!state.items.length) {
           state.items = []
         }
       })
 
-      // Handle fetchNewProducts
+      // fetchNewProducts
       .addCase(fetchNewProducts.pending, (state) => {
         state.newProductsLoading = true
         state.newProductsError = null
@@ -183,13 +171,12 @@ const productSlice = createSlice({
       .addCase(fetchNewProducts.rejected, (state, action) => {
         state.newProductsLoading = false
         state.newProductsError = action.payload
-        // Keep existing items on error
         if (!state.newProducts.length) {
           state.newProducts = []
         }
       })
 
-      // Handle fetchPopularProducts
+      // fetchPopularProducts
       .addCase(fetchPopularProducts.pending, (state) => {
         state.popularProductsLoading = true
         state.popularProductsError = null
@@ -202,13 +189,12 @@ const productSlice = createSlice({
       .addCase(fetchPopularProducts.rejected, (state, action) => {
         state.popularProductsLoading = false
         state.popularProductsError = action.payload
-        // Keep existing items on error
         if (!state.popularProducts.length) {
           state.popularProducts = []
         }
       })
 
-      // Handle fetchProductById
+      // fetchProductById
       .addCase(fetchProductById.pending, (state) => {
         state.loading = true
         state.error = null
@@ -224,7 +210,6 @@ const productSlice = createSlice({
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || "Failed to fetch product details"
-        // Do not use mock data fallback
         if (!state.currentProduct) {
           state.currentProduct = {
             id: 0,
