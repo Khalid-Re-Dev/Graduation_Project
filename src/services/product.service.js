@@ -92,7 +92,12 @@ class ProductService {
       try {
         console.log('Fetching all products...');
         const response = await apiService.get(API_ENDPOINTS.PRODUCTS.LIST, params);
-        return Array.isArray(response) ? response : [];
+        // دعم جميع أشكال الاستجابة: Array أو Object فيه results/data
+        if (Array.isArray(response)) return response;
+        if (response && Array.isArray(response.results)) return response.results;
+        if (response && Array.isArray(response.data)) return response.data;
+        // إذا لم يكن أي من ذلك، أعد مصفوفة فارغة
+        return [];
       } catch (error) {
         console.error('Failed to fetch products:', error);
         if (error.message?.includes('Unauthorized')) {
