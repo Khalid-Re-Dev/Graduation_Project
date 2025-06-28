@@ -17,7 +17,6 @@ const initialState = {
   release_date: "",
   is_active: true,
   in_stock: true,
-  stock: "",
   shop_id: ""
 };
 
@@ -52,7 +51,6 @@ export default function ProductUpsert() {
             release_date: prod.release_date ? prod.release_date.slice(0, 10) : "",
             is_active: prod.is_active,
             in_stock: prod.in_stock,
-            stock: prod.stock || "",
             shop_id: prod.shop_id || ""
           });
         } catch {
@@ -67,7 +65,6 @@ export default function ProductUpsert() {
     if (!form.name) errs.name = "اسم المنتج مطلوب";
     if (!form.price) errs.price = "السعر مطلوب";
     if (!form.category_id) errs.category_id = "التصنيف مطلوب";
-    if (!form.stock) errs.stock = "المخزون مطلوب";
     if (!form.original_price) errs.original_price = "السعر الأصلي مطلوب";
     return errs;
   };

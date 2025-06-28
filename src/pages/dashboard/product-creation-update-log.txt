@@ -6,7 +6,7 @@ Modified/New Files:
 Errors Fixed in API Integration:
 - Requests for product creation now use POST /dashboard/products/ with all required fields.
 - Requests for product update now use PATCH/PUT /dashboard/products/{product_id}/ with all required fields.
-- Payloads now include: name, description, price, original_price, category_id, brand_id, image_url, video_url, release_date, is_active, in_stock, stock, shop_id.
+- Payloads now include: name, description, price, original_price, category_id, brand_id, image_url, video_url, release_date, is_active, in_stock, shop_id.
 - Image upload is handled as FormData if a file is selected, otherwise image_url is sent as a string.
 - All requests send proper Authorization headers via apiService.
 - UI now validates all required fields before sending requests.
@@ -22,8 +22,7 @@ Fields Validated/Added to UI:
 - video_url
 - release_date
 - is_active (checkbox)
-- in_stock (checkbox)
-- stock (required)
+- in_stock (checkbox))
 - shop_id (auto-filled if available)
 
 Image Handling Improvements:

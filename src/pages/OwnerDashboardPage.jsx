@@ -442,7 +442,6 @@ function ProductsTab({ products, onAdd, onEdit, onDelete }) {
             <tr className="bg-gray-100">
               <th className="py-2 px-4">الاسم</th>
               <th className="py-2 px-4">السعر</th>
-              <th className="py-2 px-4">المخزون</th>
               <th className="py-2 px-4">الحالة</th>
               <th className="py-2 px-4">إجراءات</th>
             </tr>
@@ -452,7 +451,6 @@ function ProductsTab({ products, onAdd, onEdit, onDelete }) {
               <tr key={prod.id} className="border-b">
                 <td className="py-2 px-4">{prod.name}</td>
                 <td className="py-2 px-4">{prod.price ?? '-'}</td>
-                <td className="py-2 px-4">{prod.stock ?? '-'}</td>
                 <td className="py-2 px-4">{prod.is_active ? 'نشط' : 'غير نشط'}</td>
                 <td className="py-2 px-4 flex gap-2">
                   <button onClick={() => onEdit(prod)} className="text-blue-600 hover:underline flex items-center"><Edit size={16}/></button>

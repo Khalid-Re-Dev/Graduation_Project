@@ -45,7 +45,6 @@ function DashboardPage() {
     price: "",
     category: "",
     description: "",
-    stock: "",
     discount: "",
     image: "",
   })
@@ -199,7 +198,6 @@ function DashboardPage() {
       const productData = {
         ...formData,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock, 10),
         discount: parseInt(formData.discount, 10) || 0,
       }
 
@@ -215,7 +213,6 @@ function DashboardPage() {
         price: "",
         category: "",
         description: "",
-        stock: "",
         discount: "",
         image: "",
       })
@@ -235,7 +232,6 @@ function DashboardPage() {
       price: product.price,
       category: product.category,
       description: product.description,
-      stock: product.stock || 0,
       discount: product.discount || 0,
       image: product.image || "",
     })
@@ -254,7 +250,6 @@ function DashboardPage() {
       const productData = {
         ...formData,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock, 10),
         discount: parseInt(formData.discount, 10) || 0,
       }
 
@@ -271,7 +266,6 @@ function DashboardPage() {
         price: "",
         category: "",
         description: "",
-        stock: "",
         discount: "",
         image: "",
       })
@@ -365,7 +359,6 @@ function DashboardPage() {
                         price: "",
                         category: "",
                         description: "",
-                        stock: "",
                         discount: "",
                       })
                     }}
@@ -423,17 +416,6 @@ function DashboardPage() {
                             <option value="Gaming">Gaming</option>
                             <option value="Electronics">Electronics</option>
                           </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Stock</label>
-                          <input
-                            type="number"
-                            name="stock"
-                            value={formData.stock}
-                            onChange={handleFormChange}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#005580]"
-                            required
-                          />
                         </div>
                         <div>
                           <label className="block text-sm font-medium mb-1">Discount (%)</label>
@@ -498,9 +480,6 @@ function DashboardPage() {
                           Price
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Stock
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
@@ -526,16 +505,13 @@ function DashboardPage() {
                                   <div className="h-4 w-12 bg-gray-300 rounded animate-pulse"></div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="h-4 w-10 bg-gray-300 rounded animate-pulse"></div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="h-4 w-20 bg-gray-300 rounded animate-pulse"></div>
                                 </td>
                               </tr>
                             ))
                         : products.length === 0 ? (
                             <tr>
-                              <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                              <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
                                 No products found
                               </td>
                             </tr>
@@ -559,9 +535,6 @@ function DashboardPage() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="text-sm text-gray-900">${product.price}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-gray-900">{product.stock || "N/A"}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex space-x-2">

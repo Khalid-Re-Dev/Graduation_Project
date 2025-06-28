@@ -17,7 +17,6 @@ const initialState = {
   release_date: "",
   is_active: true,
   in_stock: true,
-  stock: "",
   brand_id: "",
   shop_id: ""
 };

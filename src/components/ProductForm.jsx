@@ -91,7 +91,7 @@ export default function ProductForm({
     }
 
     // التحقق من البيانات المطلوبة
-    const requiredFields = ['name', 'price', 'original_price', 'category_id', 'brand_id', 'stock'];
+    const requiredFields = ['name', 'price', 'original_price', 'category_id', 'brand_id'];
     const missingFields = requiredFields.filter(field => !form[field] || form[field] === '');
     if (missingFields.length > 0) {
       missingFields.forEach(field => {
@@ -235,7 +235,6 @@ export default function ProductForm({
             className="w-full border rounded px-3 py-2"
           />
         </div>
-        {/* Removed stock field */}
       </div>
 
       <div className="flex items-center gap-6">
@@ -247,16 +246,6 @@ export default function ProductForm({
             onChange={handleChange}
           />
           Active
-        </label>
-
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            name="in_stock"
-            checked={form.in_stock}
-            onChange={handleChange}
-          />
-          In Stock
         </label>
       </div>
 
