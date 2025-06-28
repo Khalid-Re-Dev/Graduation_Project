@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getOwnerProduct, createOwnerProduct, updateOwnerProduct } from "../../services/owner.service";
 import ProductForm from "../../components/ProductForm";
 import { toast } from "react-toastify";
+import { getToken } from "../../services/auth.service";
 
 const initialState = {
   name: "",
@@ -29,6 +30,14 @@ export default function ProductUpsert() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // تحقق من وجود توكن (تسجيل الدخول)
+    const token = getToken();
+    if (!token) {
+      toast.error("يجب تسجيل الدخول أولاً لإضافة منتج.");
+      navigate("/login");
+      return;
+    }
+
     if (productId) {
       (async () => {
         try {
@@ -51,7 +60,7 @@ export default function ProductUpsert() {
         }
       })();
     }
-  }, [productId]);
+  }, [productId, navigate]);
 
   const validate = () => {
     const errs = {};
