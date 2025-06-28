@@ -105,7 +105,7 @@ function CompareTable() {
             ))}
           </tr>
 
-          {/* Availability row (بدون stock) */}
+          {/* Availability row */}
           <tr>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Availability</td>
             {compareItems.map((product) => (
