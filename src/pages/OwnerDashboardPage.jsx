@@ -74,14 +74,48 @@ function OwnerDashboardPage() {
       setLoading({ ...loading, page: true })
       setError({ ...error, page: '' })
       try {
-        const res = await checkShop()
-        if (res.has_shop) {
+        let res = await checkShop()
+        // إذا لم يكن لدى المالك متجر بعد (404 أو null أو has_shop=false)
+        if (!res || res === null || res.has_shop === false) {
+          // إذا كان الخطأ من الباكيند هو ملف تعريف المالك غير موجود
+          if (res && res.error === "ملف تعريف المالك غير موجود.") {
+            setError({ ...error, shop: "يتم الآن إنشاء ملف تعريف المالك..." })
+            try {
+              await import("../services/owner.service").then(m => m.createOwnerProfile())
+              // بعد الإنشاء، أعد محاولة جلب المتجر
+              res = await checkShop()
+              if (res && res.has_shop && res.shop) {
+                setHasShop(true)
+                setShop(res.shop)
+                await loadDashboardData()
+                setError({ ...error, shop: '' })
+              } else if (res && res.has_shop === false) {
+                setHasShop(false)
+                setError({ ...error, shop: '' })
+              } else {
+                setHasShop(false)
+                setError({ ...error, shop: "لم يتم العثور على متجر بعد إنشاء ملف تعريف المالك. يرجى إنشاء متجر جديد." })
+              }
+              setLoading({ ...loading, page: false })
+              return
+            } catch (profileErr) {
+              setHasShop(false)
+              setError({ ...error, shop: "تعذر إنشاء ملف تعريف المالك. يرجى التواصل مع الدعم." })
+              setLoading({ ...loading, page: false })
+              return
+            }
+          }
+          // لا يوجد متجر بعد، لا تعتبر هذا خطأ، فقط اسمح للمالك بإنشاء متجر
+          setHasShop(false)
+          setError({ ...error, shop: '' })
+          setLoading({ ...loading, page: false })
+          return
+        }
+        if (res && res.has_shop && res.shop) {
           setHasShop(true)
           setShop(res.shop)
-          // جلب بيانات الداشبورد
           await loadDashboardData()
-        } else {
-          setHasShop(false)
+          setError({ ...error, shop: '' })
         }
       } catch (err) {
         setHasShop(false)
