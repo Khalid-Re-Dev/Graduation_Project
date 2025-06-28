@@ -6,10 +6,10 @@
 // Base URL for API requests
 export const API_BASE_URL = 'https://binc-b.onrender.com/api';
 
-// API endpoints
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
+    USERS: '/auth/users/', // ViewSet: GET, POST, PUT/PATCH, DELETE
     LOGIN: '/auth/login/',
     REGISTER: '/auth/register/',
     LOGOUT: '/auth/logout/',
@@ -17,56 +17,36 @@ export const API_ENDPOINTS = {
     VERIFY_TOKEN: '/auth/token/verify/',
   },
 
-  // Dashboard endpoints
-  DASHBOARD: {
-    STATS: '/dashboard/stats/',
-    PRODUCTS: '/dashboard/products/',
-    PRODUCT_DETAIL: (id) => `/dashboard/products/${id}/`,
-    ANALYTICS: '/dashboard/analytics/',
-    SETTINGS: '/dashboard/settings/',
-  },
-
   // Products endpoints
   PRODUCTS: {
-    LIST: '/products/',
-    DETAIL: (id) => `/products/${id}/`,
-    FEATURED: '/products/featured/',
-    POPULAR: '/products/popular/',
-    NEW: '/products/new/',
-    SEARCH: '/products/search/',
-    CATEGORIES: '/products/categories/',
-    // Alternative endpoints in case the main ones don't work
-    POPULAR_ALT: '/products/?ordering=-likes',
-    FEATURED_ALT: '/products/?featured=true',
-    NEW_ALT: '/products/?ordering=-created_at',
+    LIST: '/products/', // GET: قائمة المنتجات
+    DETAIL: (id) => `/products/${id}/`, // GET: تفاصيل منتج
+    CREATE: '/products/', // POST: إضافة منتج
+    UPDATE: (id) => `/products/${id}/update/`, // PUT/PATCH: تحديث منتج
+    DELETE: (id) => `/products/${id}/delete/`, // DELETE: حذف منتج
+    BRANDS: '/products/brands/', // ViewSet: جميع عمليات البراندات
+    REACTION: (id) => `/products/${id}/reaction/`, // تفاعل المستخدم مع منتج
   },
 
-  // User endpoints
-  USER: {
-    PROFILE: '/auth/profile/', // الصحيح حسب المسارات في Django
-    FAVORITES: '/user/favorites/',
-    PREFERENCES: '/user/preferences/',
+  // Reviews endpoints
+  REVIEWS: {
+    LIST: '/reviews/', // جلب كل المراجعات
+    CREATE: '/reviews/', // إضافة مراجعة
+    PRODUCT_REVIEWS: (productId) => `/reviews/products/${productId}/reviews/`, // جلب/إضافة مراجعات منتج
+    PRODUCT_REVIEW_DETAIL: (productId, reviewId) => `/reviews/products/${productId}/reviews/${reviewId}/`, // تفاصيل/تعديل/حذف مراجعة
   },
 
-  // Comparison endpoints
-  COMPARISON: {
-    COMPARE: (productId) => `/comparison/${productId}/compare/`,
+  // Recommendations endpoints
+  RECOMMENDATIONS: {
+    BASE: '/recommendations/', // توصيات أساسية
+    HYBRID: '/recommendations/hybrid/', // توصيات هجينة
+    FOR_YOU: '/recommendations/foryou/', // توصيات للمستخدم
   },
 
-  // Shop/Store endpoints
-  SHOP: {
-    CHECK: '/shop/check/',
-    REGISTER: '/shop/create/', // الصحيح حسب المسارات في Django
-    UPDATE: (id) => `/shop/${id}/update/`, // الصحيح حسب المسارات في Django
-    DELETE: (id) => `/shop/${id}/delete/`, // الصحيح حسب المسارات في Django
-  },
-
-  // Brands endpoints
-  BRANDS: {
-    LIST: '/dashboard/brands/',
-    CREATE: '/dashboard/brands/',
-    UPDATE: (id) => `/dashboard/brands/${id}/`,
-    DELETE: (id) => `/dashboard/brands/${id}/`,
+  // Promotions endpoints
+  PROMOTIONS: {
+    LIST: '/promotions/promotions/', // جلب العروض
+    DETAIL: (promotionId) => `/promotions/promotions/${promotionId}/`, // تفاصيل/تعديل/حذف عرض
   },
 };
 
