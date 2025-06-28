@@ -79,34 +79,43 @@ export default function ProductForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // التحقق من البيانات المطلوبة
-    const requiredFields = ['name', 'price', 'original_price', 'category_id', 'brand_id'];
-    const missingFields = requiredFields.filter(field => !form[field] || form[field] === '');
-    
-    if (missingFields.length > 0) {
-      toast.error(`الرجاء ملء جميع الحقول المطلوبة: ${missingFields.join(', ')}`);
+
+    // تحقق من وجود تصنيفات وبراندات
+    if (categories.length === 0) {
+      toast.error("يجب إضافة تصنيفات أولاً قبل إنشاء منتج.");
       return;
     }
-    
+    if (brands.length === 0) {
+      toast.error("يجب إضافة براندات أولاً قبل إنشاء منتج.");
+      return;
+    }
+
+    // التحقق من البيانات المطلوبة
+    const requiredFields = ['name', 'price', 'original_price', 'category_id', 'brand_id', 'stock'];
+    const missingFields = requiredFields.filter(field => !form[field] || form[field] === '');
+    if (missingFields.length > 0) {
+      missingFields.forEach(field => {
+        toast.error(`الحقل مطلوب: ${field}`);
+      });
+      return;
+    }
+
+    // منع إرسال صورة وimage_url معًا
+    if (imageFile && form.image_url) {
+      toast.error("يرجى اختيار صورة أو إدخال رابط صورة فقط، وليس كلاهما.");
+      return;
+    }
+
     // إنشاء FormData لإرسال البيانات مع الصور
     const formData = new FormData();
-    
-    // إضافة جميع بيانات النموذج
     Object.entries(form).forEach(([key, value]) => {
       if (value !== null && value !== '') {
         formData.append(key, value);
       }
     });
-    
-    // إضافة الصورة إذا تم اختيارها
     if (imageFile) {
       formData.append('image', imageFile);
     }
-    
-    // إضافة قيم افتراضية مطلوبة
-    formData.append('stock', '3');
-    
     onSubmit(e, formData);
   };
 

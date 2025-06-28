@@ -83,15 +83,20 @@ export default function ProductUpsert() {
       } else {
         payload = { ...form };
       }
+      // تتبع بيانات المنتج قبل الإرسال
+      console.log("بيانات المنتج قبل الإرسال:", form);
       if (productId) {
-        await updateOwnerProduct(productId, payload);
+        const res = await updateOwnerProduct(productId, payload);
+        console.log("استجابة تحديث المنتج:", res);
         toast.success("تم تحديث المنتج بنجاح!");
       } else {
-        await createOwnerProduct(payload);
+        const res = await createOwnerProduct(payload);
+        console.log("استجابة إنشاء المنتج:", res);
         toast.success("تم إضافة المنتج بنجاح!");
       }
       navigate("/dashboard");
     } catch (err) {
+      console.error("خطأ أثناء حفظ المنتج:", err);
       toast.error("فشل في حفظ المنتج. تحقق من البيانات.");
       if (err?.response?.data) setErrors(err.response.data);
     }
