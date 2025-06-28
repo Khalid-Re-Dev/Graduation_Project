@@ -1,7 +1,7 @@
 /**
  * API Configuration
  * This file contains the configuration for the API
- */
+ */ 
 
 // Base URL for API requests
 export const API_BASE_URL = 'https://binc-b.onrender.com/api';

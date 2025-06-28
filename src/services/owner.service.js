@@ -109,7 +109,9 @@ class OwnerService {
       if (!(productData instanceof FormData)) {
         dataToSend = new FormData();
         Object.entries(productData).forEach(([key, value]) => {
-          if (value !== null && value !== '') {
+          // Add only non-null or non-empty values to FormData
+          // This is crucial for file uploads and other data types
+          if (value !== null && value !== '') { // Ensure value is not null or empty string
             dataToSend.append(key, value);
           }
         });

@@ -40,7 +40,13 @@ export default function AddProduct({ onSubmit }) {
         setLoading(false);
         return;
       }
-      await createOwnerProduct({ ...form, price: parseFloat(form.price), stock: parseInt(form.stock, 10) });
+
+      const productDataToSend = {
+        ...form,
+        price: parseFloat(form.price) || 0,
+        stock: parseInt(form.stock, 10) || 0,
+      };
+      await createOwnerProduct(productDataToSend);
       toast.success("تم إضافة المنتج بنجاح");
       navigate("/owner-dashboard");
     } catch (err) {
