@@ -199,13 +199,43 @@ function OwnerDashboardPage() {
     setLoading((prev) => ({ ...prev, page: false }))
   }
 
+  // إضافة تتبع العمليات في واجهة المالك
+  const handleSaveProduct = async (form) => {
+    setProductModalLoading(true)
+    setProductModalErrors({})
+    try {
+      // تتبع البيانات المرسلة
+      console.log('بيانات المنتج قبل الإرسال:', form)
+      const formData = new FormData()
+      Object.entries(form).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, value)
+        }
+      })
+      if (productModalInitial && productModalInitial.id) {
+        console.log('تحديث منتج:', productModalInitial.id)
+        await updateOwnerProduct(productModalInitial.id, formData)
+      } else {
+        console.log('إنشاء منتج جديد')
+        await createOwnerProduct(formData)
+      }
+      setProductModalOpen(false)
+      await loadDashboardData()
+    } catch (err) {
+      console.error('خطأ أثناء حفظ المنتج:', err)
+      if (err?.response?.data) setProductModalErrors(err.response.data)
+      else setProductModalErrors({ error: 'فشل في حفظ المنتج' })
+    }
+    setProductModalLoading(false)
+  }
+
   // --- إصلاح حفظ إعدادات المتجر ---
   // تحديث إعدادات المتجر مع إرسال جميع الحقول المطلوبة
   const handleSaveSettings = async (data) => {
     setLoading((prev) => ({ ...prev, form: true }))
     setError((prev) => ({ ...prev, form: '' }))
     try {
-      // تأكد من إرسال جميع الحقول حتى الفارغة (قد يتطلب الباك إند ذلك)
+      console.log('تحديث إعدادات المتجر:', data)
       const payload = {
         name: data.name || '',
         url: data.url || '',
@@ -218,6 +248,7 @@ function OwnerDashboardPage() {
       await loadDashboardData()
       setError((prev) => ({ ...prev, form: '' }))
     } catch (err) {
+      console.error('خطأ أثناء تحديث إعدادات المتجر:', err)
       if (err?.response?.data) {
         setError((prev) => ({ ...prev, form: err.response.data.error || 'فشل في تحديث بيانات المتجر' }))
       } else {
