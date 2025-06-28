@@ -18,6 +18,7 @@ const initialState = {
   is_active: true,
   in_stock: true,
   stock: "",
+  brand_id: "",
   shop_id: ""
 };
 
