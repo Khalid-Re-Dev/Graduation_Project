@@ -43,6 +43,12 @@ export default function ProductUpsert() {
         const res = await import("../../services/owner.service").then(m => m.checkShop());
         // إذا لم يكن لدى المالك متجر بعد (404 أو null أو has_shop=false)
         if (!res || res === null || res.has_shop === false) {
+          // إذا كان الخطأ من الباكيند هو ملف تعريف المالك غير موجود
+          if (res && res.error === "ملف تعريف المالك غير موجود.") {
+            toast.error("يجب إنشاء ملف تعريف مالك أولاً. سيتم تحويلك لصفحة إنشاء المتجر.");
+            navigate("/owner-dashboard");
+            return;
+          }
           // لا يوجد متجر بعد، لا تعتبر هذا خطأ، فقط اسمح للمالك بإنشاء متجر
           setForm(prev => ({ ...prev, shop_id: "" }));
           // لا تظهر رسالة خطأ، فقط استمر (النموذج سيظهر زر إنشاء متجر)

@@ -274,9 +274,9 @@ function OwnerDashboardPage() {
             <h1 className="text-2xl font-bold">تسجيل متجر جديد</h1>
           </div>
           {error.shop && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
+            <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded flex items-center">
               <AlertCircle className="mr-2" size={20} />
-              <span>{error.shop}</span>
+              <span>{error.shop === "ملف تعريف المالك غير موجود." ? "يجب عليك أولاً إنشاء ملف تعريف مالك قبل إنشاء متجر. إذا لم يتم إنشاؤه تلقائيًا، يرجى التواصل مع الدعم الفني." : error.shop}</span>
             </div>
           )}
           {error.form && (
