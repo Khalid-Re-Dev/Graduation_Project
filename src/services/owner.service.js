@@ -104,7 +104,17 @@ class OwnerService {
    */
   async createProduct(productData) {
     try {
-      return await apiService.post('/dashboard/products/', productData);
+      let dataToSend = productData;
+      // If productData is not already FormData, convert it
+      if (!(productData instanceof FormData)) {
+        dataToSend = new FormData();
+        Object.entries(productData).forEach(([key, value]) => {
+          if (value !== null && value !== '') {
+            dataToSend.append(key, value);
+          }
+        });
+      }
+      return await apiService.post('/dashboard/products/', dataToSend);
     } catch (error) {
       console.error('Error creating product:', error);
       throw error;
