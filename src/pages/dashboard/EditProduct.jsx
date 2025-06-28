@@ -50,19 +50,20 @@ export default function EditProduct() {
     setLoading(true);
     setErrors({});
     try {
+      // حذف in_stock من FormData قبل الإرسال
+      if (formData instanceof FormData) {
+        formData.delete("in_stock");
+      } else if (typeof formData === "object") {
+        delete formData.in_stock;
+      }
       console.log("Updating product with data:", formData);
-      
-      // إرسال البيانات كما هي (FormData) إلى خدمة التحديث
       await updateOwnerProduct(id, formData);
       toast.success("تم تحديث المنتج بنجاح");
       navigate("/owner-dashboard");
     } catch (err) {
       console.error("Error updating product:", err);
-      
-      // معالجة أخطاء الخادم
       if (err?.response?.data) {
         setErrors(err.response.data);
-        // عرض رسائل الخطأ المحددة
         const errorMessages = Object.values(err.response.data).flat();
         if (errorMessages.length > 0) {
           toast.error(errorMessages[0]);

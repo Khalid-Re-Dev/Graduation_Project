@@ -83,14 +83,15 @@ export default function ProductUpsert() {
       if (imageFile) {
         payload = new FormData();
         Object.entries(form).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) payload.append(key, value);
+          if (key !== "in_stock" && value !== undefined && value !== null) payload.append(key, value);
         });
         payload.append("image", imageFile);
       } else {
         payload = { ...form };
+        delete payload.in_stock;
       }
       // تتبع بيانات المنتج قبل الإرسال
-      console.log("بيانات المنتج قبل الإرسال:", form);
+      console.log("بيانات المنتج قبل الإرسال:", payload);
       if (productId) {
         const res = await updateOwnerProduct(productId, payload);
         console.log("استجابة تحديث المنتج:", res);

@@ -33,19 +33,21 @@ export default function AddProduct({ onSubmit }) {
     setLoading(true);
     setErrors({});
     try {
+      // حذف in_stock من FormData قبل الإرسال
+      if (formData instanceof FormData) {
+        formData.delete("in_stock");
+      } else if (typeof formData === "object") {
+        delete formData.in_stock;
+      }
       console.log("Creating product with data:", formData);
-      
-      // إرسال البيانات كما هي (FormData) إلى خدمة الإنشاء
       await createOwnerProduct(formData);
       toast.success("تم إضافة المنتج بنجاح");
       navigate("/owner-dashboard");
     } catch (err) {
       console.error("Error creating product:", err);
-      
       // معالجة أخطاء الخادم
       if (err?.response?.data) {
         setErrors(err.response.data);
-        // عرض رسائل الخطأ المحددة
         const errorMessages = Object.values(err.response.data).flat();
         if (errorMessages.length > 0) {
           toast.error(errorMessages[0]);
