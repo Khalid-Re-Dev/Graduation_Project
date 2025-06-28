@@ -180,6 +180,15 @@ class AuthService {
     const user = this.getUser();
     return user && (user.is_admin || user.user_type === 'admin');
   }
+  
+  /**
+   * Check if current user is owner
+   * @returns {boolean}
+   */
+  isOwner() {
+    const user = this.getUser();
+    return user && user.user_type === "owner";
+  }
 }
 
 // Create and export a singleton instance
@@ -193,4 +202,5 @@ export const isAuthenticated = () => authService.isAuthenticated();
 export const getToken = () => authService.getToken();
 export const getUser = () => authService.getUser();
 export const isAdmin = () => authService.isAdmin();
+export const isOwner = () => authService.isOwner();
 export const clearTokens = () => authService.clearTokens();
