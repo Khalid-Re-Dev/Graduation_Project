@@ -37,6 +37,23 @@ export default function ProductUpsert() {
       return;
     }
 
+    // جلب shop_id الخاص بالمالك
+    async function fetchShopId() {
+      try {
+        const res = await import("../../services/owner.service").then(m => m.checkShop());
+        if (res && res.has_shop && res.shop && res.shop.id) {
+          setForm(prev => ({ ...prev, shop_id: res.shop.id }));
+        } else {
+          toast.error("يجب إنشاء متجر أولاً قبل إضافة منتج.");
+          navigate("/owner-dashboard");
+        }
+      } catch {
+        toast.error("حدث خطأ أثناء التحقق من المتجر.");
+        navigate("/owner-dashboard");
+      }
+    }
+    fetchShopId();
+
     if (productId) {
       (async () => {
         try {
@@ -74,6 +91,11 @@ export default function ProductUpsert() {
     const errs = validate();
     if (Object.keys(errs).length) {
       setErrors(errs);
+      return;
+    }
+    // تحقق من وجود shop_id قبل الإرسال
+    if (!form.shop_id) {
+      toast.error("يجب إنشاء متجر أولاً قبل إضافة منتج.");
       return;
     }
     setLoading(true);
