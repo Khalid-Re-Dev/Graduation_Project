@@ -242,6 +242,19 @@ class OwnerService {
       throw error;
     }
   }
+
+  /**
+   * إنشاء ملف تعريف المالك (Owner Profile) إذا لم يكن موجودًا
+   * @returns {Promise} - بيانات ملف تعريف المالك
+   */
+  async createOwnerProfile() {
+    try {
+      return await apiService.post('/owner/profile/create/', {});
+    } catch (error) {
+      console.error('Error creating owner profile:', error);
+      throw error;
+    }
+  }
 }
 
 // Create and export a singleton instance
@@ -261,3 +274,4 @@ export const getShopSettings = () => ownerService.getShopSettings();
 export const updateShopSettings = (settingsData) => ownerService.updateShopSettings(settingsData);
 export const getOwnerBrands = () => ownerService.getBrands();
 export const createOwnerBrand = (brandData) => ownerService.createBrand(brandData);
+export const createOwnerProfile = () => ownerService.createOwnerProfile();
