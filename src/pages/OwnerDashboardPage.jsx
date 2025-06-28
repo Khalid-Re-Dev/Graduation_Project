@@ -138,6 +138,11 @@ function OwnerDashboardPage() {
   // معالجة إرسال نموذج إنشاء المتجر
   const handleRegisterShop = async (e) => {
     e.preventDefault()
+    // تحقق أن المستخدم owner فعلاً
+    if (user?.user_type !== "owner") {
+      setError((prev) => ({ ...prev, form: "يجب أن يكون لديك حساب مالك (owner) لإنشاء متجر. يرجى تسجيل الدخول بحساب مالك." }))
+      return
+    }
     setLoading((prev) => ({ ...prev, form: true }))
     setError((prev) => ({ ...prev, form: '' }))
     setShopFormErrors({})
