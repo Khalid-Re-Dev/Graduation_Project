@@ -43,12 +43,24 @@ export default function ProductUpsert() {
         const res = await import("../../services/owner.service").then(m => m.checkShop());
         if (res && res.has_shop && res.shop && res.shop.id) {
           setForm(prev => ({ ...prev, shop_id: res.shop.id }));
+        } else if (res && res.owner_profile_required) {
+          // إذا كان الباك يرجع أن ملف تعريف المالك غير موجود
+          toast.info("يتم الآن إنشاء ملف تعريف المالك...");
+          // استدعاء دالة إنشاء ملف تعريف المالك (يجب أن تكون متوفرة في الخدمات)
+          const ownerProfile = await import("../../services/owner.service").then(m => m.createOwnerProfile && m.createOwnerProfile());
+          if (ownerProfile && ownerProfile.id) {
+            toast.success("تم إنشاء ملف تعريف المالك بنجاح. يرجى إعادة المحاولة.");
+            navigate("/owner-dashboard");
+          } else {
+            toast.error("تعذر إنشاء ملف تعريف المالك. يرجى التواصل مع الدعم.");
+            navigate("/owner-dashboard");
+          }
         } else {
           toast.error("يجب إنشاء متجر أولاً قبل إضافة منتج.");
           navigate("/owner-dashboard");
         }
       } catch {
-        toast.error("حدث خطأ أثناء التحقق من المتجر.");
+        toast.error("حدث خطأ أثناء التحقق من المتجر أو ملف تعريف المالك.");
         navigate("/owner-dashboard");
       }
     }
