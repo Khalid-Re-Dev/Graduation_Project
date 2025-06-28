@@ -26,6 +26,8 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `/products/${id}/delete/`, // DELETE: حذف منتج
     BRANDS: '/products/brands/', // ViewSet: جميع عمليات البراندات
     REACTION: (id) => `/products/${id}/reaction/`, // تفاعل المستخدم مع منتج
+    CATEGORIES: '/products/categories/', // جميع عمليات الفئات (GET, POST)
+    CATEGORY_DETAIL: (id) => `/products/categories/${id}/`, // تفاصيل/تعديل/حذف فئة (GET, PUT, DELETE)
   },
 
   // Reviews endpoints
