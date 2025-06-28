@@ -15,6 +15,7 @@ export default function ProductForm({
   onSubmit,
   loading,
   errors,
+  imageFile,
   setImageFile,
   form,
   setForm,
@@ -78,8 +79,35 @@ export default function ProductForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const formData = { ...form, stock: 3 }; // Fixed stock value
-    onSubmit(e, formData); // مرر e أيضًا
+    
+    // التحقق من البيانات المطلوبة
+    const requiredFields = ['name', 'price', 'original_price', 'category_id', 'brand_id'];
+    const missingFields = requiredFields.filter(field => !form[field] || form[field] === '');
+    
+    if (missingFields.length > 0) {
+      toast.error(`الرجاء ملء جميع الحقول المطلوبة: ${missingFields.join(', ')}`);
+      return;
+    }
+    
+    // إنشاء FormData لإرسال البيانات مع الصور
+    const formData = new FormData();
+    
+    // إضافة جميع بيانات النموذج
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== null && value !== '') {
+        formData.append(key, value);
+      }
+    });
+    
+    // إضافة الصورة إذا تم اختيارها
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    
+    // إضافة قيم افتراضية مطلوبة
+    formData.append('stock', '3');
+    
+    onSubmit(e, formData);
   };
 
   return (

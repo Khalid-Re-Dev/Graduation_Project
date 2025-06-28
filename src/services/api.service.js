@@ -111,13 +111,24 @@ class ApiService {
       }
 
       if (!response.ok) {
+        // Create error object with response data for better error handling
+        const error = new Error();
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        };
+
         // Handle different error status codes
         switch (response.status) {
+          case 400:
+            error.message = data.message || 'البيانات المرسلة غير صحيحة';
+            break;
           case 401:
             // Only clear tokens if refresh token exists
             if (typeof localStorage !== 'undefined' && localStorage.getItem('refresh_token')) {
               clearTokens();
-              toast.error('Session expired. Please login again.');
+              toast.error('انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.');
               // Redirect to login page if not already there
               if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
                 setTimeout(() => {
@@ -125,18 +136,25 @@ class ApiService {
                 }, 1200);
               }
             }
-            throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
+            error.message = ERROR_MESSAGES.UNAUTHORIZED;
+            break;
           case 403:
-            throw new Error(ERROR_MESSAGES.FORBIDDEN);
+            error.message = ERROR_MESSAGES.FORBIDDEN;
+            break;
           case 404:
-            throw new Error(ERROR_MESSAGES.NOT_FOUND);
+            error.message = ERROR_MESSAGES.NOT_FOUND;
+            break;
           case 422:
-            throw new Error(ERROR_MESSAGES.VALIDATION_ERROR);
+            error.message = data.message || ERROR_MESSAGES.VALIDATION_ERROR;
+            break;
           case 500:
-            throw new Error(ERROR_MESSAGES.SERVER_ERROR);
+            error.message = ERROR_MESSAGES.SERVER_ERROR;
+            break;
           default:
-            throw new Error(data.message || `Error ${response.status}`);
+            error.message = data.message || `خطأ ${response.status}`;
         }
+        
+        throw error;
       }
 
       // If the response is empty but status is OK, return an empty array for endpoints that should return collections

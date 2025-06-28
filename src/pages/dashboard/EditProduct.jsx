@@ -26,6 +26,7 @@ export default function EditProduct() {
   const [form, setForm] = useState(initialState);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [imageFile, setImageFile] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,30 +46,53 @@ export default function EditProduct() {
     fetchProduct();
   }, [id]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, formData) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
     try {
-      await updateOwnerProduct(id, form);
+      console.log("Updating product with data:", formData);
+      
+      // إرسال البيانات كما هي (FormData) إلى خدمة التحديث
+      await updateOwnerProduct(id, formData);
       toast.success("تم تحديث المنتج بنجاح");
       navigate("/owner-dashboard");
     } catch (err) {
-      setErrors(err?.response?.data || {});
-      toast.error("فشل في تحديث المنتج");
+      console.error("Error updating product:", err);
+      
+      // معالجة أخطاء الخادم
+      if (err?.response?.data) {
+        setErrors(err.response.data);
+        // عرض رسائل الخطأ المحددة
+        const errorMessages = Object.values(err.response.data).flat();
+        if (errorMessages.length > 0) {
+          toast.error(errorMessages[0]);
+        }
+      } else if (err?.error) {
+        toast.error(err.error);
+      } else {
+        toast.error("فشل في تحديث المنتج");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ProductForm
-      form={form}
-      setForm={setForm}
-      onSubmit={handleSubmit}
-      loading={loading}
-      errors={errors}
-      mode="edit"
-    />
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-2xl font-bold mb-6">تحديث المنتج</h1>
+        <ProductForm
+          form={form}
+          setForm={setForm}
+          onSubmit={handleSubmit}
+          loading={loading}
+          errors={errors}
+          imageFile={imageFile}
+          setImageFile={setImageFile}
+          mode="edit"
+        />
+      </div>
+    </div>
   );
 }

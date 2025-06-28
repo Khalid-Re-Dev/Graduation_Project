@@ -52,6 +52,22 @@ export const API_ENDPOINTS = {
   COMPARISON: {
     COMPARE: (productId) => `/comparison/${productId}/compare/`,
   },
+  
+  // Shop/Store endpoints
+  SHOP: {
+    CHECK: '/shop/check/',
+    REGISTER: '/shop/register/',
+    UPDATE: '/shop/update/',
+    DELETE: '/shop/delete/',
+  },
+  
+  // Brands endpoints
+  BRANDS: {
+    LIST: '/dashboard/brands/',
+    CREATE: '/dashboard/brands/',
+    UPDATE: (id) => `/dashboard/brands/${id}/`,
+    DELETE: (id) => `/dashboard/brands/${id}/`,
+  },
 };
 
 // Request timeout in milliseconds
