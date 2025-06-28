@@ -101,7 +101,7 @@ export default function ProductUpsert() {
         console.log("استجابة إنشاء المنتج:", res);
         toast.success("تم إضافة المنتج بنجاح!");
       }
-      navigate("/dashboard");
+      navigate("/owner-dashboard");
     } catch (err) {
       console.error("خطأ أثناء حفظ المنتج:", err);
       toast.error("فشل في حفظ المنتج. تحقق من البيانات.");

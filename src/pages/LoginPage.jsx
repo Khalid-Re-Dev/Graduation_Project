@@ -46,9 +46,7 @@ function LoginPage() {
           await dispatch(fetchFavorites())
         }
         // Redirect to dashboard if user is admin, otherwise to owner dashboard or home page
-        if (result.user.is_admin || result.user.is_staff) {
-          navigate("/dashboard")
-        } else if (result.user.user_type === "owner") {
+         if (result.user.user_type === "owner") {
           navigate("/owner-dashboard")
         } else {
           navigate("/")
