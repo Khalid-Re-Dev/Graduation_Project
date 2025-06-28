@@ -1,7 +1,7 @@
 /**
  * API Configuration
  * This file contains the configuration for the API
- */ 
+ */
 
 // Base URL for API requests
 export const API_BASE_URL = 'https://binc-b.onrender.com/api';
@@ -16,7 +16,7 @@ export const API_ENDPOINTS = {
     REFRESH_TOKEN: '/auth/token/refresh/',
     VERIFY_TOKEN: '/auth/token/verify/',
   },
-  
+
   // Dashboard endpoints
   DASHBOARD: {
     STATS: '/dashboard/stats/',
@@ -25,7 +25,7 @@ export const API_ENDPOINTS = {
     ANALYTICS: '/dashboard/analytics/',
     SETTINGS: '/dashboard/settings/',
   },
-  
+
   // Products endpoints
   PRODUCTS: {
     LIST: '/products/',
@@ -40,27 +40,27 @@ export const API_ENDPOINTS = {
     FEATURED_ALT: '/products/?featured=true',
     NEW_ALT: '/products/?ordering=-created_at',
   },
-  
+
   // User endpoints
   USER: {
-    PROFILE: '/user/profile/',
+    PROFILE: '/auth/profile/', // الصحيح حسب المسارات في Django
     FAVORITES: '/user/favorites/',
     PREFERENCES: '/user/preferences/',
   },
-  
+
   // Comparison endpoints
   COMPARISON: {
     COMPARE: (productId) => `/comparison/${productId}/compare/`,
   },
-  
+
   // Shop/Store endpoints
   SHOP: {
     CHECK: '/shop/check/',
-    REGISTER: '/shop/register/',
-    UPDATE: '/shop/update/',
-    DELETE: '/shop/delete/',
+    REGISTER: '/shop/create/', // الصحيح حسب المسارات في Django
+    UPDATE: (id) => `/shop/${id}/update/`, // الصحيح حسب المسارات في Django
+    DELETE: (id) => `/shop/${id}/delete/`, // الصحيح حسب المسارات في Django
   },
-  
+
   // Brands endpoints
   BRANDS: {
     LIST: '/dashboard/brands/',
