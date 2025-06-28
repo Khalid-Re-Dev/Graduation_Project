@@ -112,7 +112,9 @@ class AuthService {
    * @returns {string|null}
    */
   getToken() {
-    return localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    console.log('auth.service.js getToken:', token); // تتبع التوكن
+    return token;
   }
   
   /**

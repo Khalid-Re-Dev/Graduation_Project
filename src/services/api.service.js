@@ -76,6 +76,7 @@ class ApiService {
     const headers = { ...DEFAULT_HEADERS };
     if (withAuth) {
       const token = getToken();
+      console.log('getHeaders: withAuth =', withAuth, '| token =', token); // تتبع التوكن
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
