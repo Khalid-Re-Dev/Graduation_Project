@@ -41,12 +41,17 @@ export default function ProductUpsert() {
     async function fetchShopId() {
       try {
         const res = await import("../../services/owner.service").then(m => m.checkShop());
+        // إذا لم يكن لدى المالك متجر بعد (404 أو null أو has_shop=false)
+        if (!res || res === null || res.has_shop === false) {
+          // لا يوجد متجر بعد، لا تعتبر هذا خطأ، فقط اسمح للمالك بإنشاء متجر
+          setForm(prev => ({ ...prev, shop_id: "" }));
+          // لا تظهر رسالة خطأ، فقط استمر (النموذج سيظهر زر إنشاء متجر)
+          return;
+        }
         if (res && res.has_shop && res.shop && res.shop.id) {
           setForm(prev => ({ ...prev, shop_id: res.shop.id }));
         } else if (res && res.owner_profile_required) {
-          // إذا كان الباك يرجع أن ملف تعريف المالك غير موجود
           toast.info("يتم الآن إنشاء ملف تعريف المالك...");
-          // استدعاء دالة إنشاء ملف تعريف المالك (يجب أن تكون متوفرة في الخدمات)
           const ownerProfile = await import("../../services/owner.service").then(m => m.createOwnerProfile && m.createOwnerProfile());
           if (ownerProfile && ownerProfile.id) {
             toast.success("تم إنشاء ملف تعريف المالك بنجاح. يرجى إعادة المحاولة.");
@@ -59,7 +64,12 @@ export default function ProductUpsert() {
           toast.error("يجب إنشاء متجر أولاً قبل إضافة منتج.");
           navigate("/owner-dashboard");
         }
-      } catch {
+      } catch (err) {
+        // إذا كان الخطأ 404 فهذا يعني أنه لا يوجد متجر بعد، لا تظهر رسالة خطأ
+        if (err && err.message && err.message.includes('404')) {
+          setForm(prev => ({ ...prev, shop_id: "" }));
+          return;
+        }
         toast.error("حدث خطأ أثناء التحقق من المتجر أو ملف تعريف المالك.");
         navigate("/owner-dashboard");
       }
