@@ -9,7 +9,7 @@ export default defineConfig({
     open: true
   },
   preview: {
-    allowedHosts: ["binc.onrender.com"]
+    allowedHosts: ["binc.onrender.com", "best-ic.onrender.com"]
   },
   resolve: {
     alias: {
