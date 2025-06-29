@@ -40,6 +40,14 @@ export const API_ENDPOINTS = {
     POPULAR: '/products/popular/', // جلب المنتجات الأكثر شعبية
   },
 
+  // Product Specifications endpoints
+  PRODUCT_SPECIFICATIONS: {
+    LIST: (productId) => `/dashboard/products/${productId}/specifications/`, // GET
+    UPSERT: (productId) => `/dashboard/products/${productId}/specifications/`, // POST
+    UPDATE: (productId, specId) => `/dashboard/products/${productId}/specifications/${specId}/`, // PUT
+    DELETE: (productId, specId) => `/dashboard/products/${productId}/specifications/${specId}/`, // DELETE
+  },
+
   // Reviews endpoints
   REVIEWS: {
     LIST: '/reviews/', // جلب كل المراجعات
