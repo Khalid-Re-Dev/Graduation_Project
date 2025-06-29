@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../config/api.config';
 import { apiService } from './api.service';
+import { getUser } from "./auth.service";
 
 /**
  * Owner service for handling owner-specific API requests
@@ -104,8 +105,19 @@ class OwnerService {
    */
   async createProduct(productData, specifications = []) {
     try {
+      // تحقق من وجود متجر قبل الإضافة
+      const user = getUser();
+      console.log("[Product] Current user from token:", user);
+      const shopCheck = await this.checkShop();
+      console.log("[Product] /shop/check/ response:", shopCheck);
+      if (!shopCheck || !shopCheck.has_shop || !shopCheck.shop) {
+        throw new Error("يجب إنشاء متجر أولاً قبل إضافة منتج.");
+      }
+      if (user && shopCheck.owner_user_id && user.id !== shopCheck.owner_user_id) {
+        throw new Error("يوجد تعارض في هوية المستخدم. يرجى تسجيل الخروج وإعادة الدخول.");
+      }
       let dataToSend = productData;
-      // If productData is not already FormData, convert it
+      // إذا لم يكن productData من نوع FormData، حوله إلى FormData
       if (!(productData instanceof FormData)) {
         dataToSend = new FormData();
         Object.entries(productData).forEach(([key, value]) => {
@@ -148,6 +160,17 @@ class OwnerService {
    */
   async updateProduct(productId, productData, specifications = []) {
     try {
+      // تحقق من وجود متجر قبل التعديل
+      const user = getUser();
+      console.log("[Product] Current user from token:", user);
+      const shopCheck = await this.checkShop();
+      console.log("[Product] /shop/check/ response:", shopCheck);
+      if (!shopCheck || !shopCheck.has_shop || !shopCheck.shop) {
+        throw new Error("يجب إنشاء متجر أولاً قبل تعديل منتج.");
+      }
+      if (user && shopCheck.owner_user_id && user.id !== shopCheck.owner_user_id) {
+        throw new Error("يوجد تعارض في هوية المستخدم. يرجى تسجيل الخروج وإعادة الدخول.");
+      }
       const isFormData = productData instanceof FormData;
       let result;
       if (isFormData) {
