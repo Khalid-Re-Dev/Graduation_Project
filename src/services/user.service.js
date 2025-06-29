@@ -1,3 +1,6 @@
+// Exported function to check if a product is in favorites
+export const isFavorite = (productId) => userService.isFavorite(productId);
+export const toggleFavorite = (productId) => userService.toggleFavorite(productId);
 import { API_ENDPOINTS } from '../config/api.config';
 import { apiService } from './api.service';
 
@@ -46,20 +49,30 @@ class UserService {
   }
   
   /**
-   * Add product to favorites or toggle favorite status
+   * Toggle favorite status for a product
    * @param {string} productId - Product ID
-   * @param {boolean} toggleMode - If true, use toggle endpoint
    * @returns {Promise} - Response from the server
    */
-  async addToFavorites(productId, toggleMode = false) {
+  async toggleFavorite(productId) {
     try {
-      if (toggleMode) {
-        // POST /api/user/favorites/toggle/{product_id}/
-        return await apiService.post(`/user/favorites/toggle/${productId}/`);
-      }
-      return await apiService.post(`${API_ENDPOINTS.USER.FAVORITES}`, { product_id: productId });
+      // POST /api/user/favorites/toggle/{product_id}/
+      return await apiService.post(API_ENDPOINTS.USER.FAVORITES_TOGGLE(productId));
     } catch (error) {
-      console.error(`Error adding/toggling product ID ${productId} to favorites:`, error);
+      console.error(`Error toggling favorite for product ID ${productId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if a product is in favorites
+   * @param {string} productId - Product ID
+   * @returns {Promise<{is_favorite: boolean}>}
+   */
+  async isFavorite(productId) {
+    try {
+      return await apiService.get(API_ENDPOINTS.USER.FAVORITES_STATUS(productId));
+    } catch (error) {
+      console.error(`Error checking favorite status for product ID ${productId}:`, error);
       throw error;
     }
   }

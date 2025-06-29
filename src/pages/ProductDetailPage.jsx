@@ -58,13 +58,17 @@ function ProductDetailPage() {
     }
   }, [dispatch, id])
 
-  // جلب المراجعات عند تحميل الصفحة
+  // جلب المراجعات عند تحميل الصفحة (احترافي: endpoint الصحيح)
   useEffect(() => {
     if (id) {
-      fetch(`/api/reviews/?product=${id}`)
-        .then(res => res.json())
-        .then(data => setReviews(Array.isArray(data) ? data : (data.results || [])))
-        .catch(() => setReviews([]));
+      import("../services/product.service").then(({ getProductReviews }) => {
+        getProductReviews(id)
+          .then(data => {
+            console.log('Fetched reviews (service):', data);
+            setReviews(Array.isArray(data) ? data : (data.results || []));
+          })
+          .catch(() => setReviews([]));
+      });
     }
   }, [id]);
 
@@ -80,25 +84,27 @@ function ProductDetailPage() {
     }
   }
 
-  // إضافة مراجعة جديدة
+  // إضافة مراجعة جديدة (احترافي: endpoint الصحيح)
   const handleAddReview = async (e) => {
     e.preventDefault();
     setReviewLoading(true);
     setReviewError("");
     try {
-      const res = await fetch(`/api/reviews/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ product: id, rating: reviewRating, comment: reviewText })
-      });
-      if (!res.ok) throw new Error("فشل إرسال المراجعة");
-      const newReview = await res.json();
-      setReviews([newReview, ...reviews]);
+      const { addProductReview } = await import("../services/product.service");
+      await addProductReview(id, { rating: reviewRating, comment: reviewText });
+      // بعد الإضافة الناجحة، أعد جلب المراجعات من السيرفر
+      const res = await fetch(`/api/reviews/products/${id}/reviews/`, { credentials: 'include' });
+      const data = await res.json();
+      setReviews(Array.isArray(data) ? data : (data.results || []));
       setReviewText("");
       setReviewRating(5);
     } catch (err) {
-      setReviewError("فشل إرسال المراجعة. تأكد من تسجيل الدخول.");
+      // إذا كان الخطأ من السيرفر بسبب مراجعة مكررة
+      if (err?.response?.data?.error || err?.message?.includes("تقييم لهذا المنتج")) {
+        setReviewError("لقد قمت بالفعل بإضافة تقييم لهذا المنتج.");
+      } else {
+        setReviewError("فشل إرسال المراجعة. تأكد من تسجيل الدخول.");
+      }
     } finally {
       setReviewLoading(false);
     }
@@ -304,34 +310,7 @@ function ProductDetailPage() {
                 </button>
               </div>
 
-              {/* Like/Dislike Buttons */}
-              <div className="flex gap-4 mb-4 items-center">
-                <button
-                  onClick={async () => {
-                    try {
-                      await import("../services/product.service").then(({ reactToProduct }) => reactToProduct(currentProduct.id, "like"));
-                      setUserReaction("like");
-                      setReactionCounts(c => ({ ...c, likes: c.likes + 1, dislikes: userReaction === "dislike" ? c.dislikes - 1 : c.dislikes, neutrals: userReaction === "neutral" ? c.neutrals - 1 : c.neutrals }));
-                    } catch (e) { alert("فشل تسجيل الإعجاب"); }
-                  }}
-                  className={`px-4 py-2 rounded transition-colors ${userReaction === "like" ? "bg-green-600 text-white" : "bg-green-500 text-white hover:bg-green-600"}`}
-                >
-                  👍 إعجاب ({reactionCounts.likes})
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      await import("../services/product.service").then(({ reactToProduct }) => reactToProduct(currentProduct.id, "dislike"));
-                      setUserReaction("dislike");
-                      setReactionCounts(c => ({ ...c, dislikes: c.dislikes + 1, likes: userReaction === "like" ? c.likes - 1 : c.likes, neutrals: userReaction === "neutral" ? c.neutrals - 1 : c.neutrals }));
-                    } catch (e) { alert("فشل تسجيل عدم الإعجاب"); }
-                  }}
-                  className={`px-4 py-2 rounded transition-colors ${userReaction === "dislike" ? "bg-red-600 text-white" : "bg-red-500 text-white hover:bg-red-600"}`}
-                >
-                  👎 عدم إعجاب ({reactionCounts.dislikes})
-                </button>
-                <span className="text-gray-500 text-sm">مشاهدات: {reactionCounts.neutrals}</span>
-              </div>
+              {/* ...تم حذف أزرار الإعجاب وعدم الإعجاب... */}
             </div>
           </div>
         </div>
@@ -368,7 +347,7 @@ function ProductDetailPage() {
                 }`}
                 onClick={() => setActiveTab("reviews")}
               >
-                Reviews ({currentProduct.reviews?.length || 0})
+                Reviews ({reviews.length})
               </button>
             </div>
           </div>
@@ -427,6 +406,7 @@ function ProductDetailPage() {
                   {reviewError && <div className="text-red-500 text-xs mt-1">{reviewError}</div>}
                 </form>
                 {/* عرض المراجعات */}
+                {console.log('Rendered reviews:', reviews)}
                 {reviews.length === 0 ? (
                   <div>لا توجد مراجعات بعد.</div>
                 ) : (
@@ -437,7 +417,7 @@ function ProductDetailPage() {
                           {[1,2,3,4,5].map(star => (
                             <span key={star} className={star <= (r.rating || 0) ? "text-yellow-400" : "text-gray-300"}>★</span>
                           ))}
-                          <span className="text-xs text-gray-400 ml-auto">{r.user?.username || r.user || "مستخدم"}</span>
+                          <span className="text-xs text-gray-400 ml-auto">{r.user?.name || r.user?.username || r.user || "مستخدم"}</span>
                         </div>
                         <div className="text-gray-800 text-sm mb-1">{r.comment}</div>
                         <div className="text-xs text-gray-400">{r.created_at?.slice(0,10) || ""}</div>

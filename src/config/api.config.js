@@ -1,3 +1,4 @@
+// User endpoints (يجب إضافتها داخل تعريف API_ENDPOINTS وليس قبله)
 /**
  * API Configuration
  * This file contains the configuration for the API
@@ -17,6 +18,14 @@ export const API_ENDPOINTS = {
     VERIFY_TOKEN: '/auth/token/verify/',
   },
 
+  // User endpoints
+  USER: {
+    PROFILE: '/user/profile/',
+    FAVORITES: '/user/favorites/',
+    FAVORITES_TOGGLE: (productId) => `/user/favorites/${productId}/toggle/`,
+    // أضف أي مسارات أخرى لازمة هنا
+  },
+
   // Products endpoints
   PRODUCTS: {
     LIST: '/products/', // GET: قائمة المنتجات
@@ -28,6 +37,7 @@ export const API_ENDPOINTS = {
     REACTION: (id) => `/products/${id}/reaction/`, // تفاعل المستخدم مع منتج
     CATEGORIES: '/products/categories/', // جميع عمليات الفئات (GET, POST)
     CATEGORY_DETAIL: (id) => `/products/categories/${id}/`, // تفاصيل/تعديل/حذف فئة (GET, PUT, DELETE)
+    POPULAR: '/products/popular/', // جلب المنتجات الأكثر شعبية
   },
 
   // Reviews endpoints

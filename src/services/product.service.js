@@ -73,10 +73,17 @@ class ProductService {
     return await apiService.get(`/products/${productId}/reviews/`, { withAuth: false });
   }
 
-  async addProductReview(productId, rating) {
+  /**
+   * Add a review for a product (احترافي: المسار الصحيح)
+   * @param {string|number} productId - رقم المنتج
+   * @param {object} data - بيانات المراجعة (rating, comment)
+   * @returns {Promise} - بيانات المراجعة الجديدة
+   */
+  async addProductReview(productId, data) {
+    // يدعم { rating, comment }
     return await apiService.post(
-      `/products/${productId}/reviews/create/`,
-      { rating },
+      `/reviews/products/${productId}/reviews/`,
+      data,
       { withAuth: true }
     );
   }
@@ -92,4 +99,4 @@ export const getNewProducts = (limit) => productService.getNewProducts(limit);
 export const searchProducts = (query, params) => productService.searchProducts(query, params);
 export const getCategories = () => productService.getCategories();
 export const getProductReviews = (id) => productService.getProductReviews(id);
-export const addProductReview = (id, rating) => productService.addProductReview(id, rating);
+export const addProductReview = (id, data) => productService.addProductReview(id, data);

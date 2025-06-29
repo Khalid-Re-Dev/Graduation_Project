@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { getFavorites, addToFavorites, removeFromFavorites as removeFromFavoritesService } from "../services/user.service"
+import { getFavorites, toggleFavorite as toggleFavoriteService, removeFromFavorites as removeFromFavoritesService, isFavorite as isFavoriteService } from "../services/user.service"
 
 // Async thunk: جلب المفضلة من الباك إند
 export const fetchFavorites = createAsyncThunk(
@@ -22,16 +22,27 @@ export const toggleFavorite = createAsyncThunk(
   "favorites/toggleFavorite",
   async (productId, { rejectWithValue }) => {
     try {
-      // استدعاء endpoint toggle
       // POST /api/user/favorites/toggle/{product_id}/
-      // الاستجابة: حالة المنتج في المفضلة بعد التبديل
-      const res = await addToFavorites(productId, true); // true = toggle mode
+      const res = await toggleFavoriteService(productId);
       return { productId, isFavorite: res && res.is_favorite };
     } catch (error) {
       return rejectWithValue(error.message || "Failed to toggle favorite")
     }
   }
 )
+
+// Async thunk: تحقق هل المنتج في المفضلة
+export const checkFavoriteStatus = createAsyncThunk(
+  "favorites/checkFavoriteStatus",
+  async (productId, { rejectWithValue }) => {
+    try {
+      const res = await isFavoriteService(productId);
+      return { productId, isFavorite: res && res.is_favorite };
+    } catch (error) {
+      return rejectWithValue(error.message || "Failed to check favorite status");
+    }
+  }
+);
 
 // Helpers for sessionStorage
 const SESSION_KEY = 'guest_favorites';

@@ -13,8 +13,12 @@ class ReactionService {
    */
   async toggleReaction(productId, action) {
     try {
-      const response = await apiService.post(API_ENDPOINTS.PRODUCTS.REACTIONS.TOGGLE(productId), { action });
-      
+      // استخدم reaction_type بدل action حسب متطلبات الـ API
+      const response = await apiService.post(
+        API_ENDPOINTS.PRODUCTS.REACTION(productId),
+        { reaction_type: action }
+      );
+
       // Handle Arabic message response
       if (response.message && response.message.includes('neutral')) {
         return {

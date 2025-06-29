@@ -96,7 +96,7 @@ function ProductCard({ product }) {
     }
   }
 
-  // Like/Dislike handlers
+  // Like/Dislike handlers مع تحديث فوري (optimistic update)
   const handleLike = async (e) => {
     e.preventDefault && e.preventDefault();
     e.stopPropagation && e.stopPropagation();
@@ -105,6 +105,19 @@ function ProductCard({ product }) {
       toast.error("Please login to like products");
       return;
     }
+
+    // تحديث فوري
+    setLocalStats((prev) => {
+      let likes = prev.likes;
+      let dislikes = prev.dislikes;
+      if (userReaction === "like") {
+        likes = likes - 1;
+      } else {
+        likes = likes + 1;
+        if (userReaction === "dislike") dislikes = dislikes - 1;
+      }
+      return { ...prev, likes, dislikes };
+    });
 
     try {
       const result = await dispatch(toggleReaction({ productId: safeProduct.id, action: "like" })).unwrap();
@@ -128,6 +141,19 @@ function ProductCard({ product }) {
       toast.error("Please login to dislike products");
       return;
     }
+
+    // تحديث فوري
+    setLocalStats((prev) => {
+      let likes = prev.likes;
+      let dislikes = prev.dislikes;
+      if (userReaction === "dislike") {
+        dislikes = dislikes - 1;
+      } else {
+        dislikes = dislikes + 1;
+        if (userReaction === "like") likes = likes - 1;
+      }
+      return { ...prev, likes, dislikes };
+    });
 
     try {
       const result = await dispatch(toggleReaction({ productId: safeProduct.id, action: "dislike" })).unwrap();
