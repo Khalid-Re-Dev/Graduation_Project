@@ -19,10 +19,10 @@ function CategorySection() {
         <Link
           key={category.id}
           to={category.path}
-          className="flex flex-col items-center justify-center p-4 border rounded-md hover:border-[#005580] transition-colors"
+          className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-[#005580] hover:shadow-md transition-all duration-200 min-h-[120px] group"
         >
-          <category.icon className="w-8 h-8 mb-2" />
-          <span className="text-sm font-medium">{category.name}</span>
+          <category.icon className="w-8 h-8 mb-3 text-gray-800 group-hover:text-[#005580] transition" />
+          <span className="text-base font-semibold text-gray-900 mt-1">{category.name}</span>
         </Link>
       ))}
     </div>

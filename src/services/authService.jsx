@@ -1,3 +1,7 @@
+// This file is deprecated and not used anywhere in the project.
+// All authentication logic is handled by src/services/auth.service.js and backend APIs.
+// You can safely delete this file.
+
 // Mock user data
 const mockUsers = [
   {

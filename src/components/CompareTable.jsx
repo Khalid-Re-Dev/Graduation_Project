@@ -1,7 +1,7 @@
 "use client"
 
 import { useSelector, useDispatch } from "react-redux"
-import { removeFromCompare, clearCompare } from "../store/compareSlice"
+import { removeCompare, clearCompare } from "../store/compareSlice"
 import { addToCart } from "../store/cartSlice"
 import { X, ShoppingCart, Check, Minus } from "lucide-react"
 
@@ -56,7 +56,7 @@ function CompareTable() {
               >
                 <div className="relative">
                   <button
-                    onClick={() => dispatch(removeFromCompare(product.id))}
+                    onClick={() => dispatch(removeCompare(product.id))}
                     className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
                   >
                     <X size={14} />
@@ -98,19 +98,21 @@ function CompareTable() {
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Category</td>
             {compareItems.map((product) => (
               <td key={product.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {product.category}
+                {typeof product.category === 'object' && product.category && product.category.name
+                  ? product.category.name
+                  : product.category}
               </td>
             ))}
           </tr>
 
-          {/* Stock row */}
+          {/* Availability row */}
           <tr>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Availability</td>
             {compareItems.map((product) => (
               <td key={product.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {product.stock > 0 ? (
+                {product.in_stock ? (
                   <span className="text-green-600 flex items-center">
-                    <Check size={16} className="mr-1" /> In Stock ({product.stock})
+                    <Check size={16} className="mr-1" /> In Stock
                   </span>
                 ) : (
                   <span className="text-red-600 flex items-center">

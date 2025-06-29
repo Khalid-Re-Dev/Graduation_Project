@@ -15,6 +15,15 @@ function HttpInterceptor() {
     // Original fetch function
     const originalFetch = window.fetch
 
+    // Helper to check if refresh token exists
+    const hasRefreshToken = () => {
+      try {
+        return !!localStorage.getItem("refresh_token")
+      } catch {
+        return false
+      }
+    }
+
     // Override fetch to add auth token and handle errors
     window.fetch = async (url, options = {}) => {
       // Only intercept requests to our API
@@ -32,7 +41,12 @@ function HttpInterceptor() {
           const response = await originalFetch(url, options)
 
           // Handle 401 Unauthorized errors
-          if (response.status === 401) {
+          if (
+            response.status === 401 &&
+            !(typeof url === "string" && url.includes("/recommendations/")) &&
+            isAuthenticated &&
+            hasRefreshToken()
+          ) {
             // Logout user on authentication error
             dispatch(logout())
           }

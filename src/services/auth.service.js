@@ -12,20 +12,20 @@ const USER_KEY = 'user';
 class AuthService {
   /**
    * Login user
-   * @param {Object} credentials - User credentials (email, password)
+   * @param {Object} credentials - User credentials (email, password, rememberMe)
    * @returns {Promise} - The response from the server
    */
   async login(credentials) {
     try {
-      const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
-      
+      // فصل rememberMe عن بيانات الإرسال
+      const { rememberMe, ...loginData } = credentials;
+      const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, loginData);
       if (response.access && response.refresh) {
         // Store tokens and user data
-        this.setTokens(response.access, response.refresh);
-        this.setUser(response.user);
+        this.setTokens(response.access, response.refresh, rememberMe);
+        this.setUser(response.user, rememberMe);
         return response;
       }
-      
       throw new Error('Invalid response from server');
     } catch (error) {
       console.error('Login error:', error);
@@ -53,13 +53,17 @@ class AuthService {
    * @returns {Promise} - The response from the server
    */
   async logout() {
+    const refreshToken = this.getRefreshToken();
     try {
-      // Call logout endpoint if needed
-      await apiService.post(API_ENDPOINTS.AUTH.LOGOUT);
+      // Only call logout endpoint if refresh token exists
+      if (refreshToken) {
+        await apiService.post(API_ENDPOINTS.AUTH.LOGOUT, { refresh_token: refreshToken });
+      }
     } catch (error) {
       console.error('Logout error:', error);
+      // Don't throw the error, just log it since we want to clear tokens regardless
     } finally {
-      // Clear tokens and user data regardless of API response
+      // Always clear tokens and user data
       this.clearTokens();
     }
   }
@@ -104,55 +108,68 @@ class AuthService {
   }
   
   /**
-   * Get access token
-   * @returns {string|null} - Access token or null if not available
+   * Get access token from either storage
+   * @returns {string|null}
    */
   getToken() {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    console.log('auth.service.js getToken:', token); // تتبع التوكن
+    return token;
   }
   
   /**
-   * Get refresh token
-   * @returns {string|null} - Refresh token or null if not available
+   * Get refresh token from either storage
+   * @returns {string|null}
    */
   getRefreshToken() {
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
+    return localStorage.getItem(REFRESH_TOKEN_KEY) || sessionStorage.getItem(REFRESH_TOKEN_KEY);
   }
   
   /**
-   * Get user data
-   * @returns {Object|null} - User data or null if not available
+   * Get user data from either storage
+   * @returns {Object|null}
    */
   getUser() {
-    const userData = localStorage.getItem(USER_KEY);
+    const userData = localStorage.getItem(USER_KEY) || sessionStorage.getItem(USER_KEY);
     return userData ? JSON.parse(userData) : null;
   }
   
   /**
-   * Set tokens in local storage
+   * Set tokens in local storage or session storage
    * @param {string} accessToken - Access token
    * @param {string} refreshToken - Refresh token
+   * @param {boolean} rememberMe - If true, use localStorage; else sessionStorage
    */
-  setTokens(accessToken, refreshToken) {
-    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  setTokens(accessToken, refreshToken, rememberMe = false) {
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    // Remove from the other storage to avoid conflict
+    (rememberMe ? sessionStorage : localStorage).removeItem(ACCESS_TOKEN_KEY);
+    (rememberMe ? sessionStorage : localStorage).removeItem(REFRESH_TOKEN_KEY);
   }
-  
+
   /**
-   * Set user data in local storage
+   * Set user data in local storage or session storage
    * @param {Object} user - User data
+   * @param {boolean} rememberMe - If true, use localStorage; else sessionStorage
    */
-  setUser(user) {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  setUser(user, rememberMe = false) {
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem(USER_KEY, JSON.stringify(user));
+    (rememberMe ? sessionStorage : localStorage).removeItem(USER_KEY);
   }
   
   /**
-   * Clear tokens and user data from local storage
+   * Clear tokens and user data from both storages
    */
   clearTokens() {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
   }
   
   /**
@@ -162,6 +179,15 @@ class AuthService {
   isAdmin() {
     const user = this.getUser();
     return user && (user.is_admin || user.user_type === 'admin');
+  }
+  
+  /**
+   * Check if current user is owner
+   * @returns {boolean}
+   */
+  isOwner() {
+    const user = this.getUser();
+    return user && user.user_type === "owner";
   }
 }
 
@@ -176,4 +202,5 @@ export const isAuthenticated = () => authService.isAuthenticated();
 export const getToken = () => authService.getToken();
 export const getUser = () => authService.getUser();
 export const isAdmin = () => authService.isAdmin();
+export const isOwner = () => authService.isOwner();
 export const clearTokens = () => authService.clearTokens();

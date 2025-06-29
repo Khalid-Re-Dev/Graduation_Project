@@ -13,11 +13,14 @@ class ApiService {
    * @returns {Promise} - The response from the server
    */
   async request(url, options = {}) {
-    const fullUrl = `${API_BASE_URL}${url}`;
+    const withAuth = options.withAuth !== false;
+    // دعم المسارات المطلقة (absolute)
+    const isAbsolute = options.absolute === true;
+    const fullUrl = isAbsolute ? url : `${API_BASE_URL}${url}`;
 
     // Set default options
     const defaultOptions = {
-      headers: this.getHeaders(),
+      headers: this.getHeaders(withAuth),
       timeout: REQUEST_TIMEOUT,
     };
 
@@ -69,14 +72,15 @@ class ApiService {
    * Get request headers including authentication token if available
    * @returns {Object} - The headers for the request
    */
-  getHeaders() {
+  getHeaders(withAuth = true) {
     const headers = { ...DEFAULT_HEADERS };
-    const token = getToken();
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    if (withAuth) {
+      const token = getToken();
+      console.log('getHeaders: withAuth =', withAuth, '| token =', token); // تتبع التوكن
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
     }
-
     return headers;
   }
 
@@ -108,23 +112,50 @@ class ApiService {
       }
 
       if (!response.ok) {
+        // Create error object with response data for better error handling
+        const error = new Error();
+        error.response = {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        };
+
         // Handle different error status codes
         switch (response.status) {
+          case 400:
+            error.message = data.message || 'البيانات المرسلة غير صحيحة';
+            break;
           case 401:
-            // Unauthorized - clear tokens and redirect to login
-            clearTokens();
-            throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
+            // Only clear tokens if refresh token exists
+            if (typeof localStorage !== 'undefined' && localStorage.getItem('refresh_token')) {
+              clearTokens();
+              toast.error('انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.');
+              // Redirect to login page if not already there
+              if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                setTimeout(() => {
+                  window.location.href = '/login';
+                }, 1200);
+              }
+            }
+            error.message = ERROR_MESSAGES.UNAUTHORIZED;
+            break;
           case 403:
-            throw new Error(ERROR_MESSAGES.FORBIDDEN);
+            error.message = ERROR_MESSAGES.FORBIDDEN;
+            break;
           case 404:
-            throw new Error(ERROR_MESSAGES.NOT_FOUND);
+            error.message = ERROR_MESSAGES.NOT_FOUND;
+            break;
           case 422:
-            throw new Error(ERROR_MESSAGES.VALIDATION_ERROR);
+            error.message = data.message || ERROR_MESSAGES.VALIDATION_ERROR;
+            break;
           case 500:
-            throw new Error(ERROR_MESSAGES.SERVER_ERROR);
+            error.message = ERROR_MESSAGES.SERVER_ERROR;
+            break;
           default:
-            throw new Error(data.message || `Error ${response.status}`);
+            error.message = data.message || `خطأ ${response.status}`;
         }
+        
+        throw error;
       }
 
       // If the response is empty but status is OK, return an empty array for endpoints that should return collections

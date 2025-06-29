@@ -6,6 +6,7 @@ import { Routes, Route } from "react-router-dom"
 import { fetchAllProducts } from "./store/productSlice"
 import AuthProvider from "./components/AuthProvider"
 import ErrorBoundary from "./components/ErrorBoundary"
+import NotificationProvider from "./components/NotificationProvider"
 
 // Layout and Pages
 import Layout from "./components/Layout"
@@ -21,6 +22,8 @@ import LoginPage from "./pages/LoginPage"
 import SignupPage from "./pages/SignupPage"
 import NotFoundPage from "./pages/NotFoundPage"
 import OwnerDashboardPage from "./pages/OwnerDashboardPage"
+import ProfilePage from "./pages/ProfilePage"
+import ProductUpsert from "./pages/dashboard/ProductUpsert"
 
 // Main App component that sets up routing and initial data loading
 function App() {
@@ -49,46 +52,51 @@ function App() {
   }
 
   return (
-    <ErrorBoundary
-      fallbackTitle="Application Error"
-      fallbackMessage="Sorry, something went wrong with the application. Please try again."
-      onRefresh={reloadProducts}
-    >
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={
-              <ErrorBoundary
-                fallbackTitle="Home Page Error"
-                fallbackMessage="There was a problem loading the home page. This might be due to a data loading issue."
-                onRefresh={reloadProducts}
-              >
-                <HomePage />
-              </ErrorBoundary>
-            } />
-            <Route path="compare" element={<ComparePage />} />
-            <Route path="favorites" element={<FavoritesPage />} />
-            <Route path="new-products" element={<NewProductsPage />} />
-            <Route path="popular-products" element={<PopularProductsPage />} />
-            <Route path="products" element={
-              <ErrorBoundary
-                fallbackTitle="Products Page Error"
-                fallbackMessage="There was a problem loading the products page. This might be due to a data loading issue."
-                onRefresh={reloadProducts}
-              >
-                <AllProductsPage />
-              </ErrorBoundary>
-            } />
-            <Route path="products/:id" element={<ProductDetailPage />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="owner-dashboard" element={<OwnerDashboardPage />} />
-            <Route path="login" element={<LoginPage />} />
-            <Route path="signup" element={<SignupPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </AuthProvider>
-    </ErrorBoundary>
+    <NotificationProvider>
+      <ErrorBoundary
+        fallbackTitle="Application Error"
+        fallbackMessage="Sorry, something went wrong with the application. Please try again."
+        onRefresh={reloadProducts}
+      >
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={
+                <ErrorBoundary
+                  fallbackTitle="Home Page Error"
+                  fallbackMessage="There was a problem loading the home page. This might be due to a data loading issue."
+                  onRefresh={reloadProducts}
+                >
+                  <HomePage />
+                </ErrorBoundary>
+              } />
+              <Route path="compare" element={<ComparePage />} />
+              <Route path="favorites" element={<FavoritesPage />} />
+              <Route path="new-products" element={<NewProductsPage />} />
+              <Route path="popular-products" element={<PopularProductsPage />} />
+              <Route path="products" element={
+                <ErrorBoundary
+                  fallbackTitle="Products Page Error"
+                  fallbackMessage="There was a problem loading the products page. This might be due to a data loading issue."
+                  onRefresh={reloadProducts}
+                >
+                  <AllProductsPage />
+                </ErrorBoundary>
+              } />
+              <Route path="products/:id" element={<ProductDetailPage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="owner-dashboard" element={<OwnerDashboardPage />} />
+              <Route path="dashboard/add-product" element={<ProductUpsert />} />
+              <Route path="dashboard/edit-product/:productId" element={<ProductUpsert />} />
+              <Route path="login" element={<LoginPage />} />
+              <Route path="signup" element={<SignupPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </AuthProvider>
+      </ErrorBoundary>
+    </NotificationProvider>
   )
 }
 

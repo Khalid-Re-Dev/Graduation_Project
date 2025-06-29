@@ -4,56 +4,56 @@
  */
 
 // Base URL for API requests
-export const API_BASE_URL = 'http://127.0.0.1:8000/api';
+export const API_BASE_URL = 'https://binc-b.onrender.com/api';
 
-// API endpoints
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
+    USERS: '/auth/users/', // ViewSet: GET, POST, PUT/PATCH, DELETE
     LOGIN: '/auth/login/',
     REGISTER: '/auth/register/',
     LOGOUT: '/auth/logout/',
     REFRESH_TOKEN: '/auth/token/refresh/',
     VERIFY_TOKEN: '/auth/token/verify/',
   },
-  
-  // Dashboard endpoints
-  DASHBOARD: {
-    STATS: '/dashboard/stats/',
-    PRODUCTS: '/dashboard/products/',
-    PRODUCT_DETAIL: (id) => `/dashboard/products/${id}/`,
-    ANALYTICS: '/dashboard/analytics/',
-    SETTINGS: '/dashboard/settings/',
-  },
-  
+
   // Products endpoints
   PRODUCTS: {
-    LIST: '/products/',
-    DETAIL: (id) => `/products/${id}/`,
-    FEATURED: '/products/featured/',
-    POPULAR: '/products/popular/',
-    NEW: '/products/new/',
-    SEARCH: '/products/search/',
-    CATEGORIES: '/categories/',
+    LIST: '/products/', // GET: قائمة المنتجات
+    DETAIL: (id) => `/products/${id}/`, // GET: تفاصيل منتج
+    CREATE: '/products/', // POST: إضافة منتج
+    UPDATE: (id) => `/products/${id}/update/`, // PUT/PATCH: تحديث منتج
+    DELETE: (id) => `/products/${id}/delete/`, // DELETE: حذف منتج
+    BRANDS: '/products/brands/', // ViewSet: جميع عمليات البراندات
+    REACTION: (id) => `/products/${id}/reaction/`, // تفاعل المستخدم مع منتج
+    CATEGORIES: '/products/categories/', // جميع عمليات الفئات (GET, POST)
+    CATEGORY_DETAIL: (id) => `/products/categories/${id}/`, // تفاصيل/تعديل/حذف فئة (GET, PUT, DELETE)
   },
-  
-  // User endpoints
-  USER: {
-    PROFILE: '/user/profile/',
-    FAVORITES: '/user/favorites/',
-    PREFERENCES: '/user/preferences/',
+
+  // Reviews endpoints
+  REVIEWS: {
+    LIST: '/reviews/', // جلب كل المراجعات
+    CREATE: '/reviews/', // إضافة مراجعة
+    PRODUCT_REVIEWS: (productId) => `/reviews/products/${productId}/reviews/`, // جلب/إضافة مراجعات منتج
+    PRODUCT_REVIEW_DETAIL: (productId, reviewId) => `/reviews/products/${productId}/reviews/${reviewId}/`, // تفاصيل/تعديل/حذف مراجعة
   },
-  
-  // Comparison endpoints
-  COMPARISON: {
-    LIST: '/comparison/',
-    ADD: '/comparison/add/',
-    REMOVE: '/comparison/remove/',
+
+  // Recommendations endpoints
+  RECOMMENDATIONS: {
+    BASE: '/recommendations/', // توصيات أساسية
+    HYBRID: '/recommendations/hybrid/', // توصيات هجينة
+    FOR_YOU: '/recommendations/foryou/', // توصيات للمستخدم
+  },
+
+  // Promotions endpoints
+  PROMOTIONS: {
+    LIST: '/promotions/promotions/', // جلب العروض
+    DETAIL: (promotionId) => `/promotions/promotions/${promotionId}/`, // تفاصيل/تعديل/حذف عرض
   },
 };
 
 // Request timeout in milliseconds
-export const REQUEST_TIMEOUT = 30000;
+export const REQUEST_TIMEOUT = 60000;
 
 // Default headers for API requests
 export const DEFAULT_HEADERS = {

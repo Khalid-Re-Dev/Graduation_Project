@@ -81,52 +81,85 @@ function AllProductsPage() {
     return () => clearInterval(retryInterval)
   }, [dispatch])
 
+  // Helper to get numeric price
+  const getPrice = (p) => {
+    if (typeof p.price === 'number') return p.price;
+    if (typeof p.price === 'string' && !isNaN(Number(p.price))) return Number(p.price);
+    return NaN;
+  };
+
+  // Helper function to check if an object is a valid product
+  const isValidProduct = (p) => {
+    const priceNum = getPrice(p);
+    const valid = (
+      p && typeof p === 'object' &&
+      !('product_count' in p) &&
+      typeof p.id !== 'undefined' && p.id !== null &&
+      typeof p.name === 'string' && p.name.length > 0 &&
+      typeof priceNum === 'number' && !isNaN(priceNum) && priceNum >= 0
+    );
+    if (!valid) {
+      console.warn('Filtered out non-product object:', p);
+    }
+    return valid;
+  };
+
   useEffect(() => {
     if (allProducts.length > 0) {
-      let result = [...allProducts]
+      let result = [...allProducts];
 
       // Apply category filter
       if (filters.category) {
-        result = result.filter((product) => product.category.toLowerCase() === filters.category.toLowerCase())
+        result = result.filter((product) => {
+          if (typeof product.category === 'object' && product.category && product.category.name) {
+            return product.category.name.toLowerCase() === filters.category.toLowerCase();
+          }
+          return (product.category || '').toLowerCase() === filters.category.toLowerCase();
+        });
       }
 
       // Apply search filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase()
+        const query = searchQuery.toLowerCase();
         result = result.filter(
           (product) =>
-            product.name.toLowerCase().includes(query) ||
-            product.description.toLowerCase().includes(query) ||
-            product.category.toLowerCase().includes(query),
-        )
+            (typeof product.name === 'string' && product.name.toLowerCase().includes(query)) ||
+            (typeof product.description === 'string' && product.description.toLowerCase().includes(query)) ||
+            (typeof product.category === 'object' && product.category && product.category.name && product.category.name.toLowerCase().includes(query)) ||
+            ((typeof product.category === 'string' || typeof product.category === 'number') && String(product.category).toLowerCase().includes(query))
+        );
       }
 
-      // Apply price range filter
+      // Apply price range filter (use getPrice)
       result = result.filter(
-        (product) => product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1],
-      )
+        (product) => {
+          const priceNum = getPrice(product);
+          return priceNum >= filters.priceRange[0] && priceNum <= filters.priceRange[1];
+        }
+      );
 
       // Apply rating filter
       if (filters.rating > 0) {
         result = result.filter((product) => {
-          if (!product.reviews || product.reviews.length === 0) return false
-          const avgRating = product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
-          return avgRating >= filters.rating
-        })
+          if (!product.reviews || product.reviews.length === 0) return false;
+          const avgRating = product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length;
+          return avgRating >= filters.rating;
+        });
       }
 
-      // Apply sorting
+      // Apply sorting (use getPrice)
       if (sortOption === "newest") {
-        result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       } else if (sortOption === "price-low") {
-        result.sort((a, b) => a.price - b.price)
+        result.sort((a, b) => getPrice(a) - getPrice(b));
       } else if (sortOption === "price-high") {
-        result.sort((a, b) => b.price - a.price)
+        result.sort((a, b) => getPrice(b) - getPrice(a));
       } else if (sortOption === "popular") {
-        result.sort((a, b) => b.popularity - a.popularity)
+        result.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
       }
 
-      setFilteredProducts(result)
+      // Filter out invalid products
+      setFilteredProducts(result.filter(isValidProduct));
     }
   }, [allProducts, filters, sortOption, searchQuery])
 
@@ -151,22 +184,6 @@ function AllProductsPage() {
     // Update the search query state
     setSearchQuery(e.target.search.value)
   }
-
-  // Helper function to check if an object is a valid product
-  const isValidProduct = (p) => {
-    const valid = (
-      p && typeof p === 'object' &&
-      !('product_count' in p) &&
-      typeof p.id !== 'undefined' && p.id !== null &&
-      typeof p.name === 'string' && p.name.length > 0 &&
-      typeof p.description === 'string' &&
-      typeof p.price === 'number' && !isNaN(p.price) && p.price >= 0
-    );
-    if (!valid) {
-      console.warn('Filtered out non-product object:', p);
-    }
-    return valid;
-  };
 
   // Show loading state
   if (pageLoading) {
@@ -452,22 +469,24 @@ function AllProductsPage() {
             ) : filteredProducts.length === 0 ? (
               <div className="bg-white p-8 rounded-lg shadow-sm text-center">
                 <p className="text-lg mb-4">No products found matching your criteria.</p>
-                <button
-                  onClick={() => {
-                    // Reset filters and fetch products again
-                    setFilters({
-                      category: "",
-                      priceRange: [0, 2000],
-                      rating: 0,
-                    });
-                    setSearchQuery("");
-                    setSortOption("newest");
-                    dispatch(fetchAllProducts());
-                  }}
-                  className="px-4 py-2 bg-[#005580] text-white rounded hover:bg-[#004466] transition-colors"
-                >
-                  Reset Filters
-                </button>
+                {/* إظهار زر Reset Filters فقط إذا كان هناك فلتر مفعل */}
+                {(filters.category || filters.rating > 0 || filters.priceRange[0] > 0 || filters.priceRange[1] < 2000 || searchQuery) && (
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        category: "",
+                        priceRange: [0, 2000],
+                        rating: 0,
+                      });
+                      setSearchQuery("");
+                      setSortOption("newest");
+                      dispatch(fetchAllProducts());
+                    }}
+                    className="px-4 py-2 bg-[#005580] text-white rounded hover:bg-[#004466] transition-colors"
+                  >
+                    Reset Filters
+                  </button>
+                )}
               </div>
             ) : (
               <div

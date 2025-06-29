@@ -2,26 +2,34 @@
 
 import { useSelector, useDispatch } from "react-redux"
 import { Link } from "react-router-dom"
-import { removeFromFavorites, clearFavorites } from "../store/favoritesSlice"
+import { toggleFavorite, fetchFavorites, clearFavorites } from "../store/favoritesSlice"
 import { Trash2, ShoppingBag, Heart } from "lucide-react"
 import ProductCard from "../components/ProductCard"
+import { useEffect } from "react"
 
 // Favorites page component
 function FavoritesPage() {
   const dispatch = useDispatch()
-  const { items } = useSelector((state) => state.favorites)
+  const { items, loading, error, isGuest } = useSelector((state) => state.favorites)
   const { isAuthenticated } = useSelector((state) => state.auth)
 
+  // جلب المفضلة من الباك إند عند تسجيل الدخول
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchFavorites())
+    }
+  }, [dispatch, isAuthenticated])
+
   const handleRemoveItem = (id) => {
-    dispatch(removeFromFavorites(id))
+    dispatch(toggleFavorite(id))
   }
 
   const handleClearAll = () => {
     dispatch(clearFavorites())
   }
 
-  // If not authenticated, show login prompt
-  if (!isAuthenticated) {
+  // حالة عدم تسجيل الدخول
+  if (!isAuthenticated && (!items || items.length === 0)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
@@ -39,8 +47,33 @@ function FavoritesPage() {
     )
   }
 
-  // If favorites is empty
-  if (items.length === 0) {
+  // حالة التحميل
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <div className="animate-spin mx-auto mb-4 w-12 h-12 border-4 border-blue-200 border-t-[#005580] rounded-full"></div>
+          <h2 className="text-2xl font-bold mb-4">Loading your favorites...</h2>
+        </div>
+      </div>
+    )
+  }
+
+  // حالة الخطأ
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <Heart className="w-16 h-16 mx-auto text-red-500 mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Error loading favorites</h2>
+          <p className="mb-6 text-red-600">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // حالة المفضلة الفارغة
+  if (!items || items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
@@ -58,6 +91,7 @@ function FavoritesPage() {
     )
   }
 
+  // عرض المفضلة
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">

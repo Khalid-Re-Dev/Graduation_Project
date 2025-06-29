@@ -1,0 +1,22 @@
+Component(s) updated:
+- src/pages/HomePage.jsx (main homepage, added the new section)
+- src/services/recommendations.service.js (new service for recommendations API)
+
+Tailwind classes used for layout and styling:
+- Section wrapper: bg-blue-50 py-10 px-4
+- Heading: text-center text-2xl font-bold text-blue-900 mb-6
+- Product grid: grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6
+- Card: bg-white rounded-lg shadow-md p-4
+- Loading skeleton: animate-pulse, bg-gray-300, rounded, etc.
+- Retry button: px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors
+
+Source of recommendation data:
+- Uses fetchRecommendations() from src/services/recommendations.service.js
+- Endpoint: http://localhost:5000/api/recommendations/
+- Data is merged from all categories (preferred, liked, new, popular) and deduplicated by id
+
+Reused components:
+- ProductCard (for each recommended product)
+- Standard grid layout and card style as used in other product sections
+
+No changes were made to any existing API services or endpoints. All logic and imports for other sections remain untouched.

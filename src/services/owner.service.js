@@ -104,9 +104,29 @@ class OwnerService {
    */
   async createProduct(productData) {
     try {
-      return await apiService.post('/dashboard/products/', productData);
+      let dataToSend = productData;
+      // If productData is not already FormData, convert it
+      if (!(productData instanceof FormData)) {
+        dataToSend = new FormData();
+        Object.entries(productData).forEach(([key, value]) => {
+          // Add only non-null or non-empty values to FormData
+          // This is crucial for file uploads and other data types
+          if (value !== null && value !== '' && value !== undefined) {
+            dataToSend.append(key, value);
+          }
+        });
+      }
+
+      // Log the FormData contents for debugging
+      console.log('Creating product with FormData:');
+      for (let [key, value] of dataToSend.entries()) {
+        console.log(key, value);
+      }
+
+      return await apiService.post('/dashboard/products/', dataToSend);
     } catch (error) {
       console.error('Error creating product:', error);
+      // Re-throw the error so it can be handled by the calling component
       throw error;
     }
   }
@@ -122,14 +142,22 @@ class OwnerService {
       // Check if productData is FormData and use appropriate method
       const isFormData = productData instanceof FormData;
 
-      // For FormData, we need to use PATCH instead of PUT to handle partial updates properly
       if (isFormData) {
+        // Log the FormData contents for debugging
+        console.log('Updating product with FormData:');
+        for (let [key, value] of productData.entries()) {
+          console.log(key, value);
+        }
+        
+        // For FormData, we need to use PATCH instead of PUT to handle partial updates properly
         return await apiService.patch(`/dashboard/products/${productId}/`, productData);
       } else {
+        console.log('Updating product with JSON data:', productData);
         return await apiService.put(`/dashboard/products/${productId}/`, productData);
       }
     } catch (error) {
       console.error(`Error updating product ${productId}:`, error);
+      // Re-throw the error so it can be handled by the calling component
       throw error;
     }
   }
@@ -214,6 +242,19 @@ class OwnerService {
       throw error;
     }
   }
+
+  /**
+   * إنشاء ملف تعريف المالك (Owner Profile) إذا لم يكن موجودًا
+   * @returns {Promise} - بيانات ملف تعريف المالك
+   */
+  async createOwnerProfile() {
+    try {
+      return await apiService.post('/owner/profile/create/', {});
+    } catch (error) {
+      console.error('Error creating owner profile:', error);
+      throw error;
+    }
+  }
 }
 
 // Create and export a singleton instance
@@ -233,3 +274,4 @@ export const getShopSettings = () => ownerService.getShopSettings();
 export const updateShopSettings = (settingsData) => ownerService.updateShopSettings(settingsData);
 export const getOwnerBrands = () => ownerService.getBrands();
 export const createOwnerBrand = (brandData) => ownerService.createBrand(brandData);
+export const createOwnerProfile = () => ownerService.createOwnerProfile();

@@ -1,5 +1,6 @@
 "use client"
 
+//jl
 import { useState, useEffect } from "react"
 import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
@@ -14,7 +15,8 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from ".
 import {
   checkShop, registerShop, getOwnerStats, getOwnerProducts,
   getOwnerAnalytics, getShopSettings, updateShopSettings,
-  createOwnerProduct, updateOwnerProduct, deleteOwnerProduct
+  createOwnerProduct, updateOwnerProduct, deleteOwnerProduct,
+  getOwnerBrands, createOwnerBrand
 } from "../services/owner.service"
 import { getCategories } from "../services/product.service"
 
@@ -41,6 +43,7 @@ function OwnerDashboardPage() {
   const [stats, setStats] = useState(null)
   const [products, setProducts] = useState([])
   const [analytics, setAnalytics] = useState(null)
+  const [errorAnalytics, setErrorAnalytics] = useState("")
   const [orders, setOrders] = useState([])
   const [settings, setSettings] = useState(null)
 
@@ -71,14 +74,48 @@ function OwnerDashboardPage() {
       setLoading({ ...loading, page: true })
       setError({ ...error, page: '' })
       try {
-        const res = await checkShop()
-        if (res.has_shop) {
+        let res = await checkShop()
+        // إذا لم يكن لدى المالك متجر بعد (404 أو null أو has_shop=false)
+        if (!res || res === null || res.has_shop === false) {
+          // إذا كان الخطأ من الباكيند هو ملف تعريف المالك غير موجود
+          if (res && res.error === "ملف تعريف المالك غير موجود.") {
+            setError({ ...error, shop: "يتم الآن إنشاء ملف تعريف المالك..." })
+            try {
+              await import("../services/owner.service").then(m => m.createOwnerProfile())
+              // بعد الإنشاء، أعد محاولة جلب المتجر
+              res = await checkShop()
+              if (res && res.has_shop && res.shop) {
+                setHasShop(true)
+                setShop(res.shop)
+                await loadDashboardData()
+                setError({ ...error, shop: '' })
+              } else if (res && res.has_shop === false) {
+                setHasShop(false)
+                setError({ ...error, shop: '' })
+              } else {
+                setHasShop(false)
+                setError({ ...error, shop: "لم يتم العثور على متجر بعد إنشاء ملف تعريف المالك. يرجى إنشاء متجر جديد." })
+              }
+              setLoading({ ...loading, page: false })
+              return
+            } catch (profileErr) {
+              setHasShop(false)
+              setError({ ...error, shop: "تعذر إنشاء ملف تعريف المالك. يرجى التواصل مع الدعم." })
+              setLoading({ ...loading, page: false })
+              return
+            }
+          }
+          // لا يوجد متجر بعد، لا تعتبر هذا خطأ، فقط اسمح للمالك بإنشاء متجر
+          setHasShop(false)
+          setError({ ...error, shop: '' })
+          setLoading({ ...loading, page: false })
+          return
+        }
+        if (res && res.has_shop && res.shop) {
           setHasShop(true)
           setShop(res.shop)
-          // جلب بيانات الداشبورد
           await loadDashboardData()
-        } else {
-          setHasShop(false)
+          setError({ ...error, shop: '' })
         }
       } catch (err) {
         setHasShop(false)
@@ -96,11 +133,20 @@ function OwnerDashboardPage() {
   const loadDashboardData = async () => {
     setLoading((prev) => ({ ...prev, page: true }))
     setError((prev) => ({ ...prev, page: '' }))
+    setErrorAnalytics("")
     try {
       const [statsRes, productsRes, analyticsRes, settingsRes] = await Promise.all([
         getOwnerStats(),
         getOwnerProducts(),
-        getOwnerAnalytics(),
+        // analytics
+        (async () => {
+          try {
+            return await getOwnerAnalytics()
+          } catch (err) {
+            setErrorAnalytics("تعذر تحميل بيانات الإحصائيات. هناك مشكلة في السيرفر.")
+            return null
+          }
+        })(),
         getShopSettings()
       ])
       setStats(statsRes)
@@ -126,6 +172,11 @@ function OwnerDashboardPage() {
   // معالجة إرسال نموذج إنشاء المتجر
   const handleRegisterShop = async (e) => {
     e.preventDefault()
+    // تحقق أن المستخدم owner فعلاً
+    if (user?.user_type !== "owner") {
+      setError((prev) => ({ ...prev, form: "يجب أن يكون لديك حساب مالك (owner) لإنشاء متجر. يرجى تسجيل الدخول بحساب مالك." }))
+      return
+    }
     setLoading((prev) => ({ ...prev, form: true }))
     setError((prev) => ({ ...prev, form: '' }))
     setShopFormErrors({})
@@ -171,9 +222,9 @@ function OwnerDashboardPage() {
   }
 
   // إضافة منتج جديد
-  const handleAddProduct = () => openProductModal()
+  const handleAddProduct = () => navigate("/dashboard/add-product")
   // تعديل منتج
-  const handleEditProduct = (prod) => openProductModal(prod)
+  const handleEditProduct = (prod) => navigate(`/dashboard/edit-product/${prod.id}`)
   // حذف منتج
   const handleDeleteProduct = async (prod) => {
     if (!window.confirm('هل أنت متأكد من حذف المنتج؟')) return
@@ -187,30 +238,30 @@ function OwnerDashboardPage() {
     setLoading((prev) => ({ ...prev, page: false }))
   }
 
-  // حفظ منتج (إضافة أو تعديل)
+  // إضافة تتبع العمليات في واجهة المالك
   const handleSaveProduct = async (form) => {
     setProductModalLoading(true)
     setProductModalErrors({})
     try {
-      // Convert form data to FormData object for proper content type handling
+      // تتبع البيانات المرسلة
+      console.log('بيانات المنتج قبل الإرسال:', form)
       const formData = new FormData()
-
-      // Add all form fields to FormData
       Object.entries(form).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
           formData.append(key, value)
         }
       })
-
       if (productModalInitial && productModalInitial.id) {
+        console.log('تحديث منتج:', productModalInitial.id)
         await updateOwnerProduct(productModalInitial.id, formData)
       } else {
+        console.log('إنشاء منتج جديد')
         await createOwnerProduct(formData)
       }
       setProductModalOpen(false)
       await loadDashboardData()
     } catch (err) {
-      console.error("Error saving product:", err)
+      console.error('خطأ أثناء حفظ المنتج:', err)
       if (err?.response?.data) setProductModalErrors(err.response.data)
       else setProductModalErrors({ error: 'فشل في حفظ المنتج' })
     }
@@ -223,7 +274,7 @@ function OwnerDashboardPage() {
     setLoading((prev) => ({ ...prev, form: true }))
     setError((prev) => ({ ...prev, form: '' }))
     try {
-      // تأكد من إرسال جميع الحقول حتى الفارغة (قد يتطلب الباك إند ذلك)
+      console.log('تحديث إعدادات المتجر:', data)
       const payload = {
         name: data.name || '',
         url: data.url || '',
@@ -236,6 +287,7 @@ function OwnerDashboardPage() {
       await loadDashboardData()
       setError((prev) => ({ ...prev, form: '' }))
     } catch (err) {
+      console.error('خطأ أثناء تحديث إعدادات المتجر:', err)
       if (err?.response?.data) {
         setError((prev) => ({ ...prev, form: err.response.data.error || 'فشل في تحديث بيانات المتجر' }))
       } else {
@@ -256,9 +308,9 @@ function OwnerDashboardPage() {
             <h1 className="text-2xl font-bold">تسجيل متجر جديد</h1>
           </div>
           {error.shop && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
+            <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded flex items-center">
               <AlertCircle className="mr-2" size={20} />
-              <span>{error.shop}</span>
+              <span>{error.shop === "ملف تعريف المالك غير موجود." ? "يجب عليك أولاً إنشاء ملف تعريف مالك قبل إنشاء متجر. إذا لم يتم إنشاؤه تلقائيًا، يرجى التواصل مع الدعم الفني." : error.shop}</span>
             </div>
           )}
           {error.form && (
@@ -350,8 +402,6 @@ function OwnerDashboardPage() {
         <div className="flex gap-4 border-b mb-8">
           <button className={`py-2 px-4 font-medium ${activeTab === "overview" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("overview")}>نظرة عامة</button>
           <button className={`py-2 px-4 font-medium ${activeTab === "products" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("products")}>المنتجات</button>
-          <button className={`py-2 px-4 font-medium ${activeTab === "orders" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("orders")}>الطلبات</button>
-          <button className={`py-2 px-4 font-medium ${activeTab === "analytics" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("analytics")}>الإحصائيات</button>
           <button className={`py-2 px-4 font-medium ${activeTab === "settings" ? "border-b-2 border-[#005580] text-[#005580]" : "text-gray-500"}`} onClick={() => setActiveTab("settings")}>إعدادات المتجر</button>
         </div>
 
@@ -368,22 +418,7 @@ function OwnerDashboardPage() {
                 onEdit={handleEditProduct}
                 onDelete={handleDeleteProduct}
               />
-              <ProductModal
-                open={productModalOpen}
-                onClose={() => setProductModalOpen(false)}
-                onSave={handleSaveProduct}
-                categories={categories}
-                initialData={productModalInitial}
-                loading={productModalLoading}
-                errors={productModalErrors}
-              />
             </>
-          )}
-          {activeTab === "orders" && (
-            <OrdersTab orders={orders} loading={loading.page} error={error.page} />
-          )}
-          {activeTab === "analytics" && (
-            <AnalyticsTab analytics={analytics} loading={loading.page} error={error.page} />
           )}
           {activeTab === "settings" && (
             <SettingsTab settings={settings} onSave={handleSaveSettings} loading={loading.form} error={error.form} />
@@ -409,11 +444,6 @@ function OverviewTab({ stats }) {
           <div className="text-lg font-bold">{stats?.total_customers ?? 0}</div>
           <div className="text-gray-500">عدد العملاء</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-          <TrendingUp className="text-[#005580] mb-2" size={32} />
-          <div className="text-lg font-bold">{stats?.customers_change ?? 0}</div>
-          <div className="text-gray-500">تغير العملاء</div>
-        </div>
       </div>
       {/* المنتجات الأكثر شعبية */}
       <div className="bg-white rounded-lg shadow p-6 mt-4">
@@ -433,62 +463,6 @@ function OverviewTab({ stats }) {
   )
 }
 
-function ProductModal({ open, onClose, onSave, categories, initialData, loading, errors }) {
-  // عند التعديل: يجب تمرير category كـ id وليس كائن
-  const initial = initialData
-    ? { ...initialData, category: initialData.category?.id || initialData.category || '' }
-    : { name: '', price: '', category: '', description: '' }
-  const [form, setForm] = useState(initial)
-  useEffect(() => {
-    setForm(initial)
-    // eslint-disable-next-line
-  }, [initialData, open])
-  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
-  const handleCategorySelect = (catId) => setForm(f => ({ ...f, category: catId }))
-  const handleSubmit = e => { e.preventDefault(); onSave({ ...form, category: form.category }) }
-  if (!open) return null
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-        <button onClick={onClose} className="absolute left-2 top-2 text-gray-400 hover:text-gray-700">×</button>
-        <h2 className="text-lg font-bold mb-4">{form.id ? 'تعديل منتج' : 'إضافة منتج'}</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1">اسم المنتج <span className="text-red-500">*</span></label>
-            <input name="name" value={form.name} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-            {errors?.name && <div className="text-red-500 text-xs mt-1">{errors.name}</div>}
-          </div>
-          <div>
-            <label className="block mb-1">السعر <span className="text-red-500">*</span></label>
-            <input name="price" type="number" value={form.price} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-            {errors?.price && <div className="text-red-500 text-xs mt-1">{errors.price}</div>}
-          </div>
-          <div>
-            <label className="block mb-1">التصنيف <span className="text-red-500">*</span></label>
-            <Select value={form.category} onValueChange={handleCategorySelect} disabled={loading || categories.length === 0}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="اختر التصنيف" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(cat => (
-                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors?.category && <div className="text-red-500 text-xs mt-1">{errors.category}</div>}
-          </div>
-          <div>
-            <label className="block mb-1">الوصف</label>
-            <textarea name="description" value={form.description} onChange={handleChange} className="w-full border rounded px-3 py-2" rows={2} />
-            {errors?.description && <div className="text-red-500 text-xs mt-1">{errors.description}</div>}
-          </div>
-          <button type="submit" className="w-full bg-[#005580] text-white py-2 rounded hover:bg-[#004466]" disabled={loading || !form.category}>{loading ? 'جاري الحفظ...' : 'حفظ'}</button>
-        </form>
-      </div>
-    </div>
-  )
-}
-
 function ProductsTab({ products, onAdd, onEdit, onDelete }) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -502,7 +476,6 @@ function ProductsTab({ products, onAdd, onEdit, onDelete }) {
             <tr className="bg-gray-100">
               <th className="py-2 px-4">الاسم</th>
               <th className="py-2 px-4">السعر</th>
-              <th className="py-2 px-4">المخزون</th>
               <th className="py-2 px-4">الحالة</th>
               <th className="py-2 px-4">إجراءات</th>
             </tr>
@@ -512,7 +485,6 @@ function ProductsTab({ products, onAdd, onEdit, onDelete }) {
               <tr key={prod.id} className="border-b">
                 <td className="py-2 px-4">{prod.name}</td>
                 <td className="py-2 px-4">{prod.price ?? '-'}</td>
-                <td className="py-2 px-4">{prod.stock ?? '-'}</td>
                 <td className="py-2 px-4">{prod.is_active ? 'نشط' : 'غير نشط'}</td>
                 <td className="py-2 px-4 flex gap-2">
                   <button onClick={() => onEdit(prod)} className="text-blue-600 hover:underline flex items-center"><Edit size={16}/></button>
@@ -528,81 +500,6 @@ function ProductsTab({ products, onAdd, onEdit, onDelete }) {
     </div>
   )
 }
-
-// تبويب الطلبات
-function OrdersTab({ orders, loading, error }) {
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="animate-spin" size={32} /></div>
-  if (error) return <div className="text-red-500 py-4">{error}</div>
-  return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="font-bold text-lg mb-4">الطلبات</div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="py-2 px-4">رقم الطلب</th>
-              <th className="py-2 px-4">العميل</th>
-              <th className="py-2 px-4">المجموع</th>
-              <th className="py-2 px-4">الحالة</th>
-              <th className="py-2 px-4">التاريخ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders?.length ? orders.map((order) => (
-              <tr key={order.id} className="border-b">
-                <td className="py-2 px-4">{order.id}</td>
-                <td className="py-2 px-4">{order.customer_name || '-'}</td>
-                <td className="py-2 px-4">{order.total_price ?? '-'}</td>
-                <td className="py-2 px-4">{order.status}</td>
-                <td className="py-2 px-4">{order.created_at?.slice(0, 10)}</td>
-              </tr>
-            )) : (
-              <tr><td colSpan={5} className="text-center text-gray-400 py-4">لا توجد طلبات</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// تبويب الإحصائيات
-function AnalyticsTab({ analytics, loading, error }) {
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="animate-spin" size={32} /></div>
-  if (error) return <div className="text-red-500 py-4">{error}</div>
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="font-bold mb-4 flex items-center gap-2"><BarChart size={20}/> مبيعات الشهور الأخيرة</div>
-        {/* رسم بياني بسيط */}
-        {analytics?.monthly_sales ? (
-          <div className="h-48 flex items-end gap-2">
-            {analytics.monthly_sales.map((m, i) => (
-              <div key={i} className="flex flex-col items-center">
-                <div className="bg-[#005580] w-6" style={{height: `${m.sales/10}px`}}></div>
-                <span className="text-xs mt-1">{m.month}</span>
-              </div>
-            ))}
-          </div>
-        ) : <div className="text-gray-400">لا توجد بيانات مبيعات</div>}
-      </div>
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="font-bold mb-4 flex items-center gap-2"><PieChart size={20}/> المنتجات الأكثر مبيعًا</div>
-        {analytics?.top_products?.length ? (
-          <ul className="divide-y">
-            {analytics.top_products.map((prod, idx) => (
-              <li key={prod.id || idx} className="py-2 flex items-center justify-between">
-                <span>{prod.name}</span>
-                <span className="text-gray-500 text-xs">{prod.sales ?? 0} مبيعة</span>
-              </li>
-            ))}
-          </ul>
-        ) : <div className="text-gray-400">لا توجد منتجات</div>}
-      </div>
-    </div>
-  )
-}
-
 // تبويب إعدادات المتجر
 function SettingsTab({ settings, onSave, loading, error }) {
   const [form, setForm] = useState(settings || { name: '', description: '', address: '', phone: '', email: '', url: '' })

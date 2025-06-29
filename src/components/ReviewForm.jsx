@@ -4,6 +4,8 @@ import { useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { addReview } from "../store/productSlice"
 import { Star } from "lucide-react"
+import { productService } from "../services/product.service"
+import { toast } from "react-toastify"
 
 // Review form component for adding product reviews
 function ReviewForm({ productId }) {
@@ -12,30 +14,43 @@ function ReviewForm({ productId }) {
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState("")
   const [hoveredRating, setHoveredRating] = useState(0)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (!isAuthenticated) {
-      alert("Please login to add a review")
+      toast.error("Please login to add a review")
       return
     }
 
     if (!comment.trim()) {
-      alert("Please enter a comment")
+      toast.error("Please enter a comment")
       return
     }
 
-    const review = {
-      user: user?.name || "Anonymous",
-      rating,
-      comment,
-      date: new Date().toISOString(),
+    setLoading(true)
+    try {
+      await productService.addProductReview(productId, rating, user?.id)
+      dispatch(
+        addReview({
+          productId,
+          review: {
+            user: user?.name || "Anonymous",
+            rating,
+            comment,
+            date: new Date().toISOString(),
+          },
+        })
+      )
+      toast.success("Review submitted successfully!")
+      setComment("")
+      setRating(5)
+    } catch (error) {
+      toast.error(error.message || "Failed to submit review")
+    } finally {
+      setLoading(false)
     }
-
-    dispatch(addReview({ productId, review }))
-    setComment("")
-    setRating(5)
   }
 
   if (!isAuthenticated) {
@@ -99,8 +114,9 @@ function ReviewForm({ productId }) {
         <button
           type="submit"
           className="bg-[#005580] text-white py-2 px-4 rounded-md hover:bg-[#004466] transition-colors"
+          disabled={loading}
         >
-          Submit Review
+          {loading ? "Submitting..." : "Submit Review"}
         </button>
       </form>
     </div>
