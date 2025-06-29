@@ -8,6 +8,7 @@ import { toggleFavorite } from "../store/favoritesSlice"
 import { addCompare, removeCompare } from "../store/compareSlice"
 import { Heart, Minus, Plus, Monitor, Cpu, MemoryStick, BarChart2, Check } from "lucide-react"
 import ProductCard from "../components/ProductCard"
+import { getProductSpecifications } from "../services/specification.service"
 
 // Product detail page showing full product information
 function ProductDetailPage() {
@@ -18,6 +19,7 @@ function ProductDetailPage() {
   const favoriteItems = useSelector((state) => state.favorites.items)
   const [activeImage, setActiveImage] = useState(0)
   const [activeTab, setActiveTab] = useState("description")
+  const [specifications, setSpecifications] = useState([])
 
   const isInCompare = compareItems.some((item) => item.id === Number(id))
   const isInFavorites = favoriteItems.some((item) => item.id === Number(id))
@@ -65,6 +67,19 @@ function ProductDetailPage() {
         .then(res => res.json())
         .then(data => setReviews(Array.isArray(data) ? data : (data.results || [])))
         .catch(() => setReviews([]));
+    }
+  }, [id]);
+
+  // جلب المواصفات من API المواصفات
+  useEffect(() => {
+    if (id) {
+      getProductSpecifications(id)
+        .then((data) => {
+          if (Array.isArray(data)) setSpecifications(data);
+          else if (data && Array.isArray(data.results)) setSpecifications(data.results);
+          else setSpecifications([]);
+        })
+        .catch(() => setSpecifications([]));
     }
   }, [id]);
 
@@ -382,15 +397,15 @@ function ProductDetailPage() {
 
             {activeTab === "specifications" && (
               <div>
-                {currentProduct.specifications ? (
+                {specifications.length > 0 ? (
                   <table className="min-w-full divide-y divide-gray-200">
                     <tbody className="divide-y divide-gray-200">
-                      {Object.entries(currentProduct.specifications).map(([key, value]) => (
-                        <tr key={key}>
+                      {specifications.map((spec) => (
+                        <tr key={spec.id}>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 capitalize">
-                            {key.replace(/_/g, " ")}
+                            {spec.name}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{value}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{spec.value}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -21,6 +21,16 @@ export default function ProductForm({
   setForm,
   mode,
 }) {
+  // مواصفات المنتج (Display, Processor, Memory)
+  const [specifications, setSpecifications] = useState(
+    initialData && initialData.specifications
+      ? initialData.specifications
+      : [
+          { name: "Display", value: "" },
+          { name: "Processor", value: "" },
+          { name: "Memory", value: "" },
+        ]
+  );
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
 
@@ -77,10 +87,15 @@ export default function ProductForm({
     setForm((prev) => ({ ...prev, image_url: "" }));
   };
 
+  const handleSpecificationChange = (idx, field, value) => {
+    setSpecifications((prev) =>
+      prev.map((spec, i) => (i === idx ? { ...spec, [field]: value } : spec))
+    );
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // تحقق من وجود تصنيفات وبراندات
     if (categories.length === 0) {
       toast.error("يجب إضافة تصنيفات أولاً قبل إنشاء منتج.");
       return;
@@ -90,7 +105,6 @@ export default function ProductForm({
       return;
     }
 
-    // التحقق من البيانات المطلوبة
     const requiredFields = ['name', 'price', 'original_price', 'category_id', 'brand_id'];
     const missingFields = requiredFields.filter(field => !form[field] || form[field] === '');
     if (missingFields.length > 0) {
@@ -100,13 +114,11 @@ export default function ProductForm({
       return;
     }
 
-    // منع إرسال صورة وimage_url معًا
     if (imageFile && form.image_url) {
       toast.error("يرجى اختيار صورة أو إدخال رابط صورة فقط، وليس كلاهما.");
       return;
     }
 
-    // إنشاء FormData لإرسال البيانات مع الصور
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
       if (value !== null && value !== '') {
@@ -116,7 +128,12 @@ export default function ProductForm({
     if (imageFile) {
       formData.append('image', imageFile);
     }
-    onSubmit(e, formData);
+
+    // أرسل المواصفات فقط إذا كان هناك قيمة لأي منها
+    const filteredSpecs = specifications.filter(
+      (spec) => spec.value && spec.value.trim() !== ""
+    );
+    onSubmit(e, formData, filteredSpecs);
   };
 
   return (
@@ -247,6 +264,22 @@ export default function ProductForm({
           />
           Active
         </label>
+      </div>
+
+      {/* مواصفات المنتج */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {specifications.map((spec, idx) => (
+          <div key={spec.name}>
+            <label className="block mb-1 font-medium">{spec.name}</label>
+            <input
+              type="text"
+              value={spec.value}
+              onChange={e => handleSpecificationChange(idx, "value", e.target.value)}
+              className="w-full border rounded px-3 py-2"
+              placeholder={`Enter ${spec.name}`}
+            />
+          </div>
+        ))}
       </div>
 
       <button

@@ -102,15 +102,13 @@ class OwnerService {
    * @param {Object} productData - Product data
    * @returns {Promise} - Created product data
    */
-  async createProduct(productData) {
+  async createProduct(productData, specifications = []) {
     try {
       let dataToSend = productData;
       // If productData is not already FormData, convert it
       if (!(productData instanceof FormData)) {
         dataToSend = new FormData();
         Object.entries(productData).forEach(([key, value]) => {
-          // Add only non-null or non-empty values to FormData
-          // This is crucial for file uploads and other data types
           if (value !== null && value !== '' && value !== undefined) {
             dataToSend.append(key, value);
           }
@@ -123,10 +121,21 @@ class OwnerService {
         console.log(key, value);
       }
 
-      return await apiService.post('/dashboard/products/', dataToSend);
+      // أولاً: أضف المنتج
+      const product = await apiService.post('/dashboard/products/', dataToSend);
+
+      // ثانياً: إذا كان هناك مواصفات، أرسلها
+      if (product && product.id && Array.isArray(specifications) && specifications.length > 0) {
+        try {
+          await apiService.post(`/dashboard/products/${product.id}/specifications/`, { specifications });
+        } catch (specError) {
+          console.error('Error adding product specifications:', specError);
+        }
+      }
+
+      return product;
     } catch (error) {
       console.error('Error creating product:', error);
-      // Re-throw the error so it can be handled by the calling component
       throw error;
     }
   }
@@ -137,27 +146,33 @@ class OwnerService {
    * @param {Object|FormData} productData - Updated product data
    * @returns {Promise} - Updated product data
    */
-  async updateProduct(productId, productData) {
+  async updateProduct(productId, productData, specifications = []) {
     try {
-      // Check if productData is FormData and use appropriate method
       const isFormData = productData instanceof FormData;
-
+      let result;
       if (isFormData) {
-        // Log the FormData contents for debugging
         console.log('Updating product with FormData:');
         for (let [key, value] of productData.entries()) {
           console.log(key, value);
         }
-        
-        // For FormData, we need to use PATCH instead of PUT to handle partial updates properly
-        return await apiService.patch(`/dashboard/products/${productId}/`, productData);
+        result = await apiService.patch(`/dashboard/products/${productId}/`, productData);
       } else {
         console.log('Updating product with JSON data:', productData);
-        return await apiService.put(`/dashboard/products/${productId}/`, productData);
+        result = await apiService.put(`/dashboard/products/${productId}/`, productData);
       }
+
+      // إذا كان هناك مواصفات جديدة أو معدلة
+      if (Array.isArray(specifications) && specifications.length > 0) {
+        try {
+          await apiService.post(`/dashboard/products/${productId}/specifications/`, { specifications });
+        } catch (specError) {
+          console.error('Error updating product specifications:', specError);
+        }
+      }
+
+      return result;
     } catch (error) {
       console.error(`Error updating product ${productId}:`, error);
-      // Re-throw the error so it can be handled by the calling component
       throw error;
     }
   }
