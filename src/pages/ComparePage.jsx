@@ -130,35 +130,83 @@ function ComparePage() {
                     <th className="py-3 px-2 border-b">البراند</th>
                     <th className="py-3 px-2 border-b">السعر</th>
                     <th className="py-3 px-2 border-b">التقييم</th>
-                    <th className="py-3 px-2 border-b">عدد المشاهدات</th>
+                    <th className="py-3 px-2 border-b">عدد الإعجابات</th>
                     <th className="py-3 px-2 border-b">الأفضلية</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {comparison.products.map((prod) => {
-                    let brand = prod.brand_name || prod.brand || (prod.brand_obj && prod.brand_obj.name) || "غير محدد";
-                    return (
-                      <tr
-                        key={prod.id}
-                        className={
-                          prod.is_best
-                            ? "bg-gradient-to-l from-green-100 to-green-50 font-bold text-[#005580] border-2 border-[#1dbf73] shadow-md animate-pulse"
-                            : "hover:bg-gray-50"
+                  {/* حساب القيم الأقل لكل عمود */}
+                  {
+                    (() => {
+                      const minPrice = Math.min(...comparison.products.map(p => typeof p.price === 'number' ? p.price : Number.POSITIVE_INFINITY));
+                      const maxRating = Math.max(...comparison.products.map(p => typeof p.rating === 'number' ? p.rating : Number.NEGATIVE_INFINITY));
+                      const maxLikes = Math.max(...comparison.products.map(p => typeof p.likes === 'number' ? p.likes : Number.NEGATIVE_INFINITY));
+                      return comparison.products.map((prod) => {
+                        // استخراج اسم البراند فقط
+                        let brandName = "غير محدد";
+                        if (prod.brand_obj && prod.brand_obj.name) {
+                          brandName = prod.brand_obj.name;
+                        } else if (typeof prod.brand === 'object' && prod.brand && prod.brand.name) {
+                          brandName = prod.brand.name;
+                        } else if (prod.brand_name) {
+                          brandName = prod.brand_name;
+                        } else if (typeof prod.brand === 'string') {
+                          brandName = prod.brand;
                         }
-                      >
-                        <td className="py-2 px-2 border-b">{prod.name}</td>
-                        <td className="py-2 px-2 border-b">{brand}</td>
-                        <td className="py-2 px-2 border-b">{prod.price}</td>
-                        <td className="py-2 px-2 border-b">{prod.rating}</td>
-                        <td className="py-2 px-2 border-b">{prod.views}</td>
-                        <td className="py-2 px-2 border-b">
-                          {prod.is_best && (
+
+                        // Defensive: ensure all values are valid for rendering
+                        const safeName = typeof prod.name === 'object' ? JSON.stringify(prod.name) : (prod.name ?? 'غير محدد');
+                        const safeBrand = brandName ?? 'غير محدد';
+                        const safePrice = prod.price ?? 'غير محدد';
+                        const safeRating = prod.rating ?? 'غير محدد';
+                        const safeLikes = prod.likes ?? 'غير محدد';
+
+                        // تلوين الافضلية بناءً على نوع الافضلية
+                        // prod.best_by = 'rating' | 'likes' | 'views' | undefined
+                        let bestLabel = null;
+                        if (prod.is_best && prod.best_by) {
+                          let color = '';
+                          let text = '';
+                          if (prod.best_by === 'rating') {
+                            color = 'bg-[#1dbf73]';
+                            text = 'الأفضل تقييماً';
+                          } else if (prod.best_by === 'likes') {
+                            color = 'bg-[#ffb300]';
+                            text = 'الأفضل في الإعجاب';
+                          } else if (prod.best_by === 'views') {
+                            color = 'bg-[#007bff]';
+                            text = 'الأفضل في المشاهدات';
+                          }
+                          bestLabel = (
+                            <span className={`inline-block px-3 py-1 rounded-full ${color} text-white font-bold shadow`}>
+                              {text} ⭐
+                            </span>
+                          );
+                        } else if (prod.is_best) {
+                          bestLabel = (
                             <span className="inline-block px-3 py-1 rounded-full bg-[#1dbf73] text-white font-bold shadow">الأفضل ⭐</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          );
+                        }
+
+                        // تلوين الخلية الأقل قيمة في كل عمود
+                        const priceCellClass = prod.price === minPrice ? 'bg-blue-100 font-bold' : '';
+                        const ratingCellClass = prod.rating === maxRating ? 'bg-blue-100 font-bold' : '';
+                        const likesCellClass = prod.likes === maxLikes ? 'bg-blue-100 font-bold' : '';
+                        return (
+                          <tr
+                            key={prod.id}
+                            className="hover:bg-gray-50"
+                          >
+                            <td className="py-2 px-2 border-b">{safeName}</td>
+                            <td className="py-2 px-2 border-b">{safeBrand}</td>
+                            <td className={`py-2 px-2 border-b ${priceCellClass}`}>{safePrice}</td>
+                            <td className={`py-2 px-2 border-b ${ratingCellClass}`}>{safeRating}</td>
+                            <td className={`py-2 px-2 border-b ${likesCellClass}`}>{safeLikes}</td>
+                            <td className="py-2 px-2 border-b">{bestLabel}</td>
+                          </tr>
+                        );
+                      });
+                    })()}
                 </tbody>
               </table>
               {comparison.note && (
@@ -222,7 +270,7 @@ function ComparePage() {
                 checked={selectedIds.includes(product.id)}
                 onChange={() => toggleCompare(product.id)}
               />
-              <span>{product.name}</span>
+              <span>{typeof product.name === 'object' ? JSON.stringify(product.name) : product.name}</span>
             </label>
           ))}
         </div>
