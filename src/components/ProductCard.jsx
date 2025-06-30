@@ -27,11 +27,16 @@ function ProductCard({ product }) {
   const [localStats, setLocalStats] = useState(stats)
   // Fix image fallback: always use placeholder if image is missing or fails
   // Safe product object (define only once)
+  const bestImage = (product?.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0])
+    || product?.image_url
+    || product?.image
+    || '/placeholder.jpg';
   const safeProduct = {
     id: product?.id,
     name: typeof product?.name === 'string' && product?.name?.length > 0 ? product.name : 'Unnamed Product',
     price: typeof product?.price !== 'undefined' && !isNaN(Number(product?.price)) ? product.price : '-',
-    image: product?.image || '/placeholder.jpg',
+    // Use best image selection logic (images[0], image_url, image, placeholder)
+    image: bestImage,
     description: product?.description || 'No description available',
     shop_name: typeof product?.shop_name === 'string' ? product.shop_name : (product?.shop && typeof product.shop.name === 'string' ? product.shop.name : '-'),
     average_rating: typeof product?.rating === 'number' ? product.rating : (typeof product?.average_rating === 'number' ? product.average_rating : 0),
@@ -88,8 +93,13 @@ function ProductCard({ product }) {
       toast.error("Please login to add to favorites");
       return;
     }
-    await dispatch(toggleFavorite(product.id));
-    dispatch(fetchFavorites());
+    try {
+      await dispatch(toggleFavorite(product.id)).unwrap();
+      await dispatch(fetchFavorites());
+      toast.success(isInFavorites ? "Removed from favorites" : "Added to favorites");
+    } catch (error) {
+      toast.error("Failed to update favorites. Please try again.");
+    }
   }
 
   // Compare logic: only allow products from the same category as the first selected product

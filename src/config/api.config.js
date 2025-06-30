@@ -22,7 +22,7 @@ export const API_ENDPOINTS = {
   USER: {
     PROFILE: '/user/profile/',
     FAVORITES: '/user/favorites/',
-    FAVORITES_TOGGLE: (productId) => `/user/favorites/${productId}/toggle/`,
+    FAVORITES_TOGGLE: (productId) => `/user/favorites/toggle/${productId}/`,
     // أضف أي مسارات أخرى لازمة هنا
   },
 

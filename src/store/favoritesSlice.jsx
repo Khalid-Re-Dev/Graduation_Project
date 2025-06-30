@@ -24,7 +24,14 @@ export const toggleFavorite = createAsyncThunk(
     try {
       // POST /api/user/favorites/toggle/{product_id}/
       const res = await toggleFavoriteService(productId);
-      return { productId, isFavorite: res && res.is_favorite };
+      // Defensive: handle both {is_favorite: true/false} and possible nested data
+      let isFavorite = false;
+      if (res && typeof res.is_favorite === 'boolean') {
+        isFavorite = res.is_favorite;
+      } else if (res && res.data && typeof res.data.is_favorite === 'boolean') {
+        isFavorite = res.data.is_favorite;
+      }
+      return { productId, isFavorite };
     } catch (error) {
       return rejectWithValue(error.message || "Failed to toggle favorite")
     }

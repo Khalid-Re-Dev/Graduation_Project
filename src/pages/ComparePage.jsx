@@ -184,8 +184,12 @@ function ComparePage() {
                     })()}
                 </tbody>
               </table>
-              {comparison.note && !/تم وسم المنتج الأفضل بناءً على التقييم وعدد المشاهدات\.?/i.test(comparison.note) && (
-                <div className="mt-2 text-sm text-[#005580] text-center font-semibold">{comparison.note}</div>
+              {/* Only show the note if it is not the unwanted Arabic message and is not empty/whitespace */}
+              {(comparison.note &&
+                !/تم وسم المنتج الأفضل بناءً على التقييم وعدد المشاهدات\.?/i.test(comparison.note) &&
+                comparison.note.trim() !== "" &&
+                /[a-zA-Z0-9]/.test(comparison.note)) && (
+                  <div className="mt-2 text-sm text-[#005580] text-center font-semibold">{comparison.note}</div>
               )}
             </div>
           ) : comparison && comparison.products && Array.isArray(comparison.products) && comparison.products.length === 0 ? (

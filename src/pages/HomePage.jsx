@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react"
 import { Link } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllProducts, fetchNewProducts, fetchPopularProducts } from "../store/productSlice";
-import { fetchRecommendations } from "../services/recommendations.service"
+// import { fetchRecommendations } from "../services/recommendations.service"
 import HeroSection from "../sections/HeroSection"
 import CategorySection from "../sections/CategorySection"
 import ProductCard from "../components/ProductCard"
@@ -146,24 +146,36 @@ function HomePage() {
       setRecommendations([]);
       return;
     }
-    setRecommendationsLoading(true)
-    setRecommendationsError(null)
-    fetchRecommendations()
+    setRecommendationsLoading(true);
+    setRecommendationsError(null);
+    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+    fetch("https://binc-b.onrender.com/api/recommendations/foryou/", {
+      headers: {
+        "Authorization": token ? `Bearer ${token}` : undefined,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch recommendations");
+        return res.json();
+      })
       .then((data) => {
-        if (!Array.isArray(data)) {
+        console.log("Recommendations API result:", data);
+        // If the API returns an object with a 'results' array, use it. Otherwise, use the data directly if it's an array.
+        let recs = Array.isArray(data) ? data : (Array.isArray(data.results) ? data.results : []);
+        if (!Array.isArray(recs) || recs.length === 0) {
           setRecommendationsError("No recommendations available.");
           setRecommendations([]);
           return;
         }
-        setRecommendations(data);
+        setRecommendations(recs);
         setRecommendationsError(null);
       })
       .catch((err) => {
-        setRecommendationsError("Could not load recommendations. Please check your login or backend.")
-        setRecommendations([])
+        setRecommendationsError("Could not load recommendations. Please check your login or backend.");
+        setRecommendations([]);
       })
-      .finally(() => setRecommendationsLoading(false))
-  }, [isAuthenticated])
+      .finally(() => setRecommendationsLoading(false));
+  }, [isAuthenticated]);
 
   // Show loading state
   if (pageLoading) {
@@ -373,10 +385,10 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Recommended for You Section */}
+      {/* Results Section */}
       <section className="bg-[#08597a] py-10 px-4">
         <div className="container mx-auto">
-          <h2 className="text-center text-2xl font-bold text-white mb-6">Recommended for You</h2>
+          <h2 className="text-center text-2xl font-bold text-white mb-6">Results</h2>
           {recommendationsLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array(4).fill().map((_, idx) => (
@@ -402,18 +414,31 @@ function HomePage() {
               <p className="text-lg mb-4 text-red-600">{recommendationsError}</p>
               <button
                 onClick={() => {
-                  setRecommendationsLoading(true)
-                  setRecommendationsError(null)
-                  fetchRecommendations()
+                  setRecommendationsLoading(true);
+                  setRecommendationsError(null);
+                  const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+                  fetch("https://binc-b.onrender.com/api/recommendations/foryou/", {
+                    headers: {
+                      "Authorization": token ? `Bearer ${token}` : undefined,
+                    },
+                  })
+                    .then((res) => {
+                      if (!res.ok) throw new Error("Failed to fetch recommendations");
+                      return res.json();
+                    })
                     .then((data) => {
-                      if (Array.isArray(data.results)) {
-                        setRecommendations(data.results);
-                      } else {
+                      console.log("Recommendations API result (retry):", data);
+                      let recs = Array.isArray(data) ? data : (Array.isArray(data.results) ? data.results : []);
+                      if (!Array.isArray(recs) || recs.length === 0) {
+                        setRecommendationsError("No recommendations available.");
                         setRecommendations([]);
+                        return;
                       }
+                      setRecommendations(recs);
+                      setRecommendationsError(null);
                     })
                     .catch(() => setRecommendationsError("Could not load recommendations."))
-                    .finally(() => setRecommendationsLoading(false))
+                    .finally(() => setRecommendationsLoading(false));
                 }}
                 className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-900 transition-colors"
               >
@@ -422,7 +447,7 @@ function HomePage() {
             </div>
           ) : recommendations.length === 0 ? (
             <div className="bg-white p-8 rounded-lg shadow-sm text-center">
-              <p className="text-lg mb-4">No recommendations available at this time.</p>
+              <p className="text-lg mb-4">No results available at this time.</p>
             </div>
           ) : (
             <div className="scroll-container">
