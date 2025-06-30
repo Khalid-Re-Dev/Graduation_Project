@@ -25,6 +25,21 @@ function ProductCard({ product }) {
   const stats = productStats[product.id] || { likes: product.likes || 0, dislikes: product.dislikes || 0 }
   const [isHovered, setIsHovered] = useState(false)
   const [localStats, setLocalStats] = useState(stats)
+  // Fix image fallback: always use placeholder if image is missing or fails
+  // Safe product object (define only once)
+  const safeProduct = {
+    id: product?.id,
+    name: typeof product?.name === 'string' && product?.name?.length > 0 ? product.name : 'Unnamed Product',
+    price: typeof product?.price !== 'undefined' && !isNaN(Number(product?.price)) ? product.price : '-',
+    image: product?.image || '/placeholder.jpg',
+    description: product?.description || 'No description available',
+    shop_name: typeof product?.shop_name === 'string' ? product.shop_name : (product?.shop && typeof product.shop.name === 'string' ? product.shop.name : '-'),
+    average_rating: typeof product?.rating === 'number' ? product.rating : (typeof product?.average_rating === 'number' ? product.average_rating : 0),
+    discount: typeof product?.discount === 'number' ? product.discount : 0,
+    likes: localStats.likes,
+    dislikes: localStats.dislikes,
+  };
+  const [imgSrc, setImgSrc] = useState(safeProduct.image);
 
   // Update local stats when redux stats change
   useEffect(() => {
@@ -55,19 +70,11 @@ function ProductCard({ product }) {
     };
   }, [dispatch, product.id, isAuthenticated]);
 
-  // Safe product object
-  const safeProduct = {
-    id: product.id,
-    name: typeof product.name === 'string' && product.name.length > 0 ? product.name : 'Unnamed Product',
-    price: typeof product.price !== 'undefined' && !isNaN(Number(product.price)) ? product.price : '-',
-    image: product.image || '/placeholder.jpg',
-    description: product.description || 'No description available',
-    shop_name: typeof product.shop_name === 'string' ? product.shop_name : (product.shop && typeof product.shop.name === 'string' ? product.shop.name : '-'),
-    average_rating: typeof product.rating === 'number' ? product.rating : (typeof product.average_rating === 'number' ? product.average_rating : 0),
-    discount: typeof product.discount === 'number' ? product.discount : 0,
-    likes: localStats.likes,
-    dislikes: localStats.dislikes,
-  };
+  // Defensive: ensure product is defined and is an object
+  if (!product || typeof product !== 'object') {
+    console.error('ProductCard: invalid product prop', product);
+    return <div className="bg-red-100 text-red-700 p-2 rounded">Invalid product data</div>;
+  }
 
   if (!safeProduct.name || safeProduct.name === 'Loading...') {
     return null;
@@ -85,15 +92,37 @@ function ProductCard({ product }) {
     dispatch(fetchFavorites());
   }
 
+  // Compare logic: only allow products from the same category as the first selected product
   const handleToggleCompare = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (compareLoading) return;
+    // Get the category of the current product
+    let productCategoryId = product.category;
+    if (typeof productCategoryId === "object" && productCategoryId !== null) {
+      productCategoryId = productCategoryId.id;
+    }
+    // If compare list is empty, allow any product
+    if (compareItems.length === 0) {
+      dispatch(addCompare(product));
+      return;
+    }
+    // Get the category of the first product in compare list
+    let firstCategoryId = compareItems[0].category;
+    if (typeof firstCategoryId === "object" && firstCategoryId !== null) {
+      firstCategoryId = firstCategoryId.id;
+    }
+    // If removing from compare, allow
     if (isInCompare) {
       dispatch(removeCompare(product.id));
-    } else {
-      dispatch(addCompare(product));
+      return;
     }
+    // Only allow adding if same category
+    if (productCategoryId !== firstCategoryId) {
+      toast.error("You can only compare products from the same category as the first selected product.");
+      return;
+    }
+    dispatch(addCompare(product));
   }
 
   // Like/Dislike handlers مع تحديث فوري (optimistic update)
@@ -169,6 +198,13 @@ function ProductCard({ product }) {
     }
   }
 
+  // Fix image fallback
+  const handleImgError = (e) => {
+    if (!e.target.src.endsWith('/placeholder.svg')) {
+      setImgSrc('/placeholder.svg');
+    }
+  };
+
   return (
     <div
       className="bg-white border border-gray-200 shadow-sm overflow-hidden relative flex flex-col w-full max-w-[300px] min-w-[220px] mx-auto my-4 p-4 transition-transform duration-200 hover:shadow-lg rounded-lg"
@@ -185,14 +221,10 @@ function ProductCard({ product }) {
         {/* Product image */}
         <div className="relative flex flex-col items-center justify-center w-full mb-2">
           <img
-            src={safeProduct.image}
+            src={imgSrc}
             alt={safeProduct.name || "Product"}
             className="w-full h-52 object-cover rounded-md"
-            onError={(e) => {
-              if (!e.target.src.endsWith('/placeholder.svg')) {
-                e.target.src = '/placeholder.svg';
-              }
-            }}
+            onError={handleImgError}
           />
           {/* Favorite & Compare icons overlayed above the product name, but not covering it */}
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-20">
